@@ -412,6 +412,20 @@ const activeNav = activeNavLabel(pathname);
     text-decoration: none;
   }
 
+  /* Keyboard focus ring — accent blue, matches core Button :focus-visible
+     (2px accent-blue outline, offset 2px). --docs-focus-ring is themed in
+     custom.css (#005fb8 light / #569cd6 dark). Keyboard-only so mouse
+     clicks stay ring-free; :hover behavior is unchanged. */
+  .header-nav-link:focus-visible,
+  .header-login:focus-visible,
+  .header-signup:focus-visible,
+  .header-icon-link:focus-visible,
+  .search-trigger:focus-visible,
+  .theme-toggle:focus-visible {
+    outline: 2px solid var(--docs-focus-ring, #005fb8);
+    outline-offset: 2px;
+  }
+
   @media (max-width: 50rem) {
     .header-logo {
       height: 28px;
