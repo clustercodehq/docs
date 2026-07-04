@@ -26,13 +26,13 @@ The payoff compounds: the slow parts (Windows first-boot, Chocolatey, npm global
 
 1. **Launch a Windows DevBox.** From **Launch**, pick a worker that supports Windows VMs, choose a Windows image (e.g. Windows Server 2022/2025), and start it. Wait for the first-boot install to finish — this is the slow, one-time part.
 
-2. **Open the terminal.** Once the desktop is up, open the DevBox terminal from the DevBoxes list. You'll land in a PowerShell prompt as the `developer` user.
+2. **Open the DevBox terminal.** Once the desktop is up, open the DevBox terminal right from the ClusterCode console (the DevBoxes list). It opens a PowerShell session inside the guest, in your browser — you'll land at a prompt as the `developer` user, no RDP or VNC needed.
 
 </Steps>
 
 ### The proven setup — one paste
 
-Paste this entire block into the DevBox's PowerShell terminal. It's the exact, tested sequence we use to prepare a Windows golden image: [Chocolatey](https://chocolatey.org/), the base tools (Node.js, Git, VS Code, GitHub CLI), and the three AI coding agents — **Claude Code**, **OpenAI Codex**, and **GitHub Copilot** — including the PATH wiring that makes `claude` resolve.
+Paste this entire block into the DevBox terminal in the ClusterCode console. It's the exact, tested sequence we use to prepare a Windows golden image — [Chocolatey](https://chocolatey.org/), the base tools (Node.js, Git, VS Code, GitHub CLI), and the three AI coding agents (**Claude Code**, **OpenAI Codex**, and **GitHub Copilot**), including the PATH wiring that makes `claude` resolve. Paste it once and it sets up the whole machine.
 
 ```powershell
 # 1. Bootstrap Chocolatey (the package manager for the base tools)

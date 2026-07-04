@@ -1,5 +1,10 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@100..800&display=swap');
 
+/* Brand tokens below are hand-mirrored from the portal/orchestrator (core).
+   They are NOT auto-synced — run `pnpm check:tokens` (scripts/check-token-drift.mjs)
+   to verify every value here still matches the canonical core/portal token table.
+   The check runs cross-platform (plain Node) and fails listing any drifted hex. */
+
 :root {
   --sl-font: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
   --sl-font-mono: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
@@ -43,6 +48,9 @@
   --docs-border2: #3c3c3c;
   --docs-surface: #252526;
   --docs-muted: #808080;
+  /* Keyboard focus ring — accent blue, matches core Button :focus-visible
+     (packages/ui/src/theme.css --accent-blue dark #569cd6). */
+  --docs-focus-ring: #569cd6;
   --signup-text: #000000;
 }
 
@@ -73,7 +81,12 @@
   --docs-border2: #cecece;
   --docs-surface: #ffffff;
   --docs-muted: #616161;
-  --signup-text: #f3f3f3;
+  /* Keyboard focus ring — accent blue, matches core Button :focus-visible
+     (packages/ui/src/theme.css --accent-blue light #005fb8). */
+  --docs-focus-ring: #005fb8;
+  /* Text on the brand-green primary CTA — black in BOTH themes, matching
+     portal MARKETING_CTA (`text-black`). #000 on #0890b8 is ~6.6:1 (AA). */
+  --signup-text: #000000;
 }
 
 /* Code blocks — match portal code snippet styling */
@@ -118,6 +131,26 @@
   :root:not([data-theme='light']) {
     color-scheme: dark;
   }
+}
+
+/* ============================================================
+   FOCUS STATES (a11y) — keyboard :focus-visible ring on custom
+   interactive controls, matching core Button's ring
+   (packages/ui/src/theme.css: 2px accent-blue outline, offset 2px).
+   Keyboard-only (:focus-visible) so mouse clicks stay ring-free.
+   The accent-blue value is themed via --docs-focus-ring.
+   ============================================================ */
+.sidebar-collapse-btn:focus-visible,
+.sidebar-footer-logo:focus-visible,
+.collapsed-icon-item:focus-visible,
+.collapsed-logo:focus-visible,
+.breadcrumb-link:focus-visible,
+.pagination-links a:focus-visible,
+.card a:focus-visible,
+.bottom-nav-item:focus-visible,
+.bottom-nav-menu-item:focus-visible {
+  outline: 2px solid var(--docs-focus-ring);
+  outline-offset: 2px;
 }
 
 /* ============================================================
@@ -597,23 +630,29 @@ header.header {
   margin: 0 auto 2rem;
 }
 
-/* Hero action buttons — override Starlight's border-radius: 999rem
-   to square corners matching portal CTAs */
+/* Hero action buttons — aligned to the portal button canon:
+   • primary = brand-green fill, black label, bold, hover:opacity-85 (transition-opacity 200ms)
+     (portal MARKETING_CTA)
+   • secondary = bordered, hover flips border → brand green (transition-colors)
+   Square-corner radius (0.5rem) is kept intentionally — the docs brand uses
+   rounded-lg CTAs, not Starlight's default 999rem pill. */
 .sl-link-button {
   border-radius: 0.5rem !important;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
   font-weight: 700 !important;
-  transition: opacity 200ms ease !important;
+  transition: opacity 200ms ease, border-color 200ms ease !important;
 }
 
-.sl-link-button:hover {
-  opacity: 0.85;
-}
-
+/* Primary — opacity fade on hover (MARKETING_CTA). Scoped to .primary so the
+   bordered secondary uses a border-color hover instead, not an opacity fade. */
 .sl-link-button.primary {
   background: var(--sl-color-text-accent) !important;
   border-color: var(--sl-color-text-accent) !important;
   color: var(--signup-text) !important;
+}
+
+.sl-link-button.primary:hover {
+  opacity: 0.85;
 }
 
 .sl-link-button.secondary,
@@ -623,6 +662,7 @@ header.header {
   color: var(--sl-color-text) !important;
 }
 
+/* Secondary — hover flips the border to brand green (transition-colors). */
 .sl-link-button.secondary:hover,
 .sl-link-button:not(.primary):not(.minimal):hover {
   border-color: var(--sl-color-accent) !important;

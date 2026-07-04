@@ -398,7 +398,8 @@ const activeNav = activeNavLabel(pathname);
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     font-size: 14px;
     font-weight: 700;
-    color: var(--signup-text, #f3f3f3);
+    /* Black label on the brand-green fill in both themes — portal MARKETING_CTA. */
+    color: var(--signup-text, #000000);
     background: var(--docs-green, #10c0f0);
     padding: 0.4375rem 1rem;
     border-radius: 0.375rem;
@@ -410,6 +411,20 @@ const activeNav = activeNavLabel(pathname);
   .header-signup:hover {
     opacity: 0.85;
     text-decoration: none;
+  }
+
+  /* Keyboard focus ring — accent blue, matches core Button :focus-visible
+     (2px accent-blue outline, offset 2px). --docs-focus-ring is themed in
+     custom.css (#005fb8 light / #569cd6 dark). Keyboard-only so mouse
+     clicks stay ring-free; :hover behavior is unchanged. */
+  .header-nav-link:focus-visible,
+  .header-login:focus-visible,
+  .header-signup:focus-visible,
+  .header-icon-link:focus-visible,
+  .search-trigger:focus-visible,
+  .theme-toggle:focus-visible {
+    outline: 2px solid var(--docs-focus-ring, #005fb8);
+    outline-offset: 2px;
   }
 
   @media (max-width: 50rem) {
