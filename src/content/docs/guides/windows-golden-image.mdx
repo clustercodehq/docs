@@ -1,0 +1,123 @@
+---
+title: Windows Golden Image Recipe
+description: Prepare a Windows DevBox with your full toolchain once, snapshot it into a golden image, and boot every future DevBox in seconds instead of waiting 20–30 minutes.
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+Booting a fresh Windows DevBox is slow: ClusterCode runs Windows as a full VM, and the unattended Windows install takes **20–30 minutes** on first boot. Then you still have to install your toolchain — Node, Git, an editor, your AI CLIs — every single time.
+
+This recipe fixes both in two levels: **prepare a Windows DevBox by hand once**, then **snapshot it into a golden image** so every future launch reaches a working desktop — with all your tools already installed — in **seconds**.
+
+<Aside type="note">
+  Windows DevBoxes and golden images require a worker that can host Windows VMs, and building an image from a DevBox requires a **Pro or Enterprise** plan with the **owner**, **admin**, or **member** role.
+</Aside>
+
+## The two levels
+
+- **Level 1 — Prepare the machine.** Launch a Windows DevBox, open its terminal, and install everything you want baked in. You do this **once**.
+- **Level 2 — Bake the image.** Snapshot that prepared DevBox into a reusable golden image. Every launch from it skips the Windows install *and* the tool install.
+
+The payoff compounds: the slow parts (Windows first-boot, Chocolatey, npm globals) happen a single time, and are then frozen into the image.
+
+## Level 1 — Prepare a Windows DevBox
+
+<Steps>
+
+1. **Launch a Windows DevBox.** From **Launch**, pick a worker that supports Windows VMs, choose a Windows image (e.g. Windows Server 2022/2025), and start it. Wait for the first-boot install to finish — this is the slow, one-time part.
+
+2. **Open the terminal.** Once the desktop is up, open the DevBox terminal from the DevBoxes list. You'll land in a PowerShell prompt as the `developer` user.
+
+</Steps>
+
+### The proven setup — one paste
+
+Paste this entire block into the DevBox's PowerShell terminal. It's the exact, tested sequence we use to prepare a Windows golden image: [Chocolatey](https://chocolatey.org/), the base tools (Node.js, Git, VS Code, GitHub CLI), and the three AI coding agents — **Claude Code**, **OpenAI Codex**, and **GitHub Copilot** — including the PATH wiring that makes `claude` resolve.
+
+```powershell
+# 1. Bootstrap Chocolatey (the package manager for the base tools)
+Set-ExecutionPolicy Bypass -Scope Process -Force
+[System.Net.ServicePointManager]::SecurityProtocol = 3072
+iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
+
+# 2. Install Node.js (LTS = Node 22+), Git, VS Code, and the GitHub CLI
+choco install -y nodejs-lts git vscode gh
+
+# 3. Refresh PATH in this session so node/npm/git resolve without reopening
+Import-Module "$env:ChocolateyInstall\helpers\chocolateyProfile.psm1"
+refreshenv
+
+# 4. Install Claude Code (native installer — standalone binary, no npm)
+irm https://claude.ai/install.ps1 | iex
+
+# 5. Add Claude Code's install dir (~/.local/bin) to the User PATH, permanently
+$bin = "$env:USERPROFILE\.local\bin"
+$userPath = [Environment]::GetEnvironmentVariable("Path","User")
+if ($userPath -notlike "*$bin*") {
+  [Environment]::SetEnvironmentVariable("Path", "$userPath;$bin", "User")
+}
+$env:Path = [Environment]::GetEnvironmentVariable("Path","User") + ";" + [Environment]::GetEnvironmentVariable("Path","Machine")
+
+# 6. Install the Codex and Copilot CLIs (npm globals)
+npm install -g @openai/codex @github/copilot
+
+# 7. Verify every tool resolves
+node -v; npm -v; git --version; code --version; gh --version; codex --version; claude --version; copilot --version
+```
+
+The final line should print a version for each tool. If it does, this DevBox is ready to snapshot.
+
+<Aside type="tip">
+  **Why the explicit PATH step (5) for Claude Code?** The native installer places `claude.exe` in `%USERPROFILE%\.local\bin` and normally adds it to your PATH — but that step silently no-ops in a non-interactive session like the DevBox terminal, so `claude` won't resolve without it. Writing `.local\bin` into the **User** PATH makes `claude` work now and in every future session, and — importantly — the setting is **baked into the golden image**, so every DevBox you launch from it has `claude` on PATH out of the box.
+</Aside>
+
+<Aside type="caution">
+  The GitHub Copilot CLI (`@github/copilot`) requires **Node.js 22+**. `choco install nodejs-lts` currently satisfies this; if `node -p "process.versions.node.split('.')[0]"` reports below 22, run `choco upgrade -y nodejs-lts` before step 6.
+</Aside>
+
+Once the verify line prints clean versions, you have a fully-loaded Windows DevBox. Everything from here is about *never doing this again*.
+
+## Level 2 — Snapshot it into a golden image
+
+Now freeze that prepared DevBox into a reusable image. This is the standard **Build an Image from a DevBox** flow — see the [full guide](/guides/build-image-from-container) for details and validation limits.
+
+<Steps>
+
+1. Open **Create Image** and select the **From DevBox** segment.
+
+2. Pick the **same worker** the DevBox is running on (images stay on the worker that builds them).
+
+3. Select your prepared DevBox as the **source**, give the image a **name** (e.g. `windows-dev-golden`), and submit.
+
+4. A Windows snapshot briefly stops the DevBox to capture a consistent disk, then bakes the post-install disk into the image. This takes a few minutes.
+
+</Steps>
+
+<Aside type="tip">
+  The snapshot automatically records the tools it detected as **capabilities** on the image — Claude Code, Codex, GitHub Copilot, Node.js, Git, VS Code, and more render as chips in the launch picker, so you can tell at a glance what a golden image ships with.
+</Aside>
+
+## Boot in seconds from your golden image
+
+Because a snapshot lives on exactly one worker, the launch has to land on that worker — the target picker handles it.
+
+<Steps>
+
+1. Open the launch flow and open the **target** picker.
+
+2. Select the worker that holds your golden image. This pins the launch to that worker.
+
+3. Pick your golden image — filter by name, tag, or capability.
+
+4. Launch.
+
+</Steps>
+
+The DevBox boots from the baked post-install disk, so it reaches a working desktop in **seconds** instead of 20–30 minutes — with Node, Git, VS Code, and your AI CLIs already installed and on PATH. Rebuild the golden image whenever your toolchain changes; day to day, you just launch from it.
+
+## Related
+
+- [Build an Image from a DevBox](/guides/build-image-from-container)
+- [Custom Containerfile](/guides/custom-containerfile)
+- [Workers](/concepts/workers)
+- [DevBoxes](/concepts/containers)

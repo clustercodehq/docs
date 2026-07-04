@@ -1,0 +1,83 @@
+---
+title: Welcome to ClusterCode
+description: Hand off a ticket. Get back a PR. ClusterCode turns your machines into an AI development cluster.
+template: splash
+head:
+  - tag: title
+    content: ClusterCode | Docs
+hero:
+  tagline: Hand off a ticket. Get back a PR. ClusterCode turns your machines into an AI development cluster.
+  actions:
+    - text: Get Started →
+      link: /getting-started/quickstart
+      variant: primary
+    - text: View on GitHub
+      link: https://github.com/orgs/clustercodehq
+      icon: external
+      variant: secondary
+      attrs:
+        target: _blank
+        rel: noopener
+---
+
+import { Card, CardGrid } from '@astrojs/starlight/components';
+import AgentMeshBackground from '../../components/AgentMeshBackground.astro';
+import LandingHeaderScroll from '../../components/LandingHeaderScroll.astro';
+
+<AgentMeshBackground />
+<LandingHeaderScroll />
+
+<CardGrid>
+  <Card title="Install the CLI" icon="terminal">
+    Get up and running in under 5 minutes with `npm install -g @clustercode/cli`.
+
+    [Install CLI →](/getting-started/install-cli)
+  </Card>
+  <Card title="Register a Worker" icon="laptop">
+    Connect your machine as a worker and start running AI DevBoxes.
+
+    [Register →](/getting-started/register-worker)
+  </Card>
+  <Card title="Launch from a Ticket" icon="rocket">
+    Paste a GitHub issue URL and watch ClusterCode spin up a DevBox to work on it.
+
+    [Launch guide →](/guides/launch-from-ticket)
+  </Card>
+  <Card title="CLI Reference" icon="open-book">
+    Full reference for every `clustercode` command.
+
+    [CLI docs →](/cli/overview)
+  </Card>
+</CardGrid>
+
+<div class="automation-intro">
+
+## Automate your workflow
+
+Hand a task to an AI agent that spins up a DevBox, does the work, and tears
+down — on a schedule or on demand, all on infrastructure you own.
+
+</div>
+
+<CardGrid>
+  <Card title="Automation" icon="setting">
+    The big picture: Schedules vs Runs, recipes, and the coordinator + engine model.
+
+    [Overview →](/concepts/automation)
+  </Card>
+  <Card title="Schedules" icon="rocket">
+    Recurring, autonomous cron jobs — wake up to draft PRs, audits, and sweeps.
+
+    [Schedules →](/concepts/schedules)
+  </Card>
+  <Card title="Runs" icon="random">
+    On-demand and interactive — watch the timeline, steer it, answer its questions.
+
+    [Runs →](/concepts/runs)
+  </Card>
+  <Card title="Engines" icon="puzzle">
+    Claude Code, Codex, and Copilot — what each engine does and how it pauses.
+
+    [Engines →](/concepts/subagents)
+  </Card>
+</CardGrid>

@@ -1,0 +1,137 @@
+---
+title: Run an agent on demand
+description: Three copy-paste recipes for one-off agent jobs — take a ticket to a PR, delegate across engines, and reproduce-and-fix a bug.
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+Three ready-to-run recipes for **[Runs](/concepts/runs)** — one-off agent jobs
+you start on demand. Each gives you a prompt to copy, how to set it up, and what
+happens. For what a Run is — the timeline, pausing to ask you, steering — see the
+[Runs concept](/concepts/runs).
+
+## Sweep the backlog until a PR
+
+A single **autonomous** Run that picks up a ticket and carries it all the way to
+a pull request — no babysitting. Copy the prompt, pin a host, and let it go.
+
+**The prompt** — paste this into the Run composer:
+
+```text
+Find the highest-priority open issue labeled `ready-for-dev` in this repo.
+Implement it in a fresh DevBox, run the full test suite, and open a pull
+request. If the tests fail after your change, keep iterating on the fix until
+they pass. Report the PR link when done.
+```
+
+**Set it up**
+
+<Steps>
+
+1. Open the **Runs** page → **+ New run**, and paste the prompt above.
+
+2. **Pin a Target** — a [worker](/concepts/workers) **and** an image (autonomous
+   Runs can't ask you to pick one, so this is required).
+
+3. Pick an **Engine** (e.g. **Codex**, or auto-detect) and set
+   **Mode: Autonomous**.
+
+4. **Start Run.**
+
+</Steps>
+
+**How it works** — it runs unattended, never pausing for input. On the
+[timeline](/concepts/runs#the-timeline--watch-it-work) you watch it:
+
+1. list the open issues (`gh issue list --label ready-for-dev`) and pick the top one;
+2. launch a DevBox and implement the change;
+3. run the suite — red — then iterate on the fix until it's green;
+4. open the PR (`gh pr create`) and report **completed** with the link.
+
+<Aside type="tip">
+  Want this every night instead of once? It's the same recipe as the
+  [nightly backlog sweep](/guides/recurring-work#nightly-backlog-sweep) Schedule
+  — a Schedule is this Run on a cron cadence.
+</Aside>
+
+## One run, every engine
+
+A Run isn't tied to a single engine — the coordinator can delegate different
+subtasks to different [engines](/concepts/subagents), each playing to its
+strengths, all in one timeline.
+
+**The prompt** — name an engine per task right in the instruction:
+
+```text
+Do three things, each with the tool I name:
+1. Refactor the `payments` module for clarity — use Codex.
+2. Write a migration guide under docs/ for the change — use Claude Code.
+3. Update the GitHub Actions CI matrix to add Node 22 — use Copilot.
+```
+
+**Set it up**
+
+<Steps>
+
+1. **+ New run**, and paste the prompt above.
+
+2. **Pick a Target** worker (or leave it blank and answer when it asks). Keep
+   **Mode: Interactive** so you can steer.
+
+3. **Start Run.**
+
+</Steps>
+
+**How it works** — the [timeline](/concepts/runs#the-timeline--watch-it-work)
+shows the coordinator delegating each subtask to the engine you named: a
+**Codex** step, then a **Claude Code** step, then a **Copilot** step, each a
+distinct entry. Answer any question inline (e.g. Claude Code pausing to confirm
+the guide's scope), and the Run finishes with a single **completed** summary
+covering all three pieces.
+
+<Aside type="note">
+  Name the engine explicitly when it matters — left on auto-detect, the run
+  picks one CLI for the whole job. See [Engines](/concepts/subagents) for what
+  each is good at.
+</Aside>
+
+## Reproduce and fix a bug from a ticket
+
+An **interactive** Run that takes a bug report, reproduces it, and fixes it —
+pausing to ask you whenever the expected behavior is ambiguous.
+
+**The prompt** — paste this into the composer, with the bug's issue URL in the
+**Ticket URL** field:
+
+```text
+Reproduce the bug described in this issue in a fresh DevBox. Find the root
+cause, add a failing test that captures it, then fix it until that test and the
+rest of the suite pass, and open a PR linking the issue. If the expected
+behavior is ambiguous, ask me before deciding.
+```
+
+**Set it up**
+
+<Steps>
+
+1. **+ New run**, paste the prompt, and put the issue URL in **Ticket URL** so
+   the repo and issue context are cloned into the DevBox.
+
+2. Leave the **Target** blank (answer when it asks) or pin one. Keep
+   **Mode: Interactive** so it can pause.
+
+3. Pick **Claude Code — Plan** (it pauses cleanly to ask) and **Start Run.**
+
+</Steps>
+
+**How it works** — it reproduces the bug, and if the expected behavior is
+unclear it **[pauses and asks you](/concepts/runs#it-can-pause-and-ask-you)**
+(status **Needs you**) — you answer inline and it resumes from exactly there. It
+writes a failing test, fixes until green, and opens the PR. You watch and
+[steer](/concepts/runs#steering--the-chat) the whole thing on the timeline.
+
+## Next
+
+- [Runs](/concepts/runs) — how Runs work (timeline, pausing, steering, modes).
+- [Automate recurring work](/guides/recurring-work) — the same ideas on a cron cadence.
+- [Engines](/concepts/subagents) — pick the right engine per job.

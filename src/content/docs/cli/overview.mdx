@@ -1,0 +1,41 @@
+---
+title: CLI Overview
+description: All clustercode commands at a glance.
+---
+
+The `clustercode` CLI manages workers, authentication, and configuration from your terminal.
+
+## Install
+
+The CLI is published to npm. Install it globally:
+
+```bash
+npm install -g @clustercode/cli
+```
+
+Requires Node.js 22+. Verify the install with `clustercode --version`.
+
+## Commands
+
+| Command | Description |
+|---------|-------------|
+| [`clustercode login`](/cli/login) | Authenticate via browser OAuth or API token |
+| [`clustercode worker`](/cli/worker) | Select a tenant and start the worker |
+| [`clustercode doctor`](/cli/doctor) | Check system health |
+| [`clustercode onboard`](/cli/onboard) | Guided setup wizard |
+| [`clustercode config`](/cli/config) | Manage CLI configuration |
+| [`clustercode status`](/cli/status) | Show current state |
+
+New here? Run [`clustercode onboard`](/cli/onboard) — it checks everything and walks you through login, tenant selection, and container runtime setup in one step.
+
+## Configuration
+
+The CLI keeps its files under `~/.clustercode/`:
+
+| File | Purpose |
+|------|---------|
+| `credentials.json` | Your login (API key + email) |
+| `worker.json` | Worker registration (tenant + identity) |
+| `config.json` | Preferences (e.g. `WORKER_NAME`) |
+
+Run [`clustercode status`](/cli/status) at any time to see your current login, worker, and connection state.

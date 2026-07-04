@@ -1,0 +1,65 @@
+---
+title: Automation
+description: Hand work to an AI agent that spins up a DevBox, does the task, and tears down — on a schedule or on demand, all on infrastructure you own.
+---
+
+import { Aside, CardGrid, LinkCard } from '@astrojs/starlight/components';
+
+**Automation** is ClusterCode handing a task to an AI agent that spins up a
+DevBox, does the work, and tears down — either on a recurring **Schedule**
+or as an on-demand **Run**. Every execution happens on **infrastructure you
+own and control**: your own [workers](/concepts/workers) and
+[cloud workers](/guides/cloud-worker), never a black-box cloud.
+
+## Two modes
+
+| | **[Schedules](/concepts/schedules)** | **[Runs](/concepts/runs)** |
+|---|---|---|
+| Trigger | A cron cadence (e.g. nightly) | You start it, once |
+| Human | **Autonomous** — no one watching | **Interactive** — you can answer it |
+| Can it ask you a question? | No (no human in the loop) | **Yes** — it pauses and asks |
+| Best for | Recurring maintenance, periodic checks | Exploratory work, anything ambiguous |
+
+Both run the same way under the hood: a **coordinator** plans the job and
+delegates the actual coding to an in-DevBox **[engine](/concepts/subagents)**
+(Claude Code, Codex, or Copilot).
+
+A Schedule is always autonomous. A [Run](/concepts/runs) can be either
+**interactive** (the default — it can pause and ask you) or **autonomous**
+(fire-and-forget, no prompts — a Schedule's body fired once, on demand). So
+"can it ask you?" really tracks the **mode**, not whether it's a Run.
+
+## What you can do with it
+
+A few recipes to make it concrete:
+
+- **Nightly dependency audit** — a Schedule that checks for vulnerable
+  packages every night and opens a PR bumping them. → [Schedules](/concepts/schedules)
+- **Flaky-test sweep** — a Schedule that re-runs the e2e suite three times,
+  finds flaky specs, and files issues with traces.
+- **"Refactor this and open a PR"** — a Run you start from a ticket; it works
+  in a DevBox, runs the tests, and opens the PR. → [Runs](/concepts/runs)
+- **A brainstorm that asks you questions** — a Run where the agent pauses
+  mid-task to confirm a decision before continuing. → [Runs](/concepts/runs)
+
+## It runs on infrastructure you own
+
+Automation doesn't ship your code to someone else's servers. Each Schedule or
+Run executes on a [worker](/concepts/workers) you registered or a
+[cloud worker](/guides/cloud-worker) you provisioned — machines you control, behind
+your own network. You pick the host (or let ClusterCode choose from the ones you
+have), and the AI work bills against your own engine credentials.
+
+<Aside type="tip">
+  Not sure which to reach for? If it recurs and needs no supervision, it's a
+  **Schedule**. If you want to watch it, steer it, or answer its questions,
+  it's a **Run**.
+</Aside>
+
+## Next
+
+<CardGrid>
+  <LinkCard title="Schedules" href="/concepts/schedules" description="Recurring, autonomous cron jobs." />
+  <LinkCard title="Runs" href="/concepts/runs" description="On-demand, interactive — pauses to ask you." />
+  <LinkCard title="Engines" href="/concepts/subagents" description="The four CLI engines and what each can do." />
+</CardGrid>

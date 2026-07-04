@@ -1,0 +1,191 @@
+---
+/**
+ * Theme-aware product *motion* clip, wrapped in the same faux browser chrome
+ * (traffic lights + URL bar) as <ThemedImage>. The motion companion to the
+ * static screenshots: renders an autoplaying / muted / looping / inline <video>
+ * with theme-paired webm + mp4 sources and a poster, and shows the variant
+ * matching the reader's selected docs theme.
+ *
+ * Theme switch is pure CSS keyed off Starlight's `data-theme` attribute on
+ * <html> (no JS, no flash, follows the picker including "Auto"), exactly like
+ * <ThemedImage>. `prefers-reduced-motion: reduce` shows the poster still instead
+ * of the moving clip — the video is swapped out for its poster image, so it
+ * never plays for readers who opted out of motion.
+ *
+ * Assets live in docs/public/assets/media/ and are referenced by their served
+ * root-absolute URLs (e.g. /assets/media/schedules-timeline-dark.webm).
+ *
+ * Usage (inside .mdx):
+ *   import ThemedVideo from '../../../components/ThemedVideo.astro';
+ *
+ *   <ThemedVideo
+ *     darkWebm="/assets/media/schedules-timeline-dark.webm"
+ *     darkMp4="/assets/media/schedules-timeline-dark.mp4"
+ *     darkPoster="/assets/media/schedules-timeline-dark-poster.png"
+ *     lightWebm="/assets/media/schedules-timeline-light.webm"
+ *     lightMp4="/assets/media/schedules-timeline-light.mp4"
+ *     lightPoster="/assets/media/schedules-timeline-light-poster.png"
+ *     title="Schedules"
+ *     alt="…"
+ *   />
+ */
+interface Props {
+  /** webm source shown when the docs theme is dark. */
+  darkWebm: string;
+  /** mp4 (Safari/compat) source shown when the docs theme is dark. */
+  darkMp4: string;
+  /** Poster / reduced-motion still for the dark variant. */
+  darkPoster: string;
+  /** webm source shown when the docs theme is light. */
+  lightWebm: string;
+  /** mp4 (Safari/compat) source shown when the docs theme is light. */
+  lightMp4: string;
+  /** Poster / reduced-motion still for the light variant. */
+  lightPoster: string;
+  /** Required alt text — the text walkthrough stays canonical, but every
+   *  embed must still describe itself. */
+  alt: string;
+  /** URL-bar text in the faux browser chrome. */
+  url?: string;
+  /** Page title shown on the right of the chrome bar (the browser-tab name). */
+  title?: string;
+}
+
+const {
+  darkWebm,
+  darkMp4,
+  darkPoster,
+  lightWebm,
+  lightMp4,
+  lightPoster,
+  alt,
+  url = 'console.clustercode.io',
+  title,
+} = Astro.props;
+---
+
+<figure class="themed-video">
+  <div class="browser-frame">
+    <div class="browser-bar">
+      <span class="dot" style="background:#ff5f57"></span>
+      <span class="dot" style="background:#ffbd2e"></span>
+      <span class="dot" style="background:#28ca41"></span>
+      <span class="url">{url}</span>
+      {title && <span class="title">{title}</span>}
+    </div>
+    <div class="browser-body">
+      <video
+        class="tv tv-dark"
+        autoplay
+        muted
+        loop
+        playsinline
+        preload="metadata"
+        poster={darkPoster}
+        aria-label={alt}
+      >
+        <source src={darkWebm} type="video/webm" />
+        <source src={darkMp4} type="video/mp4" />
+      </video>
+      <img class="tv-poster tv-dark" src={darkPoster} alt={alt} loading="lazy" />
+
+      <video
+        class="tv tv-light"
+        autoplay
+        muted
+        loop
+        playsinline
+        preload="metadata"
+        poster={lightPoster}
+        aria-label={alt}
+      >
+        <source src={lightWebm} type="video/webm" />
+        <source src={lightMp4} type="video/mp4" />
+      </video>
+      <img class="tv-poster tv-light" src={lightPoster} alt={alt} loading="lazy" />
+    </div>
+  </div>
+</figure>
+
+<style>
+  .themed-video {
+    margin: 1.5rem 0;
+  }
+  .browser-frame {
+    border-radius: 0.6rem;
+    overflow: hidden;
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.18);
+  }
+  /* Starlight's content auto-spacing (a 0-specificity :where() rule) adds a
+     top margin to flow elements, which lands on this div and opens a ~16px gap
+     between the chrome bar and the clip. Zero it so the video sits flush. */
+  .browser-body {
+    margin: 0;
+  }
+  .browser-bar {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    background: var(--sl-color-gray-6);
+    border-bottom: 1px solid var(--sl-color-gray-5);
+  }
+  .dot {
+    width: 0.6rem;
+    height: 0.6rem;
+    border-radius: 50%;
+    flex: none;
+  }
+  .url {
+    margin-left: 0.5rem;
+    padding: 0.15rem 0.7rem;
+    border-radius: 0.35rem;
+    background: var(--sl-color-black);
+    color: var(--sl-color-gray-2);
+    font-family: var(--sl-font-mono, ui-monospace, monospace);
+    font-size: 0.75rem;
+    line-height: 1.4;
+  }
+  .title {
+    margin-left: auto;
+    color: var(--sl-color-gray-3);
+    font-family: var(--sl-font-mono, ui-monospace, monospace);
+    font-size: 0.7rem;
+    line-height: 1.4;
+    white-space: nowrap;
+  }
+  /* Shared sizing for the video + poster (no `display` here — display is owned
+     by the .tv / .tv-poster + theme rules so it can be toggled cleanly). */
+  .browser-body :global(video),
+  .browser-body :global(img) {
+    width: 100%;
+    height: auto;
+    margin: 0;
+  }
+  /* Motion default: the moving clip is shown, the still poster is hidden. */
+  .tv {
+    display: block;
+  }
+  .tv-poster {
+    display: none;
+  }
+  /* Reduced motion: swap the moving clip for its still poster (lower specificity
+     than the theme rules below, so the inactive-theme variants stay hidden). */
+  @media (prefers-reduced-motion: reduce) {
+    .tv {
+      display: none;
+    }
+    .tv-poster {
+      display: block;
+    }
+  }
+  /* Theme switch — mirrors ThemedImage. Higher specificity (ancestor selector)
+     wins over the motion rules above, so the inactive theme is fully hidden
+     (both its video and its poster) regardless of motion preference. */
+  :global([data-theme='light']) .tv-dark {
+    display: none;
+  }
+  :global([data-theme='dark']) .tv-light {
+    display: none;
+  }
+</style>

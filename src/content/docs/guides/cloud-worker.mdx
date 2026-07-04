@@ -1,0 +1,52 @@
+---
+title: Cloud worker
+description: Managed compute workers — no hardware required.
+---
+
+Cloud worker is ClusterCode's managed compute service. Instead of providing your own machines, Cloud worker runs workers in the cloud on your behalf.
+
+## Self-Hosted vs Cloud worker
+
+| | Self-Hosted | Cloud worker |
+|---|---|---|
+| Hardware | You provide | ClusterCode provides |
+| Maintenance | You manage | Zero maintenance |
+| Cost | Your electricity + hardware | Included compute allowance + top-ups |
+| Control | Full | Managed |
+| Availability | Depends on your machines | Always-on |
+| Windows support | Requires Windows host | Built-in |
+
+## When to Use Cloud worker
+
+- You don't have spare machines or don't want to manage them
+- You need Windows DevBoxes for .NET or desktop testing
+- You want workers in specific geographic regions
+- You need burst capacity beyond your physical hardware
+
+## Getting Started
+
+Cloud worker workers appear automatically in your dashboard. No CLI setup, no registration — they're always connected and ready.
+
+1. Open the orchestrator dashboard
+2. When launching a DevBox, select a Cloud worker worker
+3. DevBoxes run on managed infrastructure
+
+## Compute Allowance
+
+Each plan includes a monthly compute allowance:
+
+| Plan | Compute Allowance |
+|------|------------------|
+| Starter | 10 hrs/mo |
+| Pro | 50 hrs/mo |
+| Enterprise | 200 hrs/mo |
+
+Top-ups available on Pro and Enterprise plans when you exceed your allowance.
+
+## Supported DevBox Types
+
+Cloud worker workers support:
+- **Linux containers** — all standard ClusterCode runtimes
+- **Windows DevBoxes** — .NET, desktop apps, Visual Studio workflows
+
+For Windows, you can [snapshot a configured DevBox into a golden image](/guides/build-image-from-container) so future launches skip the 20–30 minute first-boot install and reach a working desktop in seconds.

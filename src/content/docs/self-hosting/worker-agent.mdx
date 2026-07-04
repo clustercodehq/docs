@@ -1,0 +1,53 @@
+---
+title: Worker Agent
+description: The worker that runs on each machine and executes DevBoxes.
+---
+
+The worker agent is a lightweight, standalone binary that runs on each machine and executes DevBoxes on behalf of the orchestrator. It has no runtime dependencies — the `clustercode` CLI downloads and runs it for you.
+
+## How it connects
+
+```
+Orchestrator (cloud)
+    ▲
+    │  outbound WebSocket
+    ▼
+Worker agent (your machine)
+    │
+    ▼
+Podman / Docker containers
+```
+
+The agent connects **outbound** to the orchestrator over an authenticated connection — no inbound ports, no port forwarding, no static IP or DNS on the worker side. It works behind NAT and firewalls that allow outbound HTTPS.
+
+Once connected, the agent runs DevBox operations locally (create, start, stop, terminal, and so on) as the orchestrator requests them.
+
+## Resilience
+
+- If the connection drops, the agent reconnects automatically.
+- DevBoxes keep running while the agent is disconnected — they aren't affected by the agent's connection state.
+- The agent is safe to restart; it picks up existing DevBoxes when it reconnects.
+
+## Live terminals
+
+Terminal and display output from a DevBox streams back through the agent to your browser, giving you a live web terminal for each DevBox.
+
+## Running it
+
+Start the worker with the CLI:
+
+```bash
+clustercode worker
+```
+
+Leave it running to keep the machine online as a worker. See [Register a Worker](/getting-started/register-worker) to get set up, and [`clustercode doctor`](/cli/doctor) to check its health.
+
+## Files
+
+The agent and CLI share configuration under `~/.clustercode/`:
+
+| File | Purpose |
+|------|---------|
+| `credentials.json` | Your login (from `clustercode login`) |
+| `worker.json` | Worker registration (tenant + identity) |
+| `config.json` | Preferences (e.g. `WORKER_NAME`) |

@@ -1,0 +1,108 @@
+---
+title: Plans & Limits
+description: ClusterCode pricing tiers, resource limits, and feature availability.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+The limits enforced on each plan are listed below. "Unlimited" means no enforced cap.
+
+## Plans
+
+| | Free | Starter | Pro | Enterprise |
+|---|---|---|---|---|
+| **Price** | $0/mo | $9.99/mo | $29.99/mo | $99/first user |
+| **Additional seats** | — | — | $20/seat (up to 50) | Degressive pricing |
+
+**Free** is a real plan tier, not a trial. It runs on your **own machine (BYOM)**
+using your **own Claude key (BYOK)** — there's no platform AI or compute
+allowance and no cloud/cloud-worker DevBoxes. You do get **one schedule**
+(running at most every 6 hours) to taste automation. It's the simplest way to
+self-host ClusterCode; upgrade to Starter+ for platform AI, more (and more
+frequent) schedules, and managed compute.
+
+## Resource Limits
+
+| Resource | Free | Starter | Pro | Enterprise |
+|----------|------|---------|-----|-----------|
+| Self-hosted workers | 1 | 2 | 10 | Unlimited |
+| Concurrent DevBoxes | 3 | 5 | 15 | Unlimited |
+| Cloud worker (cloud) DevBoxes | None | Unlimited | Unlimited | Unlimited |
+| Custom images | 3 | Unlimited | Unlimited | Unlimited |
+| Concurrent runs | 1 | 3 | 10 | 25 |
+| Parallel subagents per run | 1 | 3 | 10 | 25 |
+| Concurrent live sessions | 1 | 3 | 15 | Unlimited |
+| Cron schedules | 1 | 3 | 10 | Unlimited |
+| Schedule cadence floor (fastest a schedule may run) | every 6h | every hour | every 30 min | any |
+| [Projects](/concepts/projects) | 1 | 3 | 25 | Unlimited |
+| DevBox history | 1 day | 14 days | 90 days | 365 days |
+| Disk per DevBox | 64 GB | 128 GB | 256 GB | 1024 GB |
+| Display idle timeout | 3 min | 5 min | 10 min | 15 min |
+| Tenants | 1 | 1 | 5 | Unlimited |
+| Organizations | 1 | 1 | 1 | 10 |
+| Seats | 1 | 1 | 50 | Unlimited |
+
+A few notes:
+
+- **Cloud worker DevBoxes** are managed cloud compute. Free has none — it's
+  BYOM-only; paid tiers are unlimited.
+- **Custom images** is a use-cap: on a capped plan only the **newest N** managed
+  images stay launchable (Free keeps the newest 3); older ones lock until you
+  upgrade or remove some.
+- **Concurrent live sessions** is the total of terminal + display sessions across
+  all your DevBoxes (not a per-DevBox limit).
+- **Parallel subagents per run** is how many helper agents a single run may spawn;
+  it scales by plan from `1` on Free up to `25` on Enterprise.
+- **Display idle timeout** auto-closes an idle VNC display to free a live-session
+  slot — it scales by plan, from 3 min on Free up to 15 min on Enterprise.
+- **[Projects](/concepts/projects)** group your DevBoxes, runs, and schedules and
+  carry per-project environment variables. The cap counts **active** projects only —
+  archived projects are inert and don't consume a slot, so you can keep history
+  without spending against the limit.
+
+## AI & Compute Allowances
+
+| | Free | Starter | Pro | Enterprise |
+|---|---|---|---|---|
+| Platform AI allowance | — | $2/mo | $6/mo | $10/user/mo |
+| Included compute | — | $2/mo | $6/mo | $10/user/mo |
+| Pay-as-you-go wallet & top-ups | No | Yes | Yes | Yes |
+| BYOK (bring your own AI key) | Required | Optional | Optional | Optional |
+
+- **Platform AI allowance** and **Included compute** are separate monthly pools
+  (LLM spend vs. container runtime), both denominated in USD.
+- On **Free** there is no platform AI pool, so runs and Nucleus work **only**
+  through your own key (BYOK) configured under **Settings → Secrets**. On paid
+  tiers BYOK is optional — use the included platform allowance or your own key.
+- Once an allowance is spent, paid tiers can keep going via the pay-as-you-go
+  **wallet** (top-ups); Free cannot.
+
+## Features by Plan
+
+| Feature | Free | Starter | Pro | Enterprise |
+|---------|------|---------|-----|-----------|
+| AI catalog (Claude, Copilot, Codex) | ✓ | ✓ | ✓ | ✓ |
+| Platform AI pool | — | ✓ | ✓ | ✓ |
+| Live terminal & display | ✓ | ✓ | ✓ | ✓ |
+| Cron workflows (schedules) | ✓ | ✓ | ✓ | ✓ |
+| BYOI (custom images) | — | — | ✓ | ✓ |
+| [Build image from DevBox](/guides/build-image-from-container) | — | — | ✓ | ✓ |
+| GitHub Issues integration | ✓ | ✓ | ✓ | ✓ |
+| Azure DevOps integration | — | — | ✓ | ✓ |
+| Trello integration | — | — | Coming soon | Coming soon |
+| Monday.com integration | — | — | Coming soon | Coming soon |
+| Workflow templates | — | — | Coming soon | Coming soon |
+| Workflow chaining | — | — | — | Coming soon |
+| Auto-open draft PR | — | — | ✓ | ✓ |
+| Auto-update ticket status | — | — | Coming soon | Coming soon |
+| SSO/SAML | — | — | — | Coming soon |
+| RBAC | — | — | — | ✓ |
+| Audit log | — | — | — | Coming soon |
+| Secrets management | — | — | — | Coming soon |
+| VPN support | — | — | — | Coming soon |
+| REST API | — | — | — | Coming soon |
+| Dedicated support | — | — | — | ✓ |
+
+<Aside type="note" title="Integrations aren't limited to the ones we ship">
+The rows above are the integrations ClusterCode wires up **out of the box**. You're not limited to them — GitHub, Azure DevOps, Trello, Monday, or any other service can be connected by **baking the integration (its CLI, API client, and credentials) into your DevBox image**. See [Build an image from a DevBox](/guides/build-image-from-container) and [Custom Containerfile](/guides/custom-containerfile). Out-of-the-box support is a convenience, not a limit on what you can integrate.
+</Aside>

@@ -1,0 +1,115 @@
+---
+title: Build an Image from a DevBox
+description: Snapshot a running DevBox into a reusable golden image, then launch from it.
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+You've tuned a DevBox by hand — installed tools, cloned a repo, pasted credentials, finished the Windows first-boot install — and now you want every future launch to start from that exact state. **Building an image from a DevBox** snapshots a running DevBox into a reusable image (a "golden image") so you don't have to re-run a build or rewrite a Containerfile.
+
+<Aside type="note">
+  Building an image from a DevBox requires a **Pro or Enterprise** plan and the **owner**, **admin**, or **member** role. Starter users see an upgrade prompt in place of the form.
+</Aside>
+
+## Before you start
+
+The source-DevBox picker only lists DevBoxes that are **all** of:
+
+- **yours** — you launched it
+- **running**
+- **not part of a Cloud worker** — cloud-worker-managed DevBoxes are excluded
+
+If a DevBox you expect isn't listed, check it against these three rules first.
+
+## Build the image
+
+<Steps>
+
+1. Open **Create Image** and select the **From DevBox** segment.
+
+2. Pick the **target worker**. The image is built on — and stays on — this one worker. (Images aren't replicated across workers.)
+
+3. Pick the **source DevBox** from the filterable list (only eligible DevBoxes appear — see above).
+
+4. Enter an **image name**. Names are lowercase, must start with a letter or number, are 2–64 characters, and may use `a–z`, `0–9`, `.`, `_`, and `-`.
+
+5. Enter a **tag** (optional — defaults to `latest`). Tags are 1–63 characters and may use `A–Z`, `a–z`, `0–9`, `.`, `_`, and `-`.
+
+6. Optionally add **custom capabilities** as chips — up to **10**, each **40 characters or fewer**, with no commas.
+
+7. Submit. A **Linux** snapshot finishes in well under a minute. A **Windows** snapshot is slower (it can take several minutes) — see below.
+
+</Steps>
+
+## Capabilities
+
+Two kinds of capability labels travel with the image and render as chips in the launch picker:
+
+- **Inherited capabilities** are derived automatically from the source DevBox and shown read-only — you don't re-enter them.
+- **Custom capabilities** are the free-form labels you add. They're stored with a `custom:` prefix (e.g. `custom:tax-prep-2025`) so they never collide with built-in capability ids, and they render beside the built-in badges.
+
+Re-declaring a capability the source already carries won't duplicate it — the lists are merged and de-duplicated.
+
+## Linux vs Windows
+
+**Linux** images are captured directly from the DevBox's filesystem. The snapshot is fast and includes everything you added — for example, a repository you cloned into the DevBox persists in the resulting image.
+
+**Windows** images work differently:
+
+<Aside type="caution">
+  Snapshotting a Windows DevBox **stops it briefly** to capture a consistent disk, so the snapshot takes longer, and the resulting image **only runs on workers that support Windows VMs**.
+</Aside>
+
+The payoff is large: launching from a Windows golden image skips the 20–30 minute first-boot Windows install and reaches a working desktop in seconds, because the post-install disk is baked into the image.
+
+## Launch from your golden image
+
+A snapshot lives on exactly **one** worker, so the launch has to land on that worker. The launch target picker handles this.
+
+<Steps>
+
+1. Open the launch flow and open the **target** picker.
+
+2. Select the worker that holds your image. This **pins the launch to that worker**, so it can serve the image stored there.
+
+3. Pick your golden image — filter by name, tag, or capability. Custom capabilities render as chips beside the built-in capability badges.
+
+4. Launch.
+
+</Steps>
+
+The launch target picker works the same way in **Quick Launch** and the **Schedule** create panel.
+
+## Reference
+
+### Eligibility & gating
+
+| What | Rule |
+|---|---|
+| Plan | Pro or Enterprise (`images.publish`) |
+| Role | owner, admin, or member |
+| Source DevBox | yours · running · not in a Cloud worker |
+
+### Validation limits
+
+| Field | Rule |
+|---|---|
+| Image name | lowercase, leading alphanumeric, 2–64 chars, `[a-z0-9._-]` |
+| Tag | 1–63 chars, `[A-Za-z0-9._-]`, defaults to `latest` |
+| Custom capabilities | up to 10, each ≤40 chars, no commas, stored as `custom:<name>` |
+
+### Image labels
+
+Snapshots are tagged with `io.clustercode.managed=true` so they appear in the image pickers; ClusterCode also applies a few descriptive labels automatically (OS, capabilities, and so on) to render badges and chips.
+
+<Aside type="tip">
+  An image lives on the worker that created it, so it's only visible while that worker is online (you can't launch on an offline worker anyway).
+</Aside>
+
+## Related
+
+- [DevBoxes](/concepts/containers)
+- [Custom Containerfile](/guides/custom-containerfile)
+- [Workers](/concepts/workers)
+- [Cloud worker](/guides/cloud-worker)
+- [Plans & Limits](/reference/plans-and-limits)

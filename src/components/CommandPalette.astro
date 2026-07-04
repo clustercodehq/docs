@@ -1,0 +1,424 @@
+---
+const groups = [
+  {
+    label: 'Getting Started',
+    icon: 'book',
+    items: [
+      { title: 'Introduction', desc: 'What is ClusterCode', href: '/getting-started/introduction/' },
+      { title: 'Quickstart', desc: 'Get running in 5 minutes', href: '/getting-started/quickstart/' },
+      { title: 'Install CLI', desc: 'Install the CLI tool', href: '/getting-started/install-cli/' },
+      { title: 'Register a Worker', desc: 'Connect your machine', href: '/getting-started/register-worker/' },
+    ],
+  },
+  {
+    label: 'Concepts',
+    icon: 'puzzle',
+    items: [
+      { title: 'Workers', desc: 'Machines that run containers', href: '/concepts/workers/' },
+      { title: 'Containers', desc: 'Isolated execution environments', href: '/concepts/containers/' },
+      { title: 'Nucleus', desc: 'AI coding agent', href: '/concepts/nucleus/' },
+      { title: 'Tickets', desc: 'Work items from issue trackers', href: '/concepts/tickets/' },
+      { title: 'Runtime Catalog', desc: 'Available runtime images', href: '/concepts/runtime-catalog/' },
+    ],
+  },
+  {
+    label: 'Guides',
+    icon: 'map',
+    items: [
+      { title: 'Launch from Ticket', desc: 'Start a container from an issue', href: '/guides/launch-from-ticket/' },
+      { title: 'Custom Containerfile', desc: 'Build your own runtime', href: '/guides/custom-containerfile/' },
+      { title: 'Cron Workflows', desc: 'Scheduled automation', href: '/guides/cron-workflows/' },
+      { title: 'Team Setup', desc: 'Invite and manage your team', href: '/guides/team-setup/' },
+      { title: 'Cloud worker', desc: 'Managed compute offering', href: '/guides/cloud-worker/' },
+      { title: 'VS Code Extension', desc: 'Editor integration', href: '/guides/vscode-extension/' },
+      { title: 'AI Credits', desc: 'Usage and billing', href: '/guides/ai-credits/' },
+    ],
+  },
+  {
+    label: 'CLI Reference',
+    icon: 'terminal',
+    items: [
+      { title: 'Overview', desc: 'CLI command reference', href: '/cli/overview/' },
+      { title: 'login', desc: 'Authenticate with ClusterCode', href: '/cli/login/' },
+      { title: 'worker', desc: 'Manage worker registration', href: '/cli/worker/' },
+      { title: 'doctor', desc: 'Diagnose setup issues', href: '/cli/doctor/' },
+      { title: 'onboard', desc: 'First-time setup wizard', href: '/cli/onboard/' },
+      { title: 'config', desc: 'View and set configuration', href: '/cli/config/' },
+      { title: 'status', desc: 'Check worker status', href: '/cli/status/' },
+    ],
+  },
+  {
+    label: 'Self-Hosting',
+    icon: 'server',
+    items: [
+      { title: 'Worker Agent', desc: 'Run your own worker', href: '/self-hosting/worker-agent/' },
+      { title: 'Requirements', desc: 'System requirements', href: '/self-hosting/requirements/' },
+      { title: 'Troubleshooting', desc: 'Common issues and fixes', href: '/self-hosting/troubleshooting/' },
+    ],
+  },
+  {
+    label: 'Reference',
+    icon: 'file',
+    items: [
+      { title: 'Plans & Limits', desc: 'Pricing tiers and quotas', href: '/reference/plans-and-limits/' },
+      { title: 'Supported Agents', desc: 'Compatible AI agents', href: '/reference/supported-agents/' },
+      { title: 'Environment Variables', desc: 'Container env vars', href: '/reference/environment-variables/' },
+      { title: 'Changelog', desc: 'Release history', href: '/reference/changelog/' },
+    ],
+  },
+];
+
+const allItems = groups.flatMap(g => g.items.map(item => ({ ...item, group: g.label, icon: g.icon })));
+---
+
+<div id="command-palette" class="cp-overlay" data-items={JSON.stringify(allItems)} hidden>
+  <div class="cp-panel">
+    <div class="cp-input-row">
+      <svg class="cp-search-icon" width="16" height="16" viewBox="0 0 16 16" fill="none">
+        <circle cx="6.5" cy="6.5" r="4.5" stroke="currentColor" stroke-width="1.5"/>
+        <path d="M10.5 10.5L14 14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+      </svg>
+      <input id="cp-input" class="cp-input" type="text" placeholder="Search pages, guides, commands..." autocomplete="off" />
+      <kbd class="cp-esc">ESC</kbd>
+    </div>
+    <div id="cp-results" class="cp-results"></div>
+    <div class="cp-footer">
+      <span>&#8593;&#8595; navigate</span>
+      <span>&#8629; open</span>
+      <span>ESC close</span>
+    </div>
+  </div>
+</div>
+
+<script is:inline>
+(function() {
+  var overlay = document.getElementById('command-palette');
+  var input = document.getElementById('cp-input');
+  var resultsEl = document.getElementById('cp-results');
+  if (!overlay || !input || !resultsEl) return;
+
+  var items = JSON.parse(overlay.dataset.items || '[]');
+  var activeIdx = 0;
+  var filtered = items.slice();
+
+  function groupIcon(icon) {
+    var icons = {
+      book: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>',
+      puzzle: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19.439 7.85c-.049.322.059.648.289.878l1.568 1.568c.47.47.706 1.087.706 1.704s-.235 1.233-.706 1.704l-1.611 1.611a.98.98 0 0 1-.837.276c-.47-.07-.802-.48-.968-.925a2.501 2.501 0 1 0-3.214 3.214c.446.166.855.497.925.968a.979.979 0 0 1-.276.837l-1.61 1.61a2.404 2.404 0 0 1-1.705.707 2.402 2.402 0 0 1-1.704-.706l-1.568-1.568a1.026 1.026 0 0 0-.877-.29c-.493.074-.84.504-1.02.968a2.5 2.5 0 1 1-3.237-3.237c.464-.18.894-.527.967-1.02a1.026 1.026 0 0 0-.289-.877l-1.568-1.568A2.402 2.402 0 0 1 1.998 12c0-.617.236-1.234.706-1.704L4.23 8.77c.24-.24.581-.353.917-.303.515.077.877.528 1.073 1.01a2.5 2.5 0 1 0 3.259-3.259c-.482-.196-.933-.558-1.01-1.073-.05-.336.062-.676.303-.917l1.525-1.525A2.402 2.402 0 0 1 12 1.998c.617 0 1.234.236 1.704.706l1.568 1.568c.23.23.556.338.877.29.493-.074.84-.504 1.02-.968a2.5 2.5 0 1 1 3.237 3.237c-.464.18-.894.527-.967 1.02Z"/></svg>',
+      map: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>',
+      terminal: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>',
+      server: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"/><rect x="2" y="14" width="20" height="8" rx="2" ry="2"/><line x1="6" y1="6" x2="6.01" y2="6"/><line x1="6" y1="18" x2="6.01" y2="18"/></svg>',
+      file: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>',
+    };
+    return icons[icon] || icons.file;
+  }
+
+  function render() {
+    var html = '';
+    var currentGroup = '';
+    filtered.forEach(function(item, i) {
+      if (item.group !== currentGroup) {
+        currentGroup = item.group;
+        html += '<div class="cp-group-label">' + currentGroup + '</div>';
+      }
+      var cls = 'cp-item' + (i === activeIdx ? ' cp-active' : '');
+      var enterBadge = i === activeIdx ? '<kbd class="cp-enter-badge">↵</kbd>' : '';
+      html += '<a href="' + item.href + '" class="' + cls + '" data-idx="' + i + '">'
+        + '<span class="cp-item-icon">' + groupIcon(item.icon) + '</span>'
+        + '<span class="cp-item-text">'
+        + '<span class="cp-item-title">' + item.title + '</span>'
+        + '<span class="cp-item-desc">' + item.desc + '</span>'
+        + '</span>'
+        + enterBadge
+        + '</a>';
+    });
+    if (filtered.length === 0) {
+      html = '<div class="cp-empty">No results found</div>';
+    }
+    resultsEl.innerHTML = html;
+    var active = resultsEl.querySelector('.cp-active');
+    if (active) active.scrollIntoView({ block: 'nearest' });
+  }
+
+  function updateActive() {
+    var prev = resultsEl.querySelector('.cp-active');
+    var prevBadge = resultsEl.querySelector('.cp-enter-badge');
+    if (prev) prev.classList.remove('cp-active');
+    if (prevBadge) prevBadge.remove();
+    var next = resultsEl.querySelector('[data-idx="' + activeIdx + '"]');
+    if (next) {
+      next.classList.add('cp-active');
+      var badge = document.createElement('kbd');
+      badge.className = 'cp-enter-badge';
+      badge.textContent = '↵';
+      next.appendChild(badge);
+      next.scrollIntoView({ block: 'nearest' });
+    }
+  }
+
+  function open() {
+    overlay.hidden = false;
+    input.value = '';
+    filtered = items.slice();
+    activeIdx = 0;
+    render();
+    requestAnimationFrame(function() { input.focus(); });
+  }
+
+  function close() {
+    overlay.hidden = true;
+    input.blur();
+  }
+
+  function filter() {
+    var q = input.value.toLowerCase().trim();
+    if (!q) {
+      filtered = items.slice();
+    } else {
+      filtered = items.filter(function(item) {
+        return item.title.toLowerCase().indexOf(q) !== -1
+          || item.desc.toLowerCase().indexOf(q) !== -1
+          || item.group.toLowerCase().indexOf(q) !== -1;
+      });
+    }
+    activeIdx = 0;
+    render();
+  }
+
+  function navigate(item) {
+    close();
+    window.location.href = item.href;
+  }
+
+  input.addEventListener('input', filter);
+
+  input.addEventListener('keydown', function(e) {
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      activeIdx = Math.min(activeIdx + 1, filtered.length - 1);
+      updateActive();
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      activeIdx = Math.max(activeIdx - 1, 0);
+      updateActive();
+    } else if (e.key === 'Enter' && filtered[activeIdx]) {
+      e.preventDefault();
+      navigate(filtered[activeIdx]);
+    } else if (e.key === 'Escape') {
+      e.preventDefault();
+      close();
+    }
+  });
+
+  resultsEl.addEventListener('click', function(e) {
+    var link = e.target.closest('.cp-item');
+    if (link) {
+      e.preventDefault();
+      var idx = parseInt(link.dataset.idx, 10);
+      if (filtered[idx]) navigate(filtered[idx]);
+    }
+  });
+
+  resultsEl.addEventListener('mouseover', function(e) {
+    var link = e.target.closest('.cp-item');
+    if (link) {
+      var idx = parseInt(link.dataset.idx, 10);
+      if (idx !== activeIdx) {
+        activeIdx = idx;
+        updateActive();
+      }
+    }
+  });
+
+  overlay.addEventListener('click', function(e) {
+    if (e.target === overlay) close();
+  });
+
+  // Ctrl+K / Cmd+K shortcut
+  document.addEventListener('keydown', function(e) {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+      e.preventDefault();
+      if (overlay.hidden) open();
+      else close();
+    }
+  });
+
+  // Wire up search button trigger
+  window.__openCommandPalette = open;
+})();
+</script>
+
+<style is:global>
+  .cp-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding-top: 15vh;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+  }
+
+  .cp-overlay[hidden] {
+    display: none;
+  }
+
+  .cp-panel {
+    width: 100%;
+    max-width: 520px;
+    background: var(--sl-color-bg-nav);
+    border: 1px solid var(--sl-color-hairline);
+    border-radius: 12px;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    max-height: 60vh;
+  }
+
+  .cp-input-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--sl-color-hairline);
+  }
+
+  .cp-search-icon {
+    flex-shrink: 0;
+    color: var(--sl-color-gray-2);
+  }
+
+  .cp-input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-size: 15px;
+    color: var(--sl-color-text);
+  }
+
+  .cp-input::placeholder {
+    color: var(--sl-color-gray-2);
+  }
+
+  .cp-esc {
+    flex-shrink: 0;
+    font-family: var(--sl-font-mono);
+    font-size: 10px;
+    padding: 1px 4px;
+    border-radius: 3px;
+    color: var(--sl-color-gray-3);
+    background: var(--sl-color-hairline-light);
+    border: 1px solid var(--sl-color-hairline);
+  }
+
+  .cp-results {
+    overflow-y: auto;
+    padding: 6px 0;
+    flex: 1;
+  }
+
+  .cp-group-label {
+    font-family: var(--sl-font-mono);
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--sl-color-gray-3);
+    padding: 6px 16px 2px;
+  }
+
+  .cp-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 16px;
+    text-decoration: none;
+    color: var(--sl-color-text);
+    cursor: pointer;
+    transition: background-color 100ms ease;
+    border-left: 2px solid transparent;
+  }
+
+  .cp-item.cp-active {
+    background: var(--sl-color-hairline-light);
+    border-left-color: var(--docs-green, #10c0f0);
+  }
+
+  .cp-item-icon {
+    flex-shrink: 0;
+    width: 20px;
+    height: 20px;
+    color: var(--sl-color-gray-2);
+  }
+
+  .cp-item-icon svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  .cp-item-text {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-width: 0;
+  }
+
+  .cp-item-title {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--sl-color-text);
+  }
+
+  .cp-item-desc {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-size: 11px;
+    color: var(--sl-color-gray-2);
+    margin-top: 1px;
+  }
+
+  .cp-enter-badge {
+    flex-shrink: 0;
+    font-family: var(--sl-font-mono);
+    font-size: 10px;
+    padding: 1px 5px;
+    border-radius: 3px;
+    background: var(--sl-color-hairline-light);
+    border: 1px solid var(--sl-color-hairline);
+    color: var(--sl-color-gray-3);
+  }
+
+  .cp-empty {
+    padding: 24px 16px;
+    text-align: center;
+    color: var(--sl-color-gray-2);
+    font-size: 13px;
+  }
+
+  .cp-footer {
+    display: flex;
+    gap: 16px;
+    padding: 8px 16px;
+    border-top: 1px solid var(--sl-color-hairline);
+    font-family: var(--sl-font-mono);
+    font-size: 11px;
+    color: var(--sl-color-gray-3);
+  }
+
+  @media (max-width: 50rem) {
+    .cp-panel {
+      margin: 0 16px;
+      max-height: 70vh;
+    }
+
+    .cp-overlay {
+      padding-top: 10vh;
+    }
+  }
+</style>

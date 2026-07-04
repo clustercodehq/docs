@@ -1,0 +1,81 @@
+---
+title: Security Profiles
+description: Control DevBox network access, filesystem permissions, and resource limits.
+---
+
+Every DevBox in ClusterCode launches with a **security profile** that controls network egress, filesystem writability, and process-level hardening. Profiles give you a simple dial between "wide open for prototyping" and "fully locked down for sensitive repos."
+
+## The Four Profiles
+
+| Profile | Network | Filesystem | Use Case |
+|---------|---------|-----------|----------|
+| **Open** | Unrestricted (host networking) | Writable | Trusted development, quick prototyping |
+| **Standard** | Dev registries only | Writable | General development (default) |
+| **Strict** | Tenant allowlist only | Read-only | Sensitive repos, compliance-controlled work |
+| **Offline** | No internet | Read-only | Air-gapped, maximum isolation |
+
+### Open
+
+No restrictions. Full host networking, writable filesystem, all Linux capabilities retained. Use this when speed matters more than isolation — local prototyping, internal tooling, trusted repos.
+
+### Standard
+
+The default profile. DevBoxes can reach common development services — GitHub, npm, PyPI, crates.io, AI provider APIs — but nothing else. Filesystem is writable. Linux capabilities are dropped and process privileges are locked down.
+
+Allowed domains include:
+- **Source control:** github.com, api.github.com, raw.githubusercontent.com
+- **Package registries:** registry.npmjs.org, pypi.org, crates.io, proxy.golang.org, rubygems.org
+- **AI providers:** api.anthropic.com, api.openai.com, api.githubcopilot.com
+- **container registries:** registry-1.docker.io
+
+### Strict
+
+Tenant-managed allowlist only — no built-in domains are included. The filesystem is read-only (with writable tmpfs mounts for `/tmp`, caches, and package directories). CPU and memory limits are tighter than Standard. Use this for repos with compliance requirements or sensitive data.
+
+### Offline
+
+No internet access at all. Read-only filesystem. Environment variables (API keys, tokens) are **not injected** into the DevBox. This is maximum isolation — the DevBox can only work with what's already in the image and mounted workspace.
+
+## Resource Limits by Profile
+
+| Resource | Open | Standard | Strict | Offline |
+|----------|------|----------|--------|---------|
+| Memory | 4 GB | 4 GB | 2 GB | 2 GB |
+| CPU | No limit | 2 cores | 1 core | 1 core |
+| PID limit | No limit | 256 | 128 | 128 |
+| Network mode | Host | Isolated | Isolated | None |
+
+## Tenant Default
+
+Each tenant has a **default security profile** that applies to all DevBoxes unless overridden at launch time. Tenant admins can configure this in the orchestrator Settings page, along with:
+
+- **Custom allowlist** — additional domains to allow on top of the profile's built-in list (applies to Standard and Strict profiles)
+- **Custom tmpfs paths** — additional writable paths for read-only profiles (Strict and Offline)
+
+## Overriding at Launch Time
+
+When launching a DevBox from the UI, you can override the tenant default by selecting a different profile in the launch dialog. You can also add extra allowed domains and writable paths for that specific DevBox.
+
+The resolution order is:
+
+1. **Built-in profile** — base restrictions for the chosen profile
+2. **Tenant policy** — custom allowlist and tmpfs paths from tenant settings
+3. **Per-launch overrides** — extra domains and paths specified at launch time
+
+All three layers are merged. For example, a Strict profile DevBox gets the tenant's custom allowlist plus any extra domains you specify at launch.
+
+## Writable Paths on Read-Only Profiles
+
+Strict and Offline profiles use a read-only root filesystem, but certain paths are automatically mounted as writable tmpfs:
+
+- `/tmp` and `/var/tmp`
+- `/home/developer/.cache`
+- `/home/developer/.npm`
+- `/home/developer/.cargo`
+- `/home/developer/.local/share`
+
+The workspace directory and agent configuration directories (`.claude`, `.config/gh`) are host-backed volumes and are always writable regardless of profile.
+
+## Security Floor
+
+Self-hosted workers can enforce a **minimum security profile**. When a floor is set on a worker, DevBoxes on that machine cannot launch with a less restrictive profile than the floor — for example, a `standard` floor prevents Open-profile DevBoxes on that worker.

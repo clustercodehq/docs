@@ -1,0 +1,49 @@
+---
+title: Team Setup
+description: Set up multi-tenant workspaces for your team.
+---
+
+ClusterCode supports multiple tenants, organizations, and team members. This guide covers inviting members and managing access.
+
+## Concepts
+
+- **Organization** — your company or team umbrella
+- **Tenant** — a workspace within an organization (e.g. per-project or per-team)
+- **Member** — a user with access to one or more tenants
+- **Seat** — a billable slot for a member
+
+## Inviting Members
+
+From the Admin Portal:
+
+1. Navigate to **Users → Members**
+2. Click **Invite**
+3. Enter the email address
+4. Assign a role (Admin or Member)
+5. Select which tenants they can access
+
+The invitee receives an email and joins on their next sign-in.
+
+## Roles
+
+| Role | Can do |
+|------|--------|
+| **Admin** | Manage members, tenants, billing, all worker/DevBox operations |
+| **Member** | Launch DevBoxes, view workers, access assigned tenants |
+
+## Limits by Plan
+
+| Plan | Seats | Tenants | Organizations |
+|------|-------|---------|---------------|
+| Starter | 1 | 1 | 1 |
+| Pro | 1 included (+$20/seat, up to 50) | 5 | 1 |
+| Enterprise | Unlimited | Unlimited | 10 |
+
+## Admin Portal
+
+Team management happens in the Admin Portal at `admin.clustercode.io`:
+
+- Manage members and invitations
+- Configure tenants
+- View usage and billing
+- Set notification preferences

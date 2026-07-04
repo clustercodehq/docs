@@ -1,0 +1,145 @@
+---
+const currentPath = Astro.url.pathname;
+
+const pinnedItems = [
+  { label: 'Start', href: '/getting-started/quickstart/', prefix: '/getting-started/', icon: 'book' },
+  { label: 'Concepts', href: '/concepts/workers/', prefix: '/concepts/', icon: 'puzzle' },
+  { label: 'Guides', href: '/guides/launch-from-ticket/', prefix: '/guides/', icon: 'map' },
+  { label: 'Search', href: '#', prefix: '', icon: 'search', action: 'search' },
+];
+
+const menuItems = [
+  { label: 'Getting Started', href: '/getting-started/quickstart/', prefix: '/getting-started/', icon: 'book' },
+  { label: 'Concepts', href: '/concepts/workers/', prefix: '/concepts/', icon: 'puzzle' },
+  { label: 'Guides', href: '/guides/launch-from-ticket/', prefix: '/guides/', icon: 'map' },
+  { label: 'CLI', href: '/cli/overview/', prefix: '/cli/', icon: 'terminal' },
+  { label: 'Self-Hosting', href: '/self-hosting/worker-agent/', prefix: '/self-hosting/', icon: 'server' },
+  { label: 'Reference', href: '/reference/plans-and-limits/', prefix: '/reference/', icon: 'file' },
+  { label: 'Links', href: 'https://clustercode.io', prefix: '', icon: 'external', external: true },
+];
+
+function isActive(prefix: string) {
+  return prefix !== '' && currentPath.startsWith(prefix);
+}
+---
+
+<div class="bottom-nav-backdrop" data-bottom-nav-backdrop></div>
+
+<div class="bottom-nav-menu" data-bottom-nav-panel>
+  {menuItems.map((item) => (
+    <a href={item.href} class:list={['bottom-nav-menu-item', { active: isActive(item.prefix) }]} {...(item.external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}>
+      {item.icon === 'book' && (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+        </svg>
+      )}
+      {item.icon === 'puzzle' && (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M19.439 7.85c-.049.322.059.648.289.878l1.568 1.568c.47.47.706 1.087.706 1.704s-.235 1.233-.706 1.704l-1.611 1.611a.98.98 0 0 1-.837.276c-.47-.07-.802-.48-.968-.925a2.501 2.501 0 1 0-3.214 3.214c.446.166.855.497.925.968a.979.979 0 0 1-.276.837l-1.61 1.61a2.404 2.404 0 0 1-1.705.707 2.402 2.402 0 0 1-1.704-.706l-1.568-1.568a1.026 1.026 0 0 0-.877-.29c-.493.074-.84.504-1.02.968a2.5 2.5 0 1 1-3.237-3.237c.464-.18.894-.527.967-1.02a1.026 1.026 0 0 0-.289-.877l-1.568-1.568A2.402 2.402 0 0 1 1.998 12c0-.617.236-1.234.706-1.704L4.23 8.77c.24-.24.581-.353.917-.303.515.077.877.528 1.073 1.01a2.5 2.5 0 1 0 3.259-3.259c-.482-.196-.933-.558-1.01-1.073-.05-.336.062-.676.303-.917l1.525-1.525A2.402 2.402 0 0 1 12 1.998c.617 0 1.234.236 1.704.706l1.568 1.568c.23.23.556.338.877.29.493-.074.84-.504 1.02-.968a2.5 2.5 0 1 1 3.237 3.237c-.464.18-.894.527-.967 1.02Z"></path>
+        </svg>
+      )}
+      {item.icon === 'map' && (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"></polygon><line x1="8" y1="2" x2="8" y2="18"></line><line x1="16" y1="6" x2="16" y2="22"></line>
+        </svg>
+      )}
+      {item.icon === 'terminal' && (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="4 17 10 11 4 5"></polyline><line x1="12" y1="19" x2="20" y2="19"></line>
+        </svg>
+      )}
+      {item.icon === 'server' && (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect><rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect>
+          <line x1="6" y1="6" x2="6.01" y2="6"></line><line x1="6" y1="18" x2="6.01" y2="18"></line>
+        </svg>
+      )}
+      {item.icon === 'file' && (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline>
+          <line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line>
+        </svg>
+      )}
+      {item.icon === 'external' && (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line>
+        </svg>
+      )}
+      <span>{item.label}</span>
+    </a>
+  ))}
+</div>
+
+<nav class="bottom-nav" aria-label="Mobile navigation">
+  <button class="bottom-nav-item" aria-label="Menu" data-bottom-nav-menu>
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+      <path d="M4 6H20M4 12H20M4 18H20" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path>
+    </svg>
+    <span>Menu</span>
+  </button>
+  {pinnedItems.map((item) => (
+    item.action === 'search' ? (
+      <button class="bottom-nav-item" aria-label="Search" data-bottom-nav-search>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+        <span>{item.label}</span>
+      </button>
+    ) : (
+      <a href={item.href} class:list={['bottom-nav-item', { active: isActive(item.prefix) }]}>
+        {item.icon === 'book' && (
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+          </svg>
+        )}
+        {item.icon === 'puzzle' && (
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M19.439 7.85c-.049.322.059.648.289.878l1.568 1.568c.47.47.706 1.087.706 1.704s-.235 1.233-.706 1.704l-1.611 1.611a.98.98 0 0 1-.837.276c-.47-.07-.802-.48-.968-.925a2.501 2.501 0 1 0-3.214 3.214c.446.166.855.497.925.968a.979.979 0 0 1-.276.837l-1.61 1.61a2.404 2.404 0 0 1-1.705.707 2.402 2.402 0 0 1-1.704-.706l-1.568-1.568a1.026 1.026 0 0 0-.877-.29c-.493.074-.84.504-1.02.968a2.5 2.5 0 1 1-3.237-3.237c.464-.18.894-.527.967-1.02a1.026 1.026 0 0 0-.289-.877l-1.568-1.568A2.402 2.402 0 0 1 1.998 12c0-.617.236-1.234.706-1.704L4.23 8.77c.24-.24.581-.353.917-.303.515.077.877.528 1.073 1.01a2.5 2.5 0 1 0 3.259-3.259c-.482-.196-.933-.558-1.01-1.073-.05-.336.062-.676.303-.917l1.525-1.525A2.402 2.402 0 0 1 12 1.998c.617 0 1.234.236 1.704.706l1.568 1.568c.23.23.556.338.877.29.493-.074.84-.504 1.02-.968a2.5 2.5 0 1 1 3.237 3.237c-.464.18-.894.527-.967 1.02Z"></path>
+          </svg>
+        )}
+        {item.icon === 'map' && (
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"></polygon><line x1="8" y1="2" x2="8" y2="18"></line><line x1="16" y1="6" x2="16" y2="22"></line>
+          </svg>
+        )}
+        <span>{item.label}</span>
+      </a>
+    )
+  ))}
+</nav>
+
+<script is:inline>
+  (function() {
+    var menuBtn = document.querySelector('[data-bottom-nav-menu]');
+    var panel = document.querySelector('[data-bottom-nav-panel]');
+    var backdrop = document.querySelector('[data-bottom-nav-backdrop]');
+
+    function closeMenu() {
+      if (panel) panel.classList.remove('open');
+      if (backdrop) backdrop.classList.remove('open');
+      if (menuBtn) menuBtn.classList.remove('active');
+    }
+
+    function toggleMenu() {
+      var isOpen = panel && panel.classList.contains('open');
+      if (isOpen) {
+        closeMenu();
+      } else {
+        if (panel) panel.classList.add('open');
+        if (backdrop) backdrop.classList.add('open');
+        if (menuBtn) menuBtn.classList.add('active');
+      }
+    }
+
+    if (menuBtn) menuBtn.addEventListener('click', toggleMenu);
+    if (backdrop) backdrop.addEventListener('click', closeMenu);
+
+    var searchBtn = document.querySelector('[data-bottom-nav-search]');
+    if (searchBtn) {
+      searchBtn.addEventListener('click', function() {
+        closeMenu();
+        if (window.__openCommandPalette) window.__openCommandPalette();
+      });
+    }
+  })();
+</script>

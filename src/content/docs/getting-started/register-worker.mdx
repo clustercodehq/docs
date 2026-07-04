@@ -1,0 +1,77 @@
+---
+title: Register a Worker
+description: Connect a machine to your ClusterCode orchestrator as a worker.
+---
+
+A worker is a machine running Podman (or Docker) that executes DevBoxes on behalf of the orchestrator. Registration is a one-time step where the CLI selects a tenant and generates a worker identity.
+
+## Prerequisites
+
+- [CLI installed](/getting-started/install-cli) and authenticated (`clustercode login`)
+- **Podman** (or Docker) installed and running on this machine
+- Network access to the orchestrator (outbound only — no inbound ports needed)
+
+## Quick path
+
+```bash
+clustercode onboard
+```
+
+The onboard wizard checks everything (auth, tenant selection, orchestrator reachability, container runtime, disk/memory) and fixes issues automatically.
+
+## Manual path
+
+### Start the worker
+
+```bash
+clustercode worker
+```
+
+On first run, the CLI:
+1. Checks your authentication
+2. Fetches available tenants from the orchestrator
+3. Lets you pick a tenant (or auto-selects if there's only one)
+4. Saves your selection
+5. Starts the worker
+
+On subsequent runs, it reuses your saved selection and starts immediately.
+
+To pick a container engine explicitly, pass `--podman` or `--docker`. Otherwise the worker uses whichever supported engine it finds.
+
+### Verify
+
+```bash
+clustercode status
+```
+
+You should see:
+
+```
+  User:          you@example.com
+  Worker:        a1b2c3d4
+  Tenant:        your-tenant
+  Orchestrator:  console.clustercode.io
+  Connection:    Connected
+```
+
+The worker also appears in the orchestrator dashboard under the Workers panel.
+
+## Health check
+
+Run `clustercode doctor` at any time to verify the worker's health:
+
+```bash
+clustercode doctor
+```
+
+It checks: authentication, worker registration, worker binary, orchestrator connectivity, WSL2 (Windows only), container runtime (Podman/Docker), disk space, and available memory.
+
+## Multi-machine setup
+
+Repeat these steps on each machine you want to connect. Workers connect outbound — no inbound ports needed, works behind NAT and firewalls.
+
+## Next steps
+
+- [Quickstart](/getting-started/quickstart) — launch your first DevBox
+- [Self-hosting: Requirements](/self-hosting/requirements) — hardware and network requirements
+- [Self-hosting: Worker Agent](/self-hosting/worker-agent) — how the worker connects and stays online

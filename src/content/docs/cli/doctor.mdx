@@ -1,0 +1,56 @@
+---
+title: clustercode doctor
+description: Check system health — auth, connectivity, container runtime, resources.
+---
+
+## Usage
+
+```bash
+clustercode doctor
+```
+
+## Description
+
+Runs a comprehensive health check on this machine's ClusterCode setup. Checks:
+
+- **Authentication** — valid credentials in `~/.clustercode/credentials.json`
+- **Worker registration** — worker configured with a tenant
+- **Worker binary** — the worker runtime is present (downloaded automatically on first run)
+- **Orchestrator connectivity** — can reach the health endpoint
+- **WSL2** — (Windows only) WSL2 installed with a Linux distro
+- **container runtime** — Podman or Docker installed and running
+- **Disk space** — at least 5 GB free
+- **Memory** — at least 1 GB free
+
+## Options
+
+| Flag | Description |
+|------|-------------|
+| `--json` | Machine-readable JSON output (for CI/automation) |
+
+## Output
+
+Each check shows a pass/fail/warn status:
+
+```
+  ✓ Logged in as you@example.com
+  ✓ Registered (your-tenant)
+  ✓ Reachable (console.clustercode.io)
+  ✓ podman v5.3.1
+  ✓ 42.0GB free
+  ⚠ Low memory: 0.8GB free of 16.0GB
+```
+
+Icons: **✓** pass, **✗** fail, **⚠** warning. Disk and memory use warnings (⚠) instead of failures — they won't block you but indicate potential issues.
+
+## Interactive Fix
+
+When failures are found, `doctor` prompts you to run `clustercode onboard` to fix them automatically. If only warnings remain, it reports them without prompting.
+
+## CI Usage
+
+```bash
+clustercode doctor --json
+```
+
+Returns a JSON object with `healthy` (boolean) and `checks` (array). Exit code is 0 when healthy, 1 otherwise.

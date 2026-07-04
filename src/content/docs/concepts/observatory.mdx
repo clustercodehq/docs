@@ -1,0 +1,68 @@
+---
+title: Observatory
+description: An immersive, navigable galaxy view of your entire ClusterCode fleet — workers, DevBoxes, runs, and schedules as celestial bodies on one living map.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+import ThemedImage from '../../../components/ThemedImage.astro';
+import observatoryDark from '../../../assets/screenshots/observatory-dark-20260627.png';
+import observatoryLight from '../../../assets/screenshots/observatory-light-20260627.png';
+import observatoryProjectsDark from '../../../assets/screenshots/observatory-projects-dark-20260627.png';
+import observatoryProjectsLight from '../../../assets/screenshots/observatory-projects-light-20260627.png';
+
+The **Observatory** is an immersive, navigable **galaxy** view of everything in your ClusterCode workspace — one living map of your whole fleet. Instead of scanning a dozen lists, you see your [workers](/concepts/workers), [DevBoxes](/concepts/containers), [runs](/concepts/runs), and [schedules](/concepts/schedules) at a glance, each rendered as a celestial body orbiting the things it belongs to.
+
+You'll find it in the orchestrator's **Overview** nav. It follows your app theme (light or dark) and animates only the resources that are actually alive.
+
+<ThemedImage
+  dark={observatoryDark}
+  light={observatoryLight}
+  title="Observatory"
+  alt="The Observatory galaxy view: the tenant sits at the center, with workers rendered as glowing suns (orange for bring-your-own-machine, blue for cloud workers) and DevBoxes orbiting them as planets. Runs orbit as moons, schedules trace dashed orbits, and a comet marks an unassigned run. A legend and a Workers/Projects lens toggle frame the map."
+/>
+
+<Aside type="tip">
+  Want to drive it hands-on? The [Explore your fleet in the
+  Observatory](/guides/explore-observatory) guide is a step-by-step walkthrough.
+</Aside>
+
+## The Metaphor
+
+Every resource in your fleet maps to a celestial body. Once you learn the legend, the whole galaxy reads at a glance.
+
+| Body | What it is |
+|------|-----------|
+| **Center** | **You** — your tenant, the root of everything you can access. |
+| **Sun** | A [Worker](/concepts/workers). **Orange** = a BYOM worker (your own machine); **blue** = a Cloud worker (managed). |
+| **Planet** | A [DevBox](/concepts/containers), orbiting its worker. Its **fill colour** is its status; its **ring** marks its [project](/concepts/projects). |
+| **Moon** | A [Run](/concepts/runs), orbiting its DevBox. **Amber** = triggered by a schedule. |
+| **Clock / dashed orbit** | A [Schedule](/concepts/schedules), circling its worker. |
+| **Comet** | An **unassigned** run or schedule — one with no worker or DevBox yet — orbiting you in the **holding belt**. |
+| **Constellation** | A [Project](/concepts/projects) (Projects lens only). |
+
+## Two Lenses
+
+A segmented toggle at the top right switches how the galaxy is grouped:
+
+- **Workers** — DevBoxes cluster under the worker that hosts them. This is the infrastructure-first view: "what is running where?"
+- **Projects** — bodies group by project, drawn as constellations. A worker that serves more than one project **repeats** in each, shown with a **×N badge** so you can tell it's the same machine.
+
+<ThemedImage
+  dark={observatoryProjectsDark}
+  light={observatoryProjectsLight}
+  title="Observatory — Projects lens"
+  alt="The Observatory in the Projects lens: resources grouped into project constellations (web-app, data-pipeline, ml-training, infra-automation). A worker that serves more than one project repeats inside each constellation, so you can see how a single project's work is spread across the fleet."
+/>
+
+## How to Read It
+
+- **Liveness tells you what matters.** Offline workers and stopped DevBoxes don't orbit — only active resources move. A still body is idle; a moving one is doing work.
+- **Colour is status.** A worker's colour tells you whether it's your machine or a managed cloud one; a planet's fill tells you a DevBox's state at a glance.
+- **The holding belt is your backlog.** Comets orbiting the center are runs and schedules waiting for a worker or DevBox. If work isn't getting picked up, look here first.
+- **Lenses answer different questions.** Reach for the **Workers** lens to reason about capacity and placement, and the **Projects** lens to see how a single project's work is spread across your fleet.
+
+<Aside type="note">
+  The Observatory is a read-and-navigate surface — every body links back to its
+  full page, so it's a fast way to *find* a resource and jump to it, not a place
+  to reconfigure your fleet.
+</Aside>

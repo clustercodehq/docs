@@ -1,0 +1,98 @@
+---
+title: What is ClusterCode?
+description: A self-hosted platform for orchestrating agentic AI development across your own machines — launch DevBoxes from tickets, run agents on demand or on a schedule, group work into projects, and watch your whole fleet as a galaxy in the Observatory.
+---
+
+import ThemedVideoCycle from '../../../components/ThemedVideoCycle.astro';
+
+ClusterCode is a **self-hosted platform** for orchestrating agentic development across machines you own. It gives you a centralized dashboard to launch, monitor, and steer AI coding agents running inside isolated **DevBoxes** on your worker machines — on demand, on a schedule, or by chatting with an in-app assistant.
+
+<ThemedVideoCycle
+  intervalMs={8000}
+  clips={[
+    {
+      label: 'Dashboard',
+      darkWebm: '/assets/media/gif-dashboard-dark-20260627.webm',
+      darkMp4: '/assets/media/gif-dashboard-dark-20260627.mp4',
+      darkPoster: '/assets/media/gif-dashboard-dark-poster-20260627.png',
+      lightWebm: '/assets/media/gif-dashboard-light-20260627.webm',
+      lightMp4: '/assets/media/gif-dashboard-light-20260627.mp4',
+      lightPoster: '/assets/media/gif-dashboard-light-poster-20260627.png',
+      title: 'Dashboard',
+      alt: 'The ClusterCode orchestrator dashboard — connected workers, running DevBoxes, recent runs, and schedules at a glance.',
+    },
+    {
+      label: 'Observatory',
+      darkWebm: '/assets/media/gif-observatory-dark-20260627.webm',
+      darkMp4: '/assets/media/gif-observatory-dark-20260627.mp4',
+      darkPoster: '/assets/media/gif-observatory-dark-poster-20260627.png',
+      lightWebm: '/assets/media/gif-observatory-light-20260627.webm',
+      lightMp4: '/assets/media/gif-observatory-light-20260627.mp4',
+      lightPoster: '/assets/media/gif-observatory-light-poster-20260627.png',
+      title: 'Observatory',
+      alt: 'The Observatory galaxy view — the whole fleet as a navigable map: workers as suns (orange self-hosted, blue cloud), DevBoxes orbiting as planets, runs as moons, schedules as dashed orbits, and comets for unassigned work.',
+    },
+    {
+      label: 'Workers',
+      dark: '/assets/media/workers-dark-20260627.png',
+      light: '/assets/media/workers-light-20260627.png',
+      title: 'Workers',
+      alt: 'The Workers page — connected self-hosted and cloud machines, each with live CPU, memory, disk, and DevBox counts.',
+    },
+    {
+      label: 'DevBoxes',
+      dark: '/assets/media/containers-dark-20260627.png',
+      light: '/assets/media/containers-light-20260627.png',
+      title: 'DevBoxes',
+      alt: 'The DevBoxes page — running and stopped AI-agent DevBoxes across workers, with ticket, branch, and live resource usage.',
+    },
+  ]}
+/>
+
+## The Cluster
+
+ClusterCode ties your machines into one cluster:
+
+- **[Workers](/concepts/workers)** — your machines (with Podman) that run DevBoxes, or managed **Cloud workers** when you don't want to host
+- **[DevBoxes](/concepts/containers)** — isolated dev environments where AI agents work
+- **[Projects](/concepts/projects)** — group the DevBoxes, runs, and schedules behind one effort into a single dashboard
+- **[Observatory](/concepts/observatory)** — your entire fleet as a navigable galaxy map
+- **The output** — a draft PR, a passing test suite, a working branch
+
+You provide the machines. ClusterCode orchestrates the work.
+
+## What It Does
+
+- **[Launch from tickets](/guides/launch-from-ticket)** — paste a GitHub issue or Azure DevOps work item and a DevBox spins up with an AI agent and the full context ready to go
+- **[Run agents on demand](/concepts/runs)** — write a prompt, watch the run's timeline, steer it mid-flight, and answer the questions it pauses to ask
+- **[Schedule recurring work](/concepts/schedules)** — autonomous cron jobs that wake up to draft PRs, sweep flaky tests, or audit dependencies, then tear down on their own
+- **[Pick your engine](/concepts/subagents)** — Claude Code, Codex, or Copilot do the in-DevBox coding, coordinated by [Nova](/concepts/nova)
+- **[Drive it by chat](/concepts/nucleus)** — Nucleus, the in-app assistant, launches DevBoxes, starts runs, and creates schedules from a conversation
+- **[See the whole fleet](/concepts/observatory)** — the Observatory renders workers, DevBoxes, runs, and schedules as celestial bodies on one living map
+- **[Build images from a DevBox](/guides/build-image-from-container)** — snapshot a tuned DevBox into a reusable golden image so every future launch starts from that exact state
+- **Manage multiple workers** — connect any number of machines; they phone home to the orchestrator over WebSocket
+- **Live terminal access** — open a web terminal to any running DevBox and watch CPU, memory, and disk per DevBox in real time
+
+## Architecture
+
+```
+Browser (dashboard)
+    │
+    ▼
+Orchestrator
+    │  WebSocket (outbound)
+    ▼
+Worker Agents (one per machine)
+    │
+    ▼
+Podman DevBoxes (Claude Code, Copilot, Codex)
+```
+
+Each worker connects to the orchestrator over an authenticated, **outbound WebSocket** — so your machines work behind NAT and firewalls with zero port forwarding.
+
+## Next Steps
+
+- [Quickstart](/getting-started/quickstart) — get running in 5 minutes
+- [Concepts: Workers](/concepts/workers) — understand self-hosted vs Cloud worker
+- [Automation Overview](/concepts/automation) — how Runs and Schedules fit together
+- [CLI Reference](/cli/overview) — all commands at a glance

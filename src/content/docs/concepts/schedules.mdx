@@ -1,0 +1,141 @@
+---
+title: Schedules
+description: A Schedule runs an AI agent on a recurring cron cadence — autonomous DevBox jobs that spin up, do the work, and tear down on their own.
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+import ThemedImage from '../../../components/ThemedImage.astro';
+import ThemedVideo from '../../../components/ThemedVideo.astro';
+import historyDark from '../../../assets/screenshots/schedule-run-history-dark-20260627.png';
+import historyLight from '../../../assets/screenshots/schedule-run-history-light-20260627.png';
+import schedTimelineDark from '../../../assets/screenshots/schedule-timeline-dark-20260627.png';
+import schedTimelineLight from '../../../assets/screenshots/schedule-timeline-light-20260627.png';
+
+A **Schedule** runs an AI agent on a recurring **cron cadence** — wake up to
+draft PRs every morning, sweep for flaky tests nightly, audit dependencies
+weekly. Each run spins up a DevBox, does the work, and tears down on its own.
+
+Schedules are **autonomous**: no one is watching, so the agent never pauses to
+ask a question. If you want a back-and-forth, use a [Run](/concepts/runs) instead.
+
+<Aside type="tip">
+  Ready to set one up? The [Automate recurring work](/guides/recurring-work)
+  guide has copy-paste recipes (nightly backlog sweep, weekly dependency audit,
+  flaky-test sweep). This page explains how Schedules work.
+</Aside>
+
+<ThemedVideo
+  darkWebm="/assets/media/schedules-timeline-dark-20260627.webm"
+  darkMp4="/assets/media/schedules-timeline-dark-20260627.mp4"
+  darkPoster="/assets/media/schedules-timeline-dark-poster-20260627.png"
+  lightWebm="/assets/media/schedules-timeline-light-20260627.webm"
+  lightMp4="/assets/media/schedules-timeline-light-20260627.mp4"
+  lightPoster="/assets/media/schedules-timeline-light-poster-20260627.png"
+  title="Schedules"
+  alt="The Schedules page switching from the list view — ten recurring jobs, each showing its name, engine, cron cadence, target worker and next run — to the timeline view, then stepping through the 24h, 3d and 7d ranges as past executions render as colored bars along each schedule's lane."
+/>
+
+## How it works
+
+```
+Cron trigger (e.g. weekdays at 6am)
+  → Coordinator spins up a DevBox on your worker
+    → The engine implements the task
+      → Result reported (e.g. a draft PR)
+        → DevBox torn down
+```
+
+The coordinator delegates the coding to the [engine](/concepts/subagents) you
+choose. Because there's no human in the loop, the agent reports a result exactly
+once and never asks for input — anything ambiguous is decided autonomously or
+left for the result summary.
+
+## The Schedules pages
+
+Three views, each with a purpose:
+
+- **Schedules list** — every schedule, with its engine, cadence, target, next
+  run, and an **enabled/disabled** toggle. The top stats show how many are
+  enabled, running now, and failed in the last 24h. Each row has **Run now** (to
+  fire it immediately) and **Details**.
+- **Schedule detail / run history** — one schedule's configuration plus a
+  pass-rate and duration trend over its recent runs, and the list of past
+  executions (each with status and duration).
+- **Create / edit panel** — the form for a new or existing schedule (below).
+
+<ThemedImage
+  dark={historyDark}
+  light={historyLight}
+  title="Schedules"
+  alt="A schedule's detail page: configuration (target worker, image, engine, cadence), the instruction prompt, and a Stats panel showing '3 of 4 runs passed — 75%' with a duration-trend sparkline; Execution history in the side nav."
+/>
+
+Open any execution to see its **timeline** — the same step-by-step trace a
+[Run](/concepts/runs#the-timeline--watch-it-work) has, reached from the schedule:
+
+<ThemedImage
+  dark={schedTimelineDark}
+  light={schedTimelineLight}
+  title="Schedules"
+  alt="A schedule execution's timeline: breadcrumb 'Schedules / Nightly dependency audit / Completed', an Execution details strip (status, duration, DevBox count), a one-line Summary ('bumped 3 vulnerable deps, suite green, opened PR #544'), Run stats, and the Run trace listing each assistant message and tool step."
+/>
+
+## Creating a schedule
+
+From the **Schedules** page, **+ Schedule** opens the form:
+
+<Steps>
+
+1. **Prompt** — what the agent should do each run.
+
+2. **Cadence** — a cron expression (e.g. `0 6 * * 1-5` for weekdays at 6am), or
+   a preset (Hourly, Daily, Weekly). A live preview shows the next run time.
+
+3. **Engine** — which [engine](/concepts/subagents) runs the task, or
+   *auto-detect*.
+
+4. **Target** — which [worker](/concepts/workers) or
+   [cloud worker](/guides/cloud-worker) it runs on, or auto-select.
+
+5. **Image** — the DevBox image to launch.
+
+</Steps>
+
+A schedule can be **enabled** or **disabled** at any time without deleting it —
+disabled schedules keep their config but never fire.
+
+## Limits
+
+Two limits apply per plan: **how many** schedules you can have, and **how often**
+each one may run — the minimum gap between two runs, its *cadence floor*.
+
+| Plan | Schedules | Cadence floor (fastest a schedule may run) |
+|------|-----------|--------------------------------------------|
+| Free | 1 | every 6 hours |
+| Starter | 3 | every hour |
+| Pro | 10 | every 30 minutes |
+| Enterprise | Unlimited | any cadence (down to every minute) |
+
+A cron that fires more often than your plan's floor is rejected when you create or
+edit a schedule — both inline in the schedule form and on the server — with a prompt
+to upgrade. The floor is a configuration gate: if you **downgrade**, your existing
+schedules keep running at their current cadence (they're grandfathered); only new or
+edited schedules must meet the lower tier's floor.
+
+## Use cases
+
+- **Nightly ticket processing** — process all "Ready for Dev" tickets overnight.
+- **Dependency audits** — check for vulnerable packages weekly and open a PR.
+- **Flaky-test sweeps** — re-run the suite, find flaky specs, file issues.
+- **Documentation generation** — rebuild docs from source nightly.
+
+<Aside type="caution">
+  Each run consumes DevBox slots and AI credits. Monitor your usage to stay
+  within plan limits.
+</Aside>
+
+## Next
+
+- [Automate recurring work](/guides/recurring-work) — copy-paste schedule recipes.
+- [Runs](/concepts/runs) — the on-demand, interactive counterpart.
+- [Engines](/concepts/subagents) — what each engine can do.

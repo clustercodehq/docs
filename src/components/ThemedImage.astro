@@ -1,0 +1,114 @@
+---
+import { Image } from 'astro:assets';
+import type { ImageMetadata } from 'astro';
+
+/**
+ * Theme-aware product screenshot, wrapped in a faux browser chrome (traffic
+ * lights + URL bar) to match the portal's `app-screenshot` component.
+ *
+ * Renders the dark and light variant and shows the one matching the reader's
+ * selected docs theme — pure CSS keyed off Starlight's `data-theme` attribute
+ * on <html> (no JS, no flash on theme switch, follows the picker including
+ * "Auto"). `loading="lazy"` keeps the hidden variant cheap.
+ *
+ * Usage (inside .mdx):
+ *   import ThemedImage from '../../../components/ThemedImage.astro';
+ *   import formDark from '../../../assets/screenshots/build-from-container-form-dark.png';
+ *   import formLight from '../../../assets/screenshots/build-from-container-form-light.png';
+ *
+ *   <ThemedImage dark={formDark} light={formLight} alt="The From Container form" title="Create Image" />
+ */
+interface Props {
+  /** Image shown when the docs theme is dark. */
+  dark: ImageMetadata;
+  /** Image shown when the docs theme is light. */
+  light: ImageMetadata;
+  /** Required alt text — the text walkthrough stays canonical, but every
+   *  image must still describe itself. */
+  alt: string;
+  /** URL-bar text in the faux browser chrome. */
+  url?: string;
+  /** Page title shown on the right of the chrome bar (the browser-tab name),
+   *  mirroring the portal's `app-screenshot` component. */
+  title?: string;
+}
+
+const { dark, light, alt, url = 'console.clustercode.io', title } = Astro.props;
+---
+
+<figure class="themed-image">
+  <div class="browser-frame">
+    <div class="browser-bar">
+      <span class="dot" style="background:#ff5f57"></span>
+      <span class="dot" style="background:#ffbd2e"></span>
+      <span class="dot" style="background:#28ca41"></span>
+      <span class="url">{url}</span>
+      {title && <span class="title">{title}</span>}
+    </div>
+    <div class="browser-body">
+      <Image src={dark} alt={alt} class="themed-image-dark" loading="lazy" />
+      <Image src={light} alt={alt} class="themed-image-light" loading="lazy" />
+    </div>
+  </div>
+</figure>
+
+<style>
+  .themed-image {
+    margin: 1.5rem 0;
+  }
+  .browser-frame {
+    border-radius: 0.6rem;
+    overflow: hidden;
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.18);
+  }
+  /* Starlight's content auto-spacing (a 0-specificity :where() rule) adds a
+     top margin to flow elements, which lands on this div and opens a ~16px gap
+     between the chrome bar and the screenshot. Zero it so the image sits flush. */
+  .browser-body {
+    margin: 0;
+  }
+  .browser-bar {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    background: var(--sl-color-gray-6);
+    border-bottom: 1px solid var(--sl-color-gray-5);
+  }
+  .dot {
+    width: 0.6rem;
+    height: 0.6rem;
+    border-radius: 50%;
+    flex: none;
+  }
+  .url {
+    margin-left: 0.5rem;
+    padding: 0.15rem 0.7rem;
+    border-radius: 0.35rem;
+    background: var(--sl-color-black);
+    color: var(--sl-color-gray-2);
+    font-family: var(--sl-font-mono, ui-monospace, monospace);
+    font-size: 0.75rem;
+    line-height: 1.4;
+  }
+  .title {
+    margin-left: auto;
+    color: var(--sl-color-gray-3);
+    font-family: var(--sl-font-mono, ui-monospace, monospace);
+    font-size: 0.7rem;
+    line-height: 1.4;
+    white-space: nowrap;
+  }
+  .browser-body :global(img) {
+    display: block;
+    width: 100%;
+    height: auto;
+    margin: 0;
+  }
+  :global([data-theme='light']) .themed-image-dark {
+    display: none;
+  }
+  :global([data-theme='dark']) .themed-image-light {
+    display: none;
+  }
+</style>

@@ -1,0 +1,84 @@
+---
+/**
+ * Landing-page-only header behavior, matching the **portal** home nav
+ * (`.nav-home` in apps/portal globals.css): at the very top the header is fully
+ * transparent with no border, so the hero shows through; once scrolled, the
+ * surface colour fades in and the bottom border **wipes across left → right**
+ * (a `::after` line, scaleX + opacity). No drop shadow — same as the portal.
+ *
+ * IMPORTANT: there are TWO ".header" elements — Starlight's outer
+ * `<header class="header">` and the nested custom
+ * `<div class="header sl-flex header-home">`. The inner div carries the visible
+ * surface + border, so the wipe + fill target it; the outer header is cleared
+ * too so its background/border can't show through.
+ *
+ * Transparent state is pure CSS keyed on `:root[data-has-hero]` (so a stale
+ * cached script can't leave it filled). The `is:inline` script only toggles
+ * `data-scrolled` on the outer header. Imported only from index.mdx.
+ */
+---
+
+<script is:inline>
+  (function () {
+    var header = document.querySelector('header.header');
+    if (!header) return;
+    function update() {
+      var y = window.scrollY || document.documentElement.scrollTop || 0;
+      if (y > 24) header.setAttribute('data-scrolled', 'true');
+      else header.removeAttribute('data-scrolled');
+    }
+    update();
+    document.addEventListener('scroll', update, { passive: true, capture: true });
+    window.addEventListener('scroll', update, { passive: true });
+  })();
+</script>
+
+<style is:global>
+  /* Fully transparent + borderless + no shadow at the top, on BOTH the outer
+     <header> and the inner home div. Outranks Header.astro's
+     `:root[data-has-hero] .header { background: … !important }` (0,3,0). */
+  :root[data-has-hero] header.header,
+  :root[data-has-hero] header.header .header-home {
+    background: transparent !important;
+    border-bottom: none !important;
+    box-shadow: none !important;
+  }
+
+  /* The inner home div hosts the surface fade + the wiping bottom border. */
+  :root[data-has-hero] header.header .header-home {
+    position: relative;
+    transition: background-color 250ms ease !important;
+  }
+  :root[data-has-hero] header.header .header-home::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 1px;
+    background: var(--sl-color-hairline);
+    opacity: 0;
+    transform: scaleX(0);
+    transform-origin: left center;
+    transition:
+      transform 250ms ease,
+      opacity 180ms ease;
+  }
+
+  /* Scrolled: fill the surface and wipe the border in left → right.
+     data-scrolled is toggled on the outer <header> by the script above. */
+  :root[data-has-hero] header.header[data-scrolled='true'] .header-home {
+    background: var(--sl-color-bg-nav) !important;
+  }
+  :root[data-has-hero] header.header[data-scrolled='true'] .header-home::after {
+    opacity: 1;
+    transform: scaleX(1);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    :root[data-has-hero] header.header .header-home,
+    :root[data-has-hero] header.header .header-home::after {
+      transition: none !important;
+    }
+  }
+</style>

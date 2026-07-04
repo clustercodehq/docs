@@ -1,0 +1,54 @@
+---
+title: clustercode config
+description: Manage CLI configuration.
+---
+
+## Usage
+
+```bash
+clustercode config <subcommand> [arguments]
+```
+
+## Subcommands
+
+### `set`
+
+Set a configuration value:
+
+```bash
+clustercode config set WORKER_NAME my-dev-machine
+```
+
+### `get`
+
+Read a configuration value:
+
+```bash
+clustercode config get WORKER_NAME
+```
+
+### `list`
+
+Show all configuration values:
+
+```bash
+clustercode config list
+```
+
+## Allowed Keys
+
+| Key | Description |
+|-----|-------------|
+| `WORKER_NAME` | Display name for this worker (max 64 characters) |
+
+Only the keys listed above are accepted. Attempting to set an unknown key returns an error.
+
+## Configuration File
+
+Location: `~/.clustercode/config.json`
+
+```json
+{
+  "WORKER_NAME": "my-dev-machine"
+}
+```

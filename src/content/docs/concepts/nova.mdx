@@ -1,0 +1,71 @@
+---
+title: Nova
+description: ClusterCode's automation agent — the coordinator that orchestrates background agentic runs, in two modes (interactive Runs and autonomous Schedules).
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+**Nova** is ClusterCode's **automation agent** — the one that actually runs a
+[Run](/concepts/runs) or a [Schedule](/concepts/schedules). It works on your
+behalf in the background: it reads your job prompt, picks a host, launches a
+DevBox, and **delegates the real coding to an in-DevBox
+[engine](/concepts/subagents)**, then reports the result. It's the *coordinator*
+in the two-layer model — distinct from the engine that writes the code.
+
+<Aside type="caution" title="Nova runs on Anthropic models">
+  Like [Nucleus](/concepts/nucleus), Nova's coordination is powered
+  internally by **Anthropic (Claude)** models, drawing on your plan's AI
+  allowance. To add usage beyond your plan — or run on your own account —
+  **bring your own key** in
+  [Settings → Secrets](/concepts/settings#bring-your-own-key-byok): an
+  **Anthropic API key** or a **Claude OAuth token**. (The in-DevBox engines
+  may use their own credentials — see [Engines](/concepts/subagents).)
+</Aside>
+
+## Nucleus vs Nova
+
+ClusterCode has two agents, both Anthropic-powered, with different jobs:
+
+- **[Nucleus](/concepts/nucleus)** — the **interactive assistant** in the
+  dashboard. You chat with it to manage your cluster (launch DevBoxes, run
+  commands, check status).
+- **Nova** — the **background automation agent**. You don't chat with it
+  directly; you give it a job (a Run or a Schedule) and it executes that job
+  end-to-end, on its own.
+
+## Two modes
+
+Nova is the same agent in both cases — only the **contract** changes:
+
+- **Interactive — a [Run](/concepts/runs)** — a human started it and is watching
+  live. Nova can **pause and ask you a question**, and you can **steer** it
+  through the chat. This mode owns the "ask the human" tool.
+- **Autonomous — a [Schedule](/concepts/schedules)** (or an autonomous Run) —
+  headless, on a cron cadence, **no human in the loop**. There is no chat, no
+  clarification, no follow-up turn: Nova executes the job prompt once and
+  reports a result. Anything ambiguous it decides for itself.
+
+<Aside type="note">
+  Because the autonomous mode can't ask you anything, a Schedule (and an
+  autonomous Run) must be given its host and image up front. See
+  [Runs → Interactive or autonomous](/concepts/runs#interactive-or-autonomous).
+</Aside>
+
+## What it does each run
+
+Whichever mode, a Nova execution follows the same arc:
+
+1. **Read** your instruction (and any [ticket](/concepts/tickets) context).
+2. **Launch** a DevBox on the chosen [worker](/concepts/workers) or
+   [cloud worker](/guides/cloud-worker).
+3. **Delegate** the coding to an [engine](/concepts/subagents) (Claude Code,
+   Codex, or Copilot) inside the DevBox, and run quick checks itself.
+4. **Track** every DevBox it creates so you always know what it launched.
+5. **Report** the result — a completed/failed summary, a PR link, filed issues —
+   on the [timeline](/concepts/runs#the-timeline--watch-it-work).
+
+## Next
+
+- [Run an agent on demand](/guides/run-on-demand) — recipes for interactive Runs.
+- [Automate recurring work](/guides/recurring-work) — recipes for Schedules.
+- [Engines](/concepts/subagents) — the CLIs Nova delegates the coding to.

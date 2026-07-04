@@ -1,0 +1,47 @@
+---
+title: Tickets
+description: Ticket-driven provisioning — paste a URL, get a DevBox.
+---
+
+ClusterCode is **ticket-driven**. Instead of manually configuring DevBoxes, you paste a ticket URL and the system handles everything: fetching context, picking a worker, creating the DevBox, and starting the AI agent with full task context.
+
+## Supported Providers
+
+| Provider | URL Pattern | Availability |
+|----------|-------------|-------------|
+| GitHub Issues | `github.com/{owner}/{repo}/issues/{number}` | All plans |
+| Azure DevOps | `dev.azure.com/{org}/{project}/_workitems/edit/{id}` | Pro and Enterprise |
+| Trello | `trello.com/c/{cardId}/{card-name}` | Coming soon |
+| Monday.com | `monday.com/boards/{boardId}/pulses/{itemId}` | Coming soon |
+
+## How It Works
+
+1. **Paste a ticket URL** into the launch modal (or ask Nucleus)
+2. ClusterCode **fetches the ticket details** — title, description, labels, comments
+3. A **CLAUDE.md is generated** with the full ticket context as instructions for the AI agent
+4. A **DevBox launches** on the least-loaded worker with the repo cloned and agent ready
+5. The AI agent **works on the ticket** autonomously
+6. You get a **draft PR** when the work is complete
+
+## What Gets Passed to the Agent
+
+The generated context includes:
+- Ticket title and full description
+- Labels and assignees
+- Comments and discussion
+- Repository URL and default branch
+- Any linked PRs or issues
+
+## GitHub Token
+
+For GitHub Issues, a personal access token increases rate limits:
+
+| Without token | With token |
+|--------------|-----------|
+| 60 requests/hour | 5,000 requests/hour |
+
+Add your GitHub token under [Settings → Secrets](/concepts/settings#secrets) and enable **Use for DevBox authentication**.
+
+## Automation with Cron
+
+Combine tickets with [recurring work](/guides/recurring-work) to automatically process new tickets on a schedule — wake up to draft PRs every morning.

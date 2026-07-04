@@ -1,0 +1,40 @@
+---
+title: clustercode onboard
+description: Guided setup wizard that handles everything automatically.
+---
+
+## Usage
+
+```bash
+clustercode onboard
+```
+
+## Description
+
+An interactive wizard that walks you through the complete setup:
+
+1. Runs all health checks (same as `clustercode doctor`)
+2. For each failure, offers to fix it:
+   - **Not logged in** → runs the login flow
+   - **Worker not configured** → runs tenant selection
+   - **WSL2 missing** (Windows) → installs WSL2 and Ubuntu distro
+   - **container runtime missing** → installs and starts Podman
+   - **Orchestrator unreachable** → shows configuration guidance
+3. Re-runs all checks to verify fixes
+
+## When to Use
+
+- First-time setup on a new machine
+- After `clustercode doctor` reports failures
+- When you want a one-command setup instead of running individual commands
+
+## Difference from `doctor`
+
+| | `doctor` | `onboard` |
+|---|---|---|
+| Checks health | ✓ | ✓ |
+| Fixes issues | Prompts to run `onboard` | Fixes directly |
+| Interactive | Yes (prompts on failure) | Yes |
+| Idempotent | Yes | Yes |
+
+Both are safe to run multiple times. `onboard` is the fix; `doctor` is the diagnosis.

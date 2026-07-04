@@ -1,0 +1,1099 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@100..800&display=swap');
+
+:root {
+  --sl-font: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
+  --sl-font-mono: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
+  --sl-text-body-sm: 0.875rem;
+  --sl-nav-height: 3rem;
+  --sl-sidebar-width: 240px;
+  --sl-content-width: 55rem;
+  --sl-nav-pad-x: 1rem;
+  --docs-green: #10c0f0;
+  --docs-border2: #3c3c3c;
+  --docs-surface: #252526;
+  --docs-muted: #808080;
+}
+
+/* Splash/home page uses Inter for marketing feel */
+:root:has([data-has-hero]) {
+  --sl-font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* Dark theme — matches portal/orchestrator dark mode */
+:root[data-theme='dark'] {
+  --sl-color-bg: #1e1e1e;
+  --sl-color-bg-nav: #252526;
+  --sl-color-bg-sidebar: #252526;
+  --sl-color-hairline-light: #2d2d2d;
+  --sl-color-hairline: #3c3c3c;
+  --sl-color-white: #d4d4d4;
+  --sl-color-gray-1: #cccccc;
+  --sl-color-gray-2: #808080;
+  --sl-color-gray-3: #616161;
+  --sl-color-gray-4: #3c3c3c;
+  --sl-color-gray-5: #252526;
+  --sl-color-gray-6: #1e1e1e;
+  --sl-color-black: #181818;
+  --sl-color-accent-low: rgba(16, 192, 240, 0.1);
+  --sl-color-accent: #10c0f0;
+  --sl-color-accent-high: #a0e8ff;
+  --sl-color-text: #cccccc;
+  --sl-color-text-accent: #10c0f0;
+  --docs-green: #10c0f0;
+  --docs-border2: #3c3c3c;
+  --docs-surface: #252526;
+  --docs-muted: #808080;
+  --signup-text: #000000;
+}
+
+/* Light theme — matches portal/orchestrator light mode
+   NOTE: Starlight uses --sl-color-white for headings (most prominent)
+   and --sl-color-black for backgrounds (least prominent). In light mode
+   these are inverted: "white" = darkest text, "black" = lightest bg. */
+:root[data-theme='light'] {
+  --sl-color-bg: #ffffff;
+  --sl-color-bg-nav: #f3f3f3;
+  --sl-color-bg-sidebar: #f3f3f3;
+  --sl-color-hairline-light: #e8e8e8;
+  --sl-color-hairline: #cecece;
+  --sl-color-white: #333333;
+  --sl-color-gray-1: #3b3b3b;
+  --sl-color-gray-2: #616161;
+  --sl-color-gray-3: #767676;
+  --sl-color-gray-4: #cecece;
+  --sl-color-gray-5: #e8e8e8;
+  --sl-color-gray-6: #f3f3f3;
+  --sl-color-black: #ffffff;
+  --sl-color-accent-low: rgba(8, 144, 184, 0.08);
+  --sl-color-accent: #0890b8;
+  --sl-color-accent-high: #044e66;
+  --sl-color-text: #333333;
+  --sl-color-text-accent: #0890b8;
+  --docs-green: #0890b8;
+  --docs-border2: #cecece;
+  --docs-surface: #ffffff;
+  --docs-muted: #616161;
+  --signup-text: #f3f3f3;
+}
+
+/* Code blocks — match portal code snippet styling */
+:root[data-theme='dark'] .expressive-code {
+  --ec-codeBg: #252526;
+  --ec-codeBorder: #4a4a4a;
+  --ec-brdRad: 8px;
+  --ec-brdWd: 1.25px;
+  --ec-brdCol: #4a4a4a;
+  --ec-codePadBlock: 0.75rem;
+  --ec-codePadInline: 1.125rem;
+  --ec-frm-edTabBarBg: #1e1e1e;
+  --ec-frm-trmTtbBg: #1e1e1e;
+  --ec-frm-trmTtbBrdBtmCol: #3c3c3c;
+}
+
+:root[data-theme='light'] .expressive-code {
+  --ec-codeBg: #ffffff;
+  --ec-codeBorder: #b0b0b0;
+  --ec-brdRad: 8px;
+  --ec-brdWd: 1.25px;
+  --ec-brdCol: #b0b0b0;
+  --ec-codePadBlock: 0.75rem;
+  --ec-codePadInline: 1.125rem;
+  --ec-frm-edTabBarBg: #f3f3f3;
+  --ec-frm-trmTtbBg: #e0e0e0;
+  --ec-frm-trmTtbBrdBtmCol: #cecece;
+}
+
+/* Terminal frame — colored macOS-style dots (red, yellow, green) */
+.expressive-code .frame.is-terminal .header::before {
+  -webkit-mask-image: none !important;
+  mask-image: none !important;
+  background-color: transparent !important;
+  background-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%20viewBox%3D'0%200%2060%2016'%20preserveAspectRatio%3D'xMidYMid%20meet'%3E%3Ccircle%20cx%3D'8'%20cy%3D'8'%20r%3D'8'%20fill%3D'%23ff5f57'%2F%3E%3Ccircle%20cx%3D'30'%20cy%3D'8'%20r%3D'8'%20fill%3D'%23febc2e'%2F%3E%3Ccircle%20cx%3D'52'%20cy%3D'8'%20r%3D'8'%20fill%3D'%2328c840'%2F%3E%3C%2Fsvg%3E") !important;
+  background-size: contain !important;
+  background-repeat: no-repeat !important;
+}
+
+/* Starlight defaults to light; override to prefer dark */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    color-scheme: dark;
+  }
+}
+
+/* ============================================================
+   SCROLLBAR — matches portal/orchestrator thin scrollbar
+   ============================================================ */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--docs-border2) var(--sl-color-bg);
+}
+
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+*::-webkit-scrollbar-track {
+  background: var(--sl-color-bg);
+}
+
+*::-webkit-scrollbar-thumb {
+  background-color: var(--docs-border2);
+  border-radius: 4px;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background-color: var(--docs-muted);
+}
+
+*::-webkit-scrollbar-corner {
+  background: var(--sl-color-bg);
+}
+
+/* ============================================================
+   HEADER — match portal nav (h-12, bg-secondary, border-bottom)
+   ============================================================ */
+header.header {
+  height: var(--sl-nav-height);
+  border-bottom: 1px solid var(--sl-color-hairline);
+  background: var(--sl-color-bg-nav);
+  padding-inline: var(--sl-nav-pad-x);
+}
+
+/* Logo area in header */
+.site-title {
+  font-size: 0.875rem;
+  font-weight: 600;
+  gap: 0.5rem;
+}
+
+/* ============================================================
+   SIDEBAR — match portal sidebar (240px, same item heights)
+   ============================================================ */
+nav.sidebar {
+  border-right: 1px solid var(--sl-color-hairline);
+  background: var(--sl-color-bg-sidebar);
+  width: var(--sl-sidebar-width);
+}
+
+/* Sidebar nav items — match portal: text-sm, px-4, h-[48px], transition-colors */
+starlight-menu-button + nav a,
+nav.sidebar a {
+  font-size: 0.875rem;
+  padding: 0.625rem 1rem;
+  border-radius: 0.25rem;
+  color: var(--sl-color-gray-2);
+  transition: background-color 150ms ease, color 150ms ease;
+}
+
+nav.sidebar a:hover,
+nav.sidebar a:focus {
+  background-color: var(--sl-color-hairline-light);
+  color: var(--sl-color-white);
+}
+
+/* Active sidebar item — text color + left accent bar, matching portal */
+nav.sidebar a[aria-current='page'],
+nav.sidebar a[aria-current='page']:hover,
+nav.sidebar a[aria-current='page']:focus {
+  background: transparent;
+  color: var(--sl-color-white);
+  font-weight: 400;
+  position: relative;
+}
+
+nav.sidebar a[aria-current='page']::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 2px;
+  height: 100%;
+  border-radius: 0 4px 4px 0;
+  background: #005fb8;
+}
+
+:root[data-theme='dark'] nav.sidebar a[aria-current='page']::before {
+  background: #569cd6;
+}
+
+nav.sidebar li {
+  border-inline-start: none !important;
+}
+
+/* Sidebar content — remove Starlight's default padding/gap for flush items */
+nav.sidebar .sidebar-content {
+  padding: 0 !important;
+  gap: 0 !important;
+}
+
+nav.sidebar sl-sidebar-state-persist > ul > li {
+  margin-top: 0 !important;
+}
+
+/* Sidebar group labels — match portal: text-sm, font-weight 400, h-[48px], px-4 */
+nav.sidebar .group-label {
+  font-size: 0.875rem;
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: 0;
+  color: var(--sl-color-gray-2);
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  padding: 0 1rem;
+  transition: color 150ms ease, background-color 150ms ease;
+}
+
+nav.sidebar .group-label .large {
+  color: inherit;
+  font-weight: inherit;
+}
+
+nav.sidebar details > summary {
+  padding: 0;
+  padding-right: 1rem;
+  border-radius: 0.25rem;
+}
+
+nav.sidebar details > summary:hover .group-label {
+  color: var(--sl-color-text);
+}
+
+nav.sidebar details > summary:hover {
+  background-color: var(--sl-color-hairline-light);
+}
+
+/* ============================================================
+   THEME TOGGLE — hide default Starlight theme select everywhere
+   ============================================================ */
+starlight-theme-select {
+  display: none !important;
+}
+
+/* ============================================================
+   SEARCH — match portal search trigger styling
+   ============================================================ */
+site-search button,
+starlight-search button {
+  font-family: var(--sl-font-mono);
+  font-size: 0.75rem;
+  border-radius: 0.375rem;
+  height: 2rem !important;
+  padding: 0.3125rem 0.625rem;
+  transition: border-color 150ms ease, color 150ms ease;
+}
+
+:root[data-theme='dark'] site-search button,
+:root[data-theme='dark'] starlight-search button {
+  background-color: #2d2d2d !important;
+  border: 1.25px solid #4a4a4a !important;
+  color: #808080 !important;
+}
+
+:root[data-theme='light'] site-search button,
+:root[data-theme='light'] starlight-search button {
+  background-color: #e8e8e8 !important;
+  border: 1.25px solid #b0b0b0 !important;
+  color: #616161 !important;
+}
+
+site-search button:hover,
+starlight-search button:hover {
+  border-color: var(--sl-color-accent) !important;
+  color: var(--sl-color-text) !important;
+}
+
+/* Kbd badge inside search button — match portal */
+site-search button kbd,
+starlight-search button kbd {
+  font-size: 10px !important;
+  padding: 1px 4px !important;
+  border-radius: 3px !important;
+}
+
+:root[data-theme='dark'] site-search button kbd,
+:root[data-theme='dark'] starlight-search button kbd {
+  background-color: #3c3c3c !important;
+  border: 1px solid #4a4a4a !important;
+  color: #616161 !important;
+}
+
+:root[data-theme='light'] site-search button kbd,
+:root[data-theme='light'] starlight-search button kbd {
+  background-color: #cecece !important;
+  border: 1px solid #b0b0b0 !important;
+  color: #767676 !important;
+}
+
+/* ============================================================
+   CONTENT AREA — match portal (px-6 py-10)
+   ============================================================ */
+.content-panel {
+  padding-inline: 1.5rem;
+  padding-block: 2.5rem;
+}
+
+/* Hide page title panel — breadcrumb already shows the page name.
+   Exclude splash/hero pages where the title panel contains the hero. */
+:root:not([data-has-hero]) .content-panel:has(h1#_top) {
+  display: none;
+}
+
+/* Remove border-top left over from hidden title panel */
+:root:not([data-has-hero]) .content-panel:has(h1#_top) + .content-panel {
+  border-top: none;
+}
+
+/* Center content + TOC as a single unit in the viewport */
+.main-frame > .lg\:sl-flex {
+  max-width: calc(var(--sl-content-width) + var(--sl-sidebar-width));
+  margin-inline: auto;
+}
+
+
+/* Page description — first paragraph styled as subtitle with separator */
+.sl-markdown-content > p:first-child {
+  color: var(--sl-color-gray-2);
+  font-size: 0.875rem;
+  line-height: 1.43;
+  padding-bottom: 1rem;
+  margin-bottom: 1.5rem;
+  border-bottom: 1px solid var(--sl-color-hairline);
+}
+
+/* "On this page" sidebar — subtle left border on the TOC content */
+.right-sidebar {
+  border-inline-start: none !important;
+}
+
+@media (max-width: 50rem) {
+  .right-sidebar,
+  starlight-toc {
+    display: none !important;
+  }
+}
+
+@media (max-width: 72rem) {
+  mobile-starlight-toc {
+    display: none !important;
+  }
+  .main-frame {
+    --sl-mobile-toc-height: 0rem !important;
+  }
+}
+
+starlight-toc nav {
+  border-inline-start: 1px solid var(--sl-color-hairline);
+  padding-inline-start: 1rem;
+}
+
+/* Card-style sections for content — match portal SectionCard */
+.sl-markdown-content > section,
+.sl-markdown-content > h2 + *,
+.sl-markdown-content > .tablist {
+  scroll-margin-top: 3rem;
+}
+
+/* ============================================================
+   GENERAL TYPOGRAPHY
+   ============================================================ */
+body {
+  font-family: var(--sl-font);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 600;
+}
+
+a:not([class]) {
+  color: var(--sl-color-accent);
+  text-decoration: none;
+  transition: color 150ms ease;
+}
+
+a:not([class]):hover {
+  color: var(--sl-color-accent-high);
+  text-decoration: underline;
+}
+
+:not(pre) > code {
+  background: var(--sl-color-accent-low);
+  padding: 0.125rem 0.375rem;
+  border-radius: 0.25rem;
+  font-size: 0.875em;
+}
+
+/* ============================================================
+   PAGINATION — side-by-side prev/next, compact styling
+   ============================================================ */
+.pagination-links {
+  display: flex !important;
+  justify-content: space-between !important;
+  gap: 0.75rem !important;
+}
+
+.pagination-links a {
+  display: inline-flex !important;
+  flex: 0 0 auto !important;
+  width: auto !important;
+  border-color: var(--sl-color-hairline) !important;
+  border-radius: 0.375rem !important;
+  padding: 0.4rem 0.75rem !important;
+  box-shadow: none !important;
+  min-width: 0 !important;
+  transition: border-color 150ms ease, background-color 150ms ease;
+}
+
+.pagination-links a:hover {
+  border-color: var(--sl-color-accent) !important;
+  background-color: var(--sl-color-accent-low);
+}
+
+.pagination-links .link-title {
+  font-size: 0.75rem !important;
+  font-weight: 600;
+}
+
+.pagination-links span {
+  font-size: 0.625rem;
+}
+
+.pagination-links svg {
+  width: 0.875rem !important;
+  height: 0.875rem !important;
+}
+
+/* ============================================================
+   FONT SIZE — match portal text-sm (14px/20px) baseline
+   ============================================================ */
+:root {
+  --sl-text-base: 0.875rem;
+  --sl-text-sm: 0.8125rem;
+  --sl-text-xs: 0.75rem;
+  --sl-text-2xl: 1.125rem;
+  --sl-text-3xl: 1.25rem;
+  --sl-text-4xl: 1.375rem;
+  --sl-text-5xl: 1.5rem;
+  --sl-line-height: 1.43;
+}
+
+.sl-markdown-content {
+  font-size: 0.875rem;
+  line-height: 1.43;
+  color: var(--sl-color-gray-2);
+}
+
+.sl-markdown-content h2 {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--sl-color-text);
+  margin-top: 2rem;
+  margin-bottom: 0.75rem;
+}
+
+.sl-markdown-content h3 {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--sl-color-text);
+  margin-top: 1.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.sl-markdown-content h4 {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--sl-color-text);
+}
+
+/* ============================================================
+   SPLASH / HOME PAGE — match marketing portal hero styling
+   ============================================================ */
+
+/* Fix double header — Starlight wraps our custom Header in its own
+   <header class="header">. Reset the outer wrapper's chrome so
+   only our inner .header controls the visual layout. */
+header.header {
+  background: var(--sl-color-bg-nav) !important;
+  border: none !important;
+  padding: 0 !important;
+  height: auto !important;
+}
+
+/* Home page — swap nav/body colors to match portal home page.
+   Portal: white nav + gray body (light), #252526 nav + #1e1e1e body (dark).
+   Docs defaults are inverted, so override on splash pages. */
+:root[data-has-hero][data-theme='light'] {
+  --sl-color-bg: #f3f3f3;
+  --sl-color-bg-nav: #ffffff;
+}
+
+:root[data-has-hero][data-theme='dark'] {
+  --sl-color-bg: #1e1e1e;
+  --sl-color-bg-nav: #252526;
+}
+
+:root[data-has-hero] .header {
+  background: var(--sl-color-bg-nav) !important;
+}
+
+/* Home page login/signup — use Inter to match portal nav */
+:root[data-has-hero] .header-login,
+:root[data-has-hero] .header-signup {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* Hero section — centered, constrained width like marketing portal */
+.hero {
+  text-align: center;
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 5rem 1.5rem 2rem;
+  grid-template-columns: 1fr !important;
+}
+
+.hero .copy {
+  text-align: center !important;
+  align-items: center !important;
+}
+
+.hero .actions {
+  justify-content: center !important;
+}
+
+/* Hero title — Inter font, gradient on "ClusterCode" */
+.hero h1 {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-size: clamp(34px, 4.2vw, 58px) !important;
+  font-weight: 900 !important;
+  letter-spacing: -0.03em;
+  line-height: 1.12 !important;
+  color: var(--sl-color-text) !important;
+  margin-bottom: 1rem;
+}
+
+.hero-line1 {
+  display: block;
+  color: var(--sl-color-text);
+}
+
+.hero-line2 {
+  display: block;
+  background: linear-gradient(90deg, #10c0f0, #0080e0);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Hero tagline — match marketing portal subheadline */
+.hero .tagline {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-size: 1.0625rem !important;
+  line-height: 1.75;
+  color: var(--sl-color-gray-2) !important;
+  max-width: 520px;
+  margin: 0 auto 2rem;
+}
+
+/* Hero action buttons — override Starlight's border-radius: 999rem
+   to square corners matching portal CTAs */
+.sl-link-button {
+  border-radius: 0.5rem !important;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+  font-weight: 700 !important;
+  transition: opacity 200ms ease !important;
+}
+
+.sl-link-button:hover {
+  opacity: 0.85;
+}
+
+.sl-link-button.primary {
+  background: var(--sl-color-text-accent) !important;
+  border-color: var(--sl-color-text-accent) !important;
+  color: var(--signup-text) !important;
+}
+
+.sl-link-button.secondary,
+.sl-link-button:not(.primary):not(.minimal) {
+  border-color: var(--sl-color-hairline) !important;
+  background: transparent !important;
+  color: var(--sl-color-text) !important;
+}
+
+.sl-link-button.secondary:hover,
+.sl-link-button:not(.primary):not(.minimal):hover {
+  border-color: var(--sl-color-accent) !important;
+}
+
+/* Cards on splash — match portal card styling */
+.card-grid {
+  max-width: 864px;
+  margin: 0 auto;
+  padding: 0 1.5rem 3rem;
+}
+
+/* Section intro above the automation card grid: constrain it to the same width
+   and horizontal alignment as the cards (the grid is max-width:864px centered
+   with 1.5rem side padding), and add breathing room before the grid. Without
+   this the heading + paragraph span the full content column and overhang the
+   cards on both sides. */
+.automation-intro {
+  max-width: 864px;
+  margin: 0 auto;
+  padding: 0 1.5rem 1.5rem;
+}
+.automation-intro > :last-child {
+  margin-bottom: 0;
+}
+
+.card {
+  border-color: var(--sl-color-hairline) !important;
+  border-radius: 0.5rem !important;
+  background-color: var(--docs-surface) !important;
+  color: var(--sl-color-text) !important;
+  transition: border-color 150ms ease;
+}
+
+.card .body {
+  color: var(--sl-color-gray-2) !important;
+}
+
+.card:hover {
+  border-color: var(--sl-color-accent) !important;
+}
+
+.card .title {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  color: var(--sl-color-text) !important;
+}
+
+/* ============================================================
+   MOBILE — match portal responsive behavior
+   ============================================================ */
+@media (max-width: 50rem) {
+  .hero {
+    padding-top: 3rem;
+  }
+
+  :not([data-has-hero]) .main-frame {
+    padding-bottom: 3.5rem;
+  }
+}
+
+/* ============================================================
+   BREADCRUMBS — portal-style slash-separated path in header
+   ============================================================ */
+.breadcrumbs {
+  display: none;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.875rem;
+  font-weight: 400;
+  color: var(--sl-color-gray-2);
+  margin-inline-start: 0.75rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+
+@media (min-width: 50rem) {
+  .breadcrumbs {
+    display: flex;
+  }
+}
+
+.breadcrumb-sep {
+  margin-inline: 0.375rem;
+  color: var(--sl-color-gray-2);
+  flex-shrink: 0;
+}
+
+.breadcrumb-link {
+  color: var(--sl-color-gray-2);
+  text-decoration: none;
+  transition: color 150ms ease;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.breadcrumb-link:hover {
+  color: var(--sl-color-text);
+  text-decoration: none;
+}
+
+.breadcrumb-current {
+  color: var(--sl-color-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ============================================================
+   SIDEBAR FOOTER — logo + collapse chevron at bottom
+   ============================================================ */
+.sidebar-footer {
+  display: none;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 0.75rem 0.5rem;
+  margin-top: auto;
+  position: sticky;
+  bottom: 0;
+  background: var(--sl-color-bg-sidebar);
+  z-index: 1;
+  min-height: 48px;
+}
+
+@media (min-width: 50rem) {
+  .sidebar-footer {
+    display: flex;
+  }
+}
+
+.sidebar-footer-logo {
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+  padding: 0 !important;
+}
+
+/* The footer logo is now the live <Logo> lockup (cube + "ClusterCode Docs"),
+   which sizes itself via --cc-size. Do NOT force a fixed height on its inner
+   mark <img> — that would break the lockup's proportions. */
+.sidebar-footer-logo .cc-logo {
+  font-size: 22px;
+}
+
+.sidebar-collapse-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  padding: 0;
+  border: none;
+  border-radius: 0.25rem;
+  background: transparent;
+  color: var(--sl-color-gray-2);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: color 150ms ease, background-color 150ms ease;
+}
+
+.sidebar-collapse-btn:hover {
+  color: var(--sl-color-text);
+  background-color: var(--sl-color-hairline-light);
+}
+
+/* ============================================================
+   COLLAPSED SIDEBAR STRIP — 48px icon-only sidebar (portal-style)
+   ============================================================ */
+.collapsed-icons {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 0.5rem;
+  gap: 0.25rem;
+}
+
+.collapsed-icon-item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border: none;
+  background: transparent;
+  color: var(--sl-color-gray-2);
+  cursor: pointer;
+  text-decoration: none;
+  transition: color 150ms ease;
+  position: relative;
+}
+
+.collapsed-icon-item svg {
+  width: 22px;
+  height: 22px;
+}
+
+.collapsed-icon-item:hover {
+  color: var(--sl-color-text);
+}
+
+.collapsed-icon-item.active {
+  color: var(--sl-color-accent);
+}
+
+.collapsed-icon-item.active::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 2px;
+  height: 24px;
+  background: var(--sl-color-accent);
+  border-radius: 0 1px 1px 0;
+}
+
+.collapsed-logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  margin-top: auto;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  padding: 0 0 0.5rem;
+}
+
+.collapsed-logo-img {
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+}
+
+.collapsed-logo-chevron {
+  display: none;
+  color: var(--sl-color-gray-2);
+}
+
+.sidebar-collapsed-strip:hover .collapsed-logo-img {
+  display: none;
+}
+
+.sidebar-collapsed-strip:hover .collapsed-logo-chevron {
+  display: block;
+}
+
+.sidebar-collapsed-strip:hover .collapsed-logo {
+  color: var(--sl-color-gray-2);
+}
+
+.sidebar-collapsed-strip:hover .collapsed-logo:hover {
+  color: var(--sl-color-text);
+}
+
+/* ============================================================
+   SIDEBAR GROUP ICONS — SVG icons next to each section header
+   ============================================================ */
+sl-sidebar-state-persist > ul > li > details > summary .group-label .large::before {
+  content: '';
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  margin-inline-end: 0.75rem;
+  vertical-align: -4px;
+  background-color: currentColor;
+  -webkit-mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  mask-size: contain;
+  mask-repeat: no-repeat;
+  mask-position: center;
+}
+
+/* 1. Getting Started — book */
+sl-sidebar-state-persist > ul > li:nth-child(1) > details > summary .group-label .large::before {
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 19.5A2.5 2.5 0 0 1 6.5 17H20'/%3E%3Cpath d='M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 19.5A2.5 2.5 0 0 1 6.5 17H20'/%3E%3Cpath d='M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z'/%3E%3C/svg%3E");
+}
+
+/* 2. Concepts — puzzle */
+sl-sidebar-state-persist > ul > li:nth-child(2) > details > summary .group-label .large::before {
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M19.439 7.85c-.049.322.059.648.289.878l1.568 1.568c.47.47.706 1.087.706 1.704s-.235 1.233-.706 1.704l-1.611 1.611a.98.98 0 0 1-.837.276c-.47-.07-.802-.48-.968-.925a2.501 2.501 0 1 0-3.214 3.214c.446.166.855.497.925.968a.979.979 0 0 1-.276.837l-1.61 1.61a2.404 2.404 0 0 1-1.705.707 2.402 2.402 0 0 1-1.704-.706l-1.568-1.568a1.026 1.026 0 0 0-.877-.29c-.493.074-.84.504-1.02.968a2.5 2.5 0 1 1-3.237-3.237c.464-.18.894-.527.967-1.02a1.026 1.026 0 0 0-.289-.877l-1.568-1.568A2.402 2.402 0 0 1 1.998 12c0-.617.236-1.234.706-1.704L4.23 8.77c.24-.24.581-.353.917-.303.515.077.877.528 1.073 1.01a2.5 2.5 0 1 0 3.259-3.259c-.482-.196-.933-.558-1.01-1.073-.05-.336.062-.676.303-.917l1.525-1.525A2.402 2.402 0 0 1 12 1.998c.617 0 1.234.236 1.704.706l1.568 1.568c.23.23.556.338.877.29.493-.074.84-.504 1.02-.968a2.5 2.5 0 1 1 3.237 3.237c-.464.18-.894.527-.967 1.02Z'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M19.439 7.85c-.049.322.059.648.289.878l1.568 1.568c.47.47.706 1.087.706 1.704s-.235 1.233-.706 1.704l-1.611 1.611a.98.98 0 0 1-.837.276c-.47-.07-.802-.48-.968-.925a2.501 2.501 0 1 0-3.214 3.214c.446.166.855.497.925.968a.979.979 0 0 1-.276.837l-1.61 1.61a2.404 2.404 0 0 1-1.705.707 2.402 2.402 0 0 1-1.704-.706l-1.568-1.568a1.026 1.026 0 0 0-.877-.29c-.493.074-.84.504-1.02.968a2.5 2.5 0 1 1-3.237-3.237c.464-.18.894-.527.967-1.02a1.026 1.026 0 0 0-.289-.877l-1.568-1.568A2.402 2.402 0 0 1 1.998 12c0-.617.236-1.234.706-1.704L4.23 8.77c.24-.24.581-.353.917-.303.515.077.877.528 1.073 1.01a2.5 2.5 0 1 0 3.259-3.259c-.482-.196-.933-.558-1.01-1.073-.05-.336.062-.676.303-.917l1.525-1.525A2.402 2.402 0 0 1 12 1.998c.617 0 1.234.236 1.704.706l1.568 1.568c.23.23.556.338.877.29.493-.074.84-.504 1.02-.968a2.5 2.5 0 1 1 3.237 3.237c-.464.18-.894.527-.967 1.02Z'/%3E%3C/svg%3E");
+}
+
+/* 3. Automation — zap */
+sl-sidebar-state-persist > ul > li:nth-child(3) > details > summary .group-label .large::before {
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolygon points='13 2 3 14 12 14 11 22 21 10 12 10 13 2'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolygon points='13 2 3 14 12 14 11 22 21 10 12 10 13 2'/%3E%3C/svg%3E");
+}
+
+/* 4. Guides — map */
+sl-sidebar-state-persist > ul > li:nth-child(4) > details > summary .group-label .large::before {
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolygon points='1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6'/%3E%3Cline x1='8' y1='2' x2='8' y2='18'/%3E%3Cline x1='16' y1='6' x2='16' y2='22'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolygon points='1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6'/%3E%3Cline x1='8' y1='2' x2='8' y2='18'/%3E%3Cline x1='16' y1='6' x2='16' y2='22'/%3E%3C/svg%3E");
+}
+
+/* 5. CLI Reference — terminal */
+sl-sidebar-state-persist > ul > li:nth-child(5) > details > summary .group-label .large::before {
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='4 17 10 11 4 5'/%3E%3Cline x1='12' y1='19' x2='20' y2='19'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='4 17 10 11 4 5'/%3E%3Cline x1='12' y1='19' x2='20' y2='19'/%3E%3C/svg%3E");
+}
+
+/* 6. Self-Hosting — server */
+sl-sidebar-state-persist > ul > li:nth-child(6) > details > summary .group-label .large::before {
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='2' y='2' width='20' height='8' rx='2' ry='2'/%3E%3Crect x='2' y='14' width='20' height='8' rx='2' ry='2'/%3E%3Cline x1='6' y1='6' x2='6.01' y2='6'/%3E%3Cline x1='6' y1='18' x2='6.01' y2='18'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='2' y='2' width='20' height='8' rx='2' ry='2'/%3E%3Crect x='2' y='14' width='20' height='8' rx='2' ry='2'/%3E%3Cline x1='6' y1='6' x2='6.01' y2='6'/%3E%3Cline x1='6' y1='18' x2='6.01' y2='18'/%3E%3C/svg%3E");
+}
+
+/* 7. Reference — file-text */
+sl-sidebar-state-persist > ul > li:nth-child(7) > details > summary .group-label .large::before {
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z'/%3E%3Cpolyline points='14 2 14 8 20 8'/%3E%3Cline x1='16' y1='13' x2='8' y2='13'/%3E%3Cline x1='16' y1='17' x2='8' y2='17'/%3E%3Cpolyline points='10 9 9 9 8 9'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z'/%3E%3Cpolyline points='14 2 14 8 20 8'/%3E%3Cline x1='16' y1='13' x2='8' y2='13'/%3E%3Cline x1='16' y1='17' x2='8' y2='17'/%3E%3Cpolyline points='10 9 9 9 8 9'/%3E%3C/svg%3E");
+}
+
+/* 8. Links — external-link */
+sl-sidebar-state-persist > ul > li:nth-child(8) > details > summary .group-label .large::before {
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6'/%3E%3Cpolyline points='15 3 21 3 21 9'/%3E%3Cline x1='10' y1='14' x2='21' y2='3'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6'/%3E%3Cpolyline points='15 3 21 3 21 9'/%3E%3Cline x1='10' y1='14' x2='21' y2='3'/%3E%3C/svg%3E");
+}
+
+/* ============================================================
+   BOTTOM NAV — mobile bottom navigation bar (portal-style)
+   ============================================================ */
+.bottom-nav {
+  display: none;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 3.5rem;
+  background: var(--sl-color-bg-nav);
+  border-top: 1px solid var(--sl-color-hairline);
+  z-index: var(--sl-z-index-navbar, 10);
+}
+
+@media (max-width: 50rem) {
+  :root:not([data-has-hero]) .bottom-nav {
+    display: flex;
+  }
+  :root:not([data-has-hero]) .search-trigger {
+    display: none;
+  }
+}
+
+.bottom-nav-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  font-size: 11px;
+  color: var(--sl-color-gray-2);
+  text-decoration: none;
+  border: none;
+  background: none;
+  cursor: pointer;
+  padding: 0;
+  transition: color 150ms ease;
+}
+
+.bottom-nav-item:hover {
+  color: var(--sl-color-text);
+  text-decoration: none;
+}
+
+/* Active = icon + text blue, no border (mobile pattern). */
+.bottom-nav-item.active {
+  color: #005fb8;
+}
+
+:root[data-theme='dark'] .bottom-nav-item.active {
+  color: #569cd6;
+}
+
+.bottom-nav-item svg {
+  width: 22px;
+  height: 22px;
+}
+
+/* ============================================================
+   MOBILE MENU PANEL — slide-up from bottom nav (portal-style)
+   ============================================================ */
+@media (max-width: 50rem) {
+  starlight-menu-button {
+    display: none !important;
+  }
+
+  .bottom-nav {
+    z-index: 9999 !important;
+  }
+
+  .breadcrumbs {
+    display: flex !important;
+  }
+
+  .breadcrumb-sep,
+  .breadcrumb-link {
+    display: none;
+  }
+
+  .breadcrumb-current {
+    font-size: 0.875rem;
+    font-weight: 500;
+  }
+}
+
+.bottom-nav-backdrop {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 9997;
+  background: rgba(0, 0, 0, 0.4);
+}
+
+.bottom-nav-backdrop.open {
+  display: block;
+}
+
+.bottom-nav-menu {
+  display: none;
+  position: fixed;
+  bottom: 3.5rem;
+  left: 0;
+  right: 0;
+  z-index: 9998;
+  background: var(--sl-color-bg-sidebar);
+  border-top: 1px solid var(--sl-color-hairline);
+  animation: slide-up 150ms ease-out;
+}
+
+.bottom-nav-menu.open {
+  display: block;
+}
+
+@keyframes slide-up {
+  from { transform: translateY(8px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.bottom-nav-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1.25rem;
+  font-size: 0.875rem;
+  color: var(--sl-color-gray-2);
+  text-decoration: none;
+  transition: color 100ms ease, background-color 100ms ease;
+}
+
+.bottom-nav-menu-item:hover {
+  color: var(--sl-color-text);
+  text-decoration: none;
+}
+
+/* Active = icon + text blue, no border, no bg tint (mobile pattern). */
+.bottom-nav-menu-item.active {
+  color: #005fb8;
+  background: transparent;
+}
+
+:root[data-theme='dark'] .bottom-nav-menu-item.active {
+  color: #569cd6;
+}
+
+.bottom-nav-menu-item svg {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}

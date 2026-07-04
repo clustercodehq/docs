@@ -1,0 +1,86 @@
+---
+title: Workers
+description: Understand self-hosted workers and Cloud worker managed compute.
+---
+
+import ThemedImage from '../../../components/ThemedImage.astro';
+import workersDark from '../../../assets/screenshots/workers-list-dark-20260627.png';
+import workersLight from '../../../assets/screenshots/workers-list-light-20260627.png';
+
+A **worker** is a machine that runs DevBoxes for ClusterCode. It connects outbound to the orchestrator over WebSocket and executes DevBox operations locally using Podman.
+
+The **Workers** page lists every machine connected to your orchestrator, with live CPU, memory, disk, and DevBox counts:
+
+<ThemedImage
+  dark={workersDark}
+  light={workersLight}
+  title="Workers"
+  alt="The Workers page showing three connected self-hosted workers, each card listing tenant, CPU, memory, disk, DevBox count, last heartbeat, and status."
+/>
+
+## Self-Hosted Workers
+
+Self-hosted workers are machines you control — your laptop, a spare desktop, a cloud VM, a NAS. You install the CLI, register the machine, and it becomes a worker.
+
+**Advantages:**
+- Full control over hardware and network
+- No per-minute compute costs
+- Works behind NAT and firewalls (outbound connection only)
+- Use existing machines you already own
+
+**Requirements:**
+- Node.js 22+
+- Podman installed and running
+- Network access to the orchestrator (outbound WebSocket)
+
+## Cloud worker (Managed Compute)
+
+Cloud worker is ClusterCode's managed compute offering. Instead of running workers on your own machines, Cloud worker provides cloud workers that are always on, always available.
+
+**Advantages:**
+- No hardware to maintain
+- Always-on availability
+- Scales with your plan
+- Supports both Linux and Windows DevBoxes
+
+**When to use Cloud worker:**
+- You don't have spare machines
+- You need Windows DevBoxes
+- You want zero infrastructure management
+- You need workers in specific geographic regions
+
+See the [Cloud worker guide](/guides/cloud-worker) for setup details.
+
+## How Workers Connect
+
+```
+Worker Agent (your machine)
+    │
+    │  WebSocket (outbound, authenticated)
+    │
+    ▼
+Orchestrator (cloud or on-premises)
+    │
+    │  Sends DevBox operations
+    │
+    ▼
+Worker Agent executes via Podman
+```
+
+Workers phone home — they initiate the connection outbound. This means:
+- No port forwarding required
+- Works behind corporate firewalls
+- Works behind NAT routers
+- No static IP needed on the worker
+
+If the connection drops, the agent reconnects automatically.
+
+## Worker Limits by Plan
+
+| Plan | Self-Hosted Workers | Concurrent DevBoxes |
+|------|--------------------|-----------------------|
+| Starter | 2 | 5 |
+| Pro | 10 | 15 |
+| Enterprise | Unlimited | Unlimited |
+
+See [Plans & Limits](/reference/plans-and-limits) for the full breakdown.

@@ -1,0 +1,86 @@
+---
+title: Settings
+description: Your per-user ClusterCode preferences — secrets and BYOK keys, Nucleus behavior, appearance, DevBox display, notifications, and version info.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+**Settings** holds your preferences for the orchestrator — open it from the
+sidebar. Most of it is **per-user** (your secrets, Nucleus instructions,
+theme); the **DevBox Security** profiles are **tenant-level** — shared across
+your team. The page is organised into the sections below (the right-hand nav
+jumps between them).
+
+## Secrets
+
+API keys and tokens for external services. Values are **encrypted at rest** and
+are only ever handed to your running DevBox instances and Nucleus — never
+shown back to you once saved (you replace a value by pasting a new one).
+
+Each credential you add can be switched on for one or both **uses**:
+
+- **Use for Nucleus (Bring Your Own Key)** — route Nucleus's own requests
+  through your key. See [Bring your own key](#bring-your-own-key-byok) below.
+- **Use for DevBox authentication** — make the token available **inside** the
+  DevBoxes you launch (for example a GitHub token so an agent can push and open
+  PRs).
+
+### Bring your own key (BYOK)
+
+Nucleus is built on **Anthropic (Claude)** models. Every plan includes a
+monthly AI allowance, but you can add your own credential for **additional usage
+beyond your plan** — or to run entirely on your own account. Two options:
+
+- **Anthropic API key** — billed to your Anthropic account, used directly for
+  Nucleus requests.
+- **Claude OAuth token** — routes Nucleus through your **personal Claude Code
+  subscription**. Make sure your usage complies with Anthropic's terms.
+
+Paste the key under **Secrets**, then enable **Use for Nucleus (Bring Your Own
+Key)**. See also [AI Credits](/guides/ai-credits) for how plan allowance and BYOK
+interact.
+
+## Nucleus
+
+Customize [Nucleus](/concepts/nucleus)'s behavior with a personal instruction
+file — a **`NUCLEUS.md`**, conceptually like a `CLAUDE.md`. Use it to set tone,
+standing preferences, or project context the assistant should always keep in
+mind. You can edit it inline and **reset** it back to the default at any time.
+
+## Appearance
+
+Pick the app theme: **Light**, **Dark**, or **System** (follow your OS). The
+choice applies immediately and persists on this device.
+
+## DevBoxes
+
+Two groups of settings for your [DevBoxes](/concepts/containers):
+
+**Display**
+
+- **Hide external and system DevBoxes** — show only the DevBoxes managed by
+  ClusterCode, hiding anything else running on your workers.
+
+**DevBox Security** — configure your **tenant's security profiles**. Each
+tenant defines a **default [security profile](/concepts/security-profiles)**
+applied to **every DevBox launched on its workers** (it governs what the
+DevBox can reach — egress, allowed domains, and so on). You'll see one card
+per tenant you belong to, showing its current default profile and your role; from
+here you set that **default**. You can still **override the profile or add extra
+allowed domains per DevBox at launch time**. Changing the tenant default
+requires the right role (e.g. owner/admin).
+
+## Notifications
+
+Control which **email** notifications you receive:
+
+- **DevBox Alerts** — DevBox lifecycle events (created, started, stopped, deleted).
+- **Worker Alerts** — worker connection and disconnection events.
+
+**Billing & Plan** and **Account** notifications are **always on** — they cover
+events you shouldn't miss (payment, plan changes, account security).
+
+## About
+
+Shows the running **application version** (click to copy) — handy when reporting
+an issue so we know exactly which build you're on.

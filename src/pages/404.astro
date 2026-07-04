@@ -1,0 +1,20 @@
+---
+import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
+---
+
+<StarlightPage frontmatter={{ title: '404 — Page Not Found', template: 'splash' }}>
+  <div style="text-align: center; padding: 2rem 0;">
+    <p style="font-size: 1.5rem; margin-bottom: 1rem;">
+      This page doesn't exist.
+    </p>
+    <p style="color: var(--sl-color-gray-2); margin-bottom: 2rem;">
+      The page you're looking for has been moved, renamed, or never existed in the first place.
+    </p>
+    <nav style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+      <a href="/">Home</a>
+      <a href="/getting-started/quickstart">Quickstart</a>
+      <a href="/cli/overview">CLI Reference</a>
+      <a href="/concepts/workers">Concepts</a>
+    </nav>
+  </div>
+</StarlightPage>

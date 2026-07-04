@@ -1,0 +1,341 @@
+---
+/**
+ * Auto-cycling showcase of several theme-aware product clips, each wrapped in the
+ * same faux browser chrome (traffic lights + URL bar) as <ThemedVideo>. It's the
+ * multi-clip companion to <ThemedVideo>: instead of one motion clip, it rotates
+ * through a list of them (observatory, then dashboard, …) and renders pills so a
+ * reader can jump between them. The very first clip in `clips` is what loads on
+ * top, so order it the way you want the page to open.
+ *
+ * Each clip carries its own theme-paired webm + mp4 + poster, exactly like
+ * <ThemedVideo>; theme switching is the same pure-CSS swap keyed off Starlight's
+ * `data-theme`, and `prefers-reduced-motion: reduce` shows the poster still
+ * (the carousel still advances, just through stills instead of motion).
+ *
+ * Rotation + pill handling is a tiny progressive-enhancement script: with no JS
+ * the first clip simply stays visible. Clicking a pill pins that clip and stops
+ * the auto-rotation (so the reader stays in control).
+ *
+ * Assets live in docs/public/assets/media/ and are referenced by their served
+ * root-absolute URLs (e.g. /assets/media/gif-observatory-dark-20260627.webm).
+ *
+ * Usage (inside .mdx):
+ *   import ThemedVideoCycle from '../../../components/ThemedVideoCycle.astro';
+ *
+ *   <ThemedVideoCycle
+ *     intervalMs={7000}
+ *     clips={[
+ *       {
+ *         label: 'Observatory',
+ *         darkWebm: '/assets/media/gif-observatory-dark-20260627.webm',
+ *         darkMp4:  '/assets/media/gif-observatory-dark-20260627.mp4',
+ *         darkPoster: '/assets/media/gif-observatory-dark-poster-20260627.png',
+ *         lightWebm: '/assets/media/gif-observatory-light-20260627.webm',
+ *         lightMp4:  '/assets/media/gif-observatory-light-20260627.mp4',
+ *         lightPoster: '/assets/media/gif-observatory-light-poster-20260627.png',
+ *         title: 'Observatory',
+ *         alt: '…',
+ *       },
+ *       { label: 'Dashboard', … },
+ *     ]}
+ *   />
+ */
+interface Clip {
+  /** Short pill label, e.g. "Observatory". */
+  label: string;
+  /** Required alt / aria-label — every embed describes itself. */
+  alt: string;
+  /** URL-bar text in the faux browser chrome. */
+  url?: string;
+  /** Page title shown on the right of the chrome bar. */
+  title?: string;
+
+  /* A slide is EITHER a motion clip (the six video fields) OR a static themed
+     screenshot (dark + light). Motion clips on the homepage exist only for a
+     few screens; everything else is a still, so the cycle mixes both. */
+
+  /** Motion: webm/mp4/poster per theme. Provide all six for a video slide. */
+  darkWebm?: string;
+  darkMp4?: string;
+  darkPoster?: string;
+  lightWebm?: string;
+  lightMp4?: string;
+  lightPoster?: string;
+
+  /** Still: theme-paired image URLs. Provide both for an image slide. */
+  dark?: string;
+  light?: string;
+}
+
+interface Props {
+  clips: Clip[];
+  /** Auto-rotation cadence in ms (0 disables auto-rotation). */
+  intervalMs?: number;
+}
+
+const { clips, intervalMs = 7000 } = Astro.props;
+---
+
+<figure class="tvc" data-interval={intervalMs}>
+  <div class="tvc-stage">
+    {clips.map((clip, i) => (
+      <div class="tvc-slide" data-idx={i} hidden={i !== 0}>
+        <div class="browser-frame">
+          <div class="browser-bar">
+            <span class="dot" style="background:#ff5f57"></span>
+            <span class="dot" style="background:#ffbd2e"></span>
+            <span class="dot" style="background:#28ca41"></span>
+            <span class="url">{clip.url ?? 'console.clustercode.io'}</span>
+            {clip.title && <span class="title">{clip.title}</span>}
+          </div>
+          <div class="browser-body">
+            {clip.darkWebm ? (
+              <>
+                <video
+                  class="tv tv-dark"
+                  muted
+                  loop
+                  playsinline
+                  preload={i === 0 ? 'metadata' : 'none'}
+                  poster={clip.darkPoster}
+                  aria-label={clip.alt}
+                >
+                  <source src={clip.darkWebm} type="video/webm" />
+                  <source src={clip.darkMp4} type="video/mp4" />
+                </video>
+                <img class="tv-poster tv-dark" src={clip.darkPoster} alt={clip.alt} loading="lazy" />
+
+                <video
+                  class="tv tv-light"
+                  muted
+                  loop
+                  playsinline
+                  preload={i === 0 ? 'metadata' : 'none'}
+                  poster={clip.lightPoster}
+                  aria-label={clip.alt}
+                >
+                  <source src={clip.lightWebm} type="video/webm" />
+                  <source src={clip.lightMp4} type="video/mp4" />
+                </video>
+                <img class="tv-poster tv-light" src={clip.lightPoster} alt={clip.alt} loading="lazy" />
+              </>
+            ) : (
+              <>
+                <img class="tvi tv-dark" src={clip.dark} alt={clip.alt} loading="lazy" />
+                <img class="tvi tv-light" src={clip.light} alt={clip.alt} loading="lazy" />
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+    ))}
+  </div>
+
+  <div class="tvc-pills" role="tablist" aria-label="Showcase clips">
+    {clips.map((clip, i) => (
+      <button
+        type="button"
+        class:list={['tvc-pill', { active: i === 0 }]}
+        data-idx={i}
+        role="tab"
+        aria-selected={i === 0 ? 'true' : 'false'}
+      >
+        {clip.label}
+      </button>
+    ))}
+  </div>
+</figure>
+
+<script>
+  // Progressive enhancement: with JS off the first slide just stays visible.
+  function initCycle(fig: HTMLElement) {
+    // Guard against double-init (HMR re-runs, view transitions) — two timers
+    // would fight and desync the active pill from the visible slide.
+    if (fig.dataset.tvcInit) return;
+    fig.dataset.tvcInit = '1';
+    const slides = Array.from(fig.querySelectorAll<HTMLElement>('.tvc-slide'));
+    const pills = Array.from(fig.querySelectorAll<HTMLButtonElement>('.tvc-pill'));
+    if (slides.length < 2) {
+      // Single clip — still autoplay it, nothing to rotate.
+      slides[0]?.querySelectorAll('video').forEach((v) => v.play().catch(() => {}));
+      return;
+    }
+
+    const interval = Number(fig.dataset.interval) || 0;
+    let current = 0;
+    let timer: ReturnType<typeof setInterval> | undefined;
+    let pinned = false;
+
+    function show(idx: number) {
+      slides.forEach((slide, i) => {
+        const on = i === idx;
+        slide.hidden = !on;
+        slide.querySelectorAll('video').forEach((v) => {
+          if (on) {
+            v.currentTime = 0;
+            v.play().catch(() => {});
+          } else {
+            v.pause();
+          }
+        });
+      });
+      pills.forEach((pill, i) => {
+        pill.classList.toggle('active', i === idx);
+        pill.setAttribute('aria-selected', i === idx ? 'true' : 'false');
+      });
+      current = idx;
+    }
+
+    function start() {
+      if (!interval || pinned) return;
+      timer = setInterval(() => show((current + 1) % slides.length), interval);
+    }
+    function stop() {
+      if (timer) clearInterval(timer);
+      timer = undefined;
+    }
+
+    pills.forEach((pill, i) => {
+      pill.addEventListener('click', () => {
+        pinned = true; // reader took control — stop auto-rotating
+        stop();
+        show(i);
+      });
+    });
+
+    // Kick off the first clip's playback, then start rotating.
+    show(0);
+    start();
+  }
+
+  document.querySelectorAll<HTMLElement>('.tvc').forEach(initCycle);
+</script>
+
+<style>
+  .tvc {
+    margin: 1.5rem 0;
+  }
+  .browser-frame {
+    border-radius: 0.6rem;
+    overflow: hidden;
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.18);
+  }
+  /* Zero Starlight's flow auto-margin so the clip sits flush under the bar. */
+  .browser-body {
+    margin: 0;
+    position: relative;
+  }
+  .browser-bar {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    background: var(--sl-color-gray-6);
+    border-bottom: 1px solid var(--sl-color-gray-5);
+  }
+  .dot {
+    width: 0.6rem;
+    height: 0.6rem;
+    border-radius: 50%;
+    flex: none;
+  }
+  .url {
+    margin-left: 0.5rem;
+    padding: 0.15rem 0.7rem;
+    border-radius: 0.35rem;
+    background: var(--sl-color-black);
+    color: var(--sl-color-gray-2);
+    font-family: var(--sl-font-mono, ui-monospace, monospace);
+    font-size: 0.75rem;
+    line-height: 1.4;
+  }
+  .title {
+    margin-left: auto;
+    color: var(--sl-color-gray-3);
+    font-family: var(--sl-font-mono, ui-monospace, monospace);
+    font-size: 0.7rem;
+    line-height: 1.4;
+    white-space: nowrap;
+  }
+  /* No `display` here — display is owned by the .tv / .tv-poster + theme rules
+     below so it can be toggled cleanly. Setting display:block here would have
+     higher specificity than `.tv-poster` and leak the poster in next to the
+     playing video. */
+  .browser-body :global(video),
+  .browser-body :global(img) {
+    width: 100%;
+    height: auto;
+    margin: 0;
+  }
+  /* Motion default: the moving clip shows, the still poster is hidden. */
+  .tv {
+    display: block;
+  }
+  .tv-poster {
+    display: none;
+  }
+  /* Static screenshot slides — always shown (theme-switched below), and NOT
+     hidden by the reduced-motion rule (they don't move, so there's nothing to
+     opt out of). */
+  .tvi {
+    display: block;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .tv {
+      display: none;
+    }
+    .tv-poster {
+      display: block;
+    }
+  }
+  /* Theme switch — higher specificity than the motion rules wins, so the
+     inactive theme is fully hidden (video + poster + still) regardless of
+     motion pref. .tv-dark / .tv-light sit on videos, posters, and images. */
+  :global([data-theme='light']) .tv-dark {
+    display: none;
+  }
+  :global([data-theme='dark']) .tv-light {
+    display: none;
+  }
+
+  /* Pills — mirror the marketing showcase: rounded, mono, accent when active.
+     They're a toggle group, so every pill must be the same height: an
+     inline-flex box with `white-space: nowrap` keeps each label on one line
+     (otherwise the active pill's text can wrap and grow taller than the rest). */
+  .tvc-pills {
+    margin-top: 0.85rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+  .tvc-pill {
+    display: inline-flex;
+    align-items: center;
+    white-space: nowrap;
+    /* Starlight's content auto-spacing (`:where(* + *)`) adds a 1rem top margin
+       to every flow sibling, which lands on pills 2..n and drops them ~8px below
+       the first one — a clear misalignment. Zero it so all pills share a row. */
+    margin: 0;
+    font-family: var(--sl-font-mono, ui-monospace, monospace);
+    font-size: 0.75rem;
+    line-height: 1.4;
+    padding: 0.2rem 0.7rem;
+    border-radius: 999px;
+    cursor: pointer;
+    color: var(--sl-color-gray-2);
+    border: 1px solid var(--sl-color-gray-5);
+    background: transparent;
+    transition: color 0.15s, border-color 0.15s, background 0.15s;
+  }
+  .tvc-pill:hover {
+    border-color: var(--sl-color-accent);
+    color: var(--sl-color-white);
+  }
+  .tvc-pill.active {
+    color: var(--sl-color-black);
+    background: var(--sl-color-accent);
+    border-color: var(--sl-color-accent);
+  }
+</style>

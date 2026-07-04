@@ -1,0 +1,168 @@
+---
+title: Runs
+description: A Run is an on-demand AI agent job that fires once — watch its timeline, steer it mid-flight, and answer its questions.
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+import ThemedImage from '../../../components/ThemedImage.astro';
+import timelineDark from '../../../assets/screenshots/runs-timeline-dark-20260627.png';
+import timelineLight from '../../../assets/screenshots/runs-timeline-light-20260627.png';
+import askDark from '../../../assets/screenshots/runs-paused-question-dark-20260627.png';
+import askLight from '../../../assets/screenshots/runs-paused-question-light-20260627.png';
+import chatDark from '../../../assets/screenshots/run-chat-dark-20260627.png';
+import chatLight from '../../../assets/screenshots/run-chat-light-20260627.png';
+
+A **Run** is an on-demand agent job that fires **once**. You write a prompt, the
+coordinator spins up a DevBox and gets to work, and — unlike a
+[Schedule](/concepts/schedules) — you can **watch its timeline, steer it, and
+answer its questions** as it goes.
+
+<Aside type="tip">
+  Ready to try one? The [Run an agent on demand](/guides/run-on-demand) guide
+  has copy-paste recipes (take a ticket to a PR, delegate across engines, fix a
+  bug). This page explains how Runs work.
+</Aside>
+
+## Starting a Run
+
+From the orchestrator's **Runs** page, **+ New run** opens the composer:
+
+<Steps>
+
+1. **Instructions** — what you want done (Markdown supported). This is the only
+   required field.
+
+2. **Ticket URL** *(optional)* — paste a GitHub/Azure issue and the launch step
+   resolves its repo/branch, clones it, and readies the issue context inside the
+   DevBox.
+
+3. **Target** *(optional)* — pin a [worker](/concepts/workers) or
+   [cloud worker](/guides/cloud-worker), **or leave it blank** — the agent will ask
+   you to pick a host (and image) the moment it needs to launch.
+
+4. **Engine** — which [engine](/concepts/subagents) runs the task, or
+   *auto-detect* to use the best available CLI on the image.
+
+5. **Mode** — **Interactive** (default) or **Autonomous** (see
+   [below](#interactive-or-autonomous)).
+
+6. **Start Run** — the coordinator launches a DevBox and begins.
+
+</Steps>
+
+## Interactive or autonomous
+
+A Run can fire in one of two modes:
+
+- **Interactive** *(default)* — a human is watching. The agent can pause and
+  [ask you a question](#it-can-pause-and-ask-you), and you can steer it. This is
+  everything described on this page.
+- **Autonomous** — fire-and-forget. The Run executes to completion **without
+  ever pausing** — it's a [Schedule's](/concepts/schedules) body fired once, on
+  demand. There's no human in the loop, so it never asks a question; if it hits
+  an ambiguity it decides for itself or fails fast with a result.
+
+Because an autonomous Run can't ask you anything, it **must be given a target up
+front** — a [worker](/concepts/workers) *and* an image, or a
+[cloud worker](/guides/cloud-worker) (which auto-picks an image). A "just
+instructions" autonomous Run with no host is rejected at creation, since it
+could only fail when it reached the point of needing to ask.
+
+<Aside type="tip">
+  Use **autonomous** for a well-specified one-off you don't want to babysit
+  (and where you've pinned the host). Use **interactive** for anything
+  exploratory, or where you want to watch, steer, or answer the agent.
+</Aside>
+
+## The timeline — watch it work
+
+Every Run has a live **timeline**: each step the agent takes appears as it
+happens, so you can follow exactly what it's doing instead of waiting for a
+final summary.
+
+<ThemedImage
+  dark={timelineDark}
+  light={timelineLight}
+  title="Runs"
+  alt="A completed Run's timeline: assistant messages interleaved with tool steps — launching a DevBox, running the test suite, then opening a PR — with a Run details panel showing the engine (Claude Code — Plan), duration, and summary."
+/>
+
+The timeline interleaves the agent's **messages** with its **tool steps** —
+each one expandable to see the exact call and result:
+
+- **launch DevBox** — a DevBox is created on the chosen host.
+- **exec in DevBox** — a command runs inside it (tests, a build, `gh pr create`).
+- **report job result** — the agent finalizes the Run as completed or failed.
+
+The **Run details** panel alongside it shows the status, engine, started/completed
+times, duration, the DevBox(s) used, and a one-paragraph summary of everything
+the Run did. A finished Run can leave its DevBox up so a follow-up continues
+where it left off.
+
+## It can pause and ask you
+
+The headline difference from a Schedule: a Run can **pause mid-flight and ask
+you a question**, then resume from exactly where it stopped once you answer. Its
+status flips to **Needs you** and the question appears inline.
+
+<ThemedImage
+  dark={askDark}
+  light={askLight}
+  title="Runs"
+  alt="A paused Run showing the 'Needs you' status and a question panel: 'Where should the dark-mode toggle live?' with single-select options and a free-text escape — the first of three questions."
+/>
+
+How questions are asked:
+
+- **A choice** — single-select (pick one) or multi-select (pick any), each with
+  a recommended default and an "Other → free text" escape.
+- **Free text** — an open-ended answer.
+- **Several at once** — a Run can ask multiple questions in one pause (the
+  example above is the first of three).
+
+This works for **any [engine](/concepts/subagents)** you pick — the question
+comes from the coordinator, not the engine. The DevBox and its session stay
+alive while paused, so it's safe to answer minutes — or hours — later.
+
+<Aside type="note">
+  Questions only happen in **Runs**. A [Schedule](/concepts/schedules) is
+  autonomous, so it never asks — it reports a result and finishes.
+</Aside>
+
+## Steering — the chat
+
+A Run is a conversation. Below the timeline is a **chat composer**:
+
+- **Steer it** — type a follow-up instruction while it's working; it's delivered
+  at the next turn boundary, so you can redirect without stopping the Run.
+- **Answer a question** — when the status is **Needs you**, your reply resumes
+  the Run from where it paused.
+- **Continue a finished Run** — if the DevBox is still up, a new message picks
+  the work back up in the same workspace.
+
+<ThemedImage
+  dark={chatDark}
+  light={chatLight}
+  title="Runs"
+  alt="A running Run with its chat composer at the bottom — placeholder 'Steer this run — type an instruction to queue for the next turn' — and a note that the message is delivered at the next turn boundary, alongside the live Run details panel."
+/>
+
+## Picking an engine
+
+Name an engine when you care which one runs. An interactive brainstorm is a good
+fit for **Claude Code — Plan** (it can pause itself mid-task); a tightly-scoped
+job suits **Claude Code — API credits** or **Codex**. See
+[Engines](/concepts/subagents) for the full comparison and how each one pauses.
+
+## When to use a Run vs a Schedule
+
+- **Run** — exploratory or ambiguous work, anything you want to watch, steer, or
+  where the agent may need a decision from you.
+- **[Schedule](/concepts/schedules)** — recurring, well-specified work that needs
+  no supervision.
+
+## Next
+
+- [Run an agent on demand](/guides/run-on-demand) — copy-paste recipes to try.
+- [Engines](/concepts/subagents) — what each engine can do, and how each pauses.
+- [Schedules](/concepts/schedules) — the recurring, autonomous counterpart.

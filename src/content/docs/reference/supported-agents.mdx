@@ -1,0 +1,49 @@
+---
+title: Supported Agents
+description: AI agent runtimes available in ClusterCode.
+---
+
+## Agent Matrix
+
+| Agent | Provider | Tier | Auth Required |
+|-------|----------|------|---------------|
+| **Claude Code** | Anthropic | Starter+ | Anthropic API key |
+| **GitHub Copilot** | GitHub/Microsoft | Starter+ | `COPILOT_GITHUB_TOKEN` + `GH_TOKEN` |
+| **Codex** | OpenAI | Starter+ | `OPENAI_API_KEY` |
+
+## Capabilities
+
+| Capability | Claude Code | GitHub Copilot | Codex |
+|-----------|-------------|----------------|-------|
+| Code generation | ✓ | ✓ | ✓ |
+| Code review | ✓ | ✓ | ✓ |
+| Terminal access | ✓ | ✓ | ✓ |
+| File operations | ✓ | ✓ | ✓ |
+| Git operations | ✓ | ✓ | ✓ |
+| Multi-file edits | ✓ | ✓ | ✓ |
+| Web search | ✓ | — | ✓ |
+| MCP tools | ✓ | — | — |
+
+## Default Tools (All Agents)
+
+Every DevBox includes these tools regardless of agent:
+
+- **GitHub CLI** (`gh`) — PR creation, issue management
+- **Oh My Posh** — shell prompt theming
+- **Nerd Font** — terminal icons
+- **Shell Config** — bash history, readline, tab completion
+- **Neovim** — text editing
+
+Infrastructure (always present):
+- **Git** — version control
+- **Node.js** — runtime
+- **curl** — HTTP client
+- **tmux** — terminal multiplexer
+
+## Agent Images
+
+Each supported agent ships as a prebuilt DevBox image, ready to launch — no setup required.
+
+## Custom Agents (BYOI)
+
+On Pro and Enterprise plans, build custom DevBox images with any agent or toolchain. See [Custom Containerfile](/guides/custom-containerfile).

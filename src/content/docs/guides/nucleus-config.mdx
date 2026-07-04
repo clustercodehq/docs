@@ -1,0 +1,77 @@
+---
+title: Nucleus Configuration
+description: Customize Nucleus behavior with a NUCLEUS.md file.
+---
+
+**NUCLEUS.md** is a per-tenant configuration file that customizes how Nucleus behaves. It lets you define workflows, skip confirmation prompts, and set up post-launch automation — all in plain Markdown.
+
+## Where to Edit
+
+NUCLEUS.md is managed in the orchestrator dashboard:
+
+1. Open the orchestrator at your deployment URL
+2. Go to **Settings**
+3. Find the **NUCLEUS.md** section
+4. Click **Edit NUCLEUS.md**
+
+Nucleus applies your NUCLEUS.md to every message you send. Maximum length is 10,000 characters.
+
+## How It Works
+
+When Nucleus receives a message, it loads your NUCLEUS.md content as mandatory instructions that override its default behavior. Nucleus will execute every step you define in order — it won't skip steps or stop early. Safety requirements (confirming destructive operations like stop/remove) still take priority.
+
+## Directives
+
+### Auto-Launch
+
+By default, Nucleus shows a launch summary and waits for your confirmation before creating a DevBox. Add the `auto-launch` directive to skip the confirmation:
+
+```markdown
+## Launch Settings
+
+auto-launch
+```
+
+With auto-launch enabled, Nucleus still resolves all values (worker, image, name) and shows a brief summary, but proceeds immediately without waiting for "yes."
+
+### Post-Launch Workflow
+
+Define what Nucleus should do automatically after launching a DevBox. Without a workflow, Nucleus asks if you'd like to open a terminal. With a workflow, it executes your steps instead:
+
+```markdown
+## Post-Launch Workflow
+
+1. Start Claude Code in the DevBox with `--dangerously-skip-permissions`
+2. Open the terminal so I can watch
+```
+
+Nucleus will follow these steps sequentially after a successful launch.
+
+## Example
+
+Here's a complete NUCLEUS.md that auto-launches DevBoxes and starts the AI agent automatically:
+
+```markdown
+## Launch Settings
+
+auto-launch
+
+## Post-Launch Workflow
+
+1. Start Claude Code with --dangerously-skip-permissions
+2. Open the live terminal
+
+## Preferences
+
+- Always use terminal images, not display images
+- Default to 8 GB memory for DevBoxes
+- When I say "go", treat it as a launch request
+```
+
+## Tips
+
+- Keep instructions clear and actionable — Nucleus follows them literally
+- Use numbered lists for sequential workflows
+- The Preferences section is free-form — Nucleus interprets it as behavioral guidance
+- You can reset to defaults at any time from the Settings page
+- Changes take effect on the next Nucleus message — no restart needed

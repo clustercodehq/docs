@@ -1,0 +1,57 @@
+---
+title: Nucleus
+description: The in-platform AI assistant that manages your farm.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+**Nucleus** is ClusterCode's built-in AI assistant. It lives in the orchestrator dashboard and helps you manage workers, launch DevBoxes, execute commands, and monitor your cluster — all through natural conversation.
+
+<Aside type="caution" title="Nucleus runs on Anthropic models">
+  Nucleus is powered internally by **Anthropic (Claude)** models. Each plan
+  includes a monthly AI allowance (see [Budget](#budget)); when you exhaust it —
+  or to run on your own account — **bring your own key** in
+  [Settings → Secrets](/concepts/settings#bring-your-own-key-byok): add an
+  **Anthropic API key** or a **Claude OAuth token** and toggle **Use for
+  Nucleus**. The OAuth option routes requests through your personal Claude Code
+  subscription.
+</Aside>
+
+## What Nucleus Can Do
+
+- **Launch DevBoxes from tickets** — "Launch a DevBox for github.com/org/repo/issues/42"
+- **Execute commands** — "Run npm start in DevBox X" or start long-running processes in the background
+- **Open terminals and displays** — "Open a terminal on DevBox X" or open a VNC display for GUI interaction
+- **Build images** — "Build the claude-code-terminal image" with composable capabilities
+- **Monitor status** — "What's running on worker-1?" or get details on a specific DevBox
+- **Fetch tickets** — Pull details from GitHub Issues or Azure DevOps work items
+- **Navigate the UI** — Nucleus can direct you to any page in the dashboard
+- **Read docs** — Nucleus can look up ClusterCode documentation to answer your questions
+
+## How It Works
+
+When you ask Nucleus to do something, it:
+
+1. Interprets your request
+2. Takes the action on your cluster
+3. Confirms with you before executing destructive operations
+4. Reports the result
+
+## Budget
+
+Nucleus sessions use AI credits from your plan allowance:
+
+| Plan | Monthly AI Allowance |
+|------|---------------------|
+| Starter | $2/mo |
+| Pro | $6/mo |
+| Enterprise | $10/user/mo |
+
+You can also **bring your own key** in [Settings → Secrets](/concepts/settings#bring-your-own-key-byok) — an Anthropic API key or a Claude OAuth token — for usage beyond your plan. See [AI Credits](/guides/ai-credits) for how the allowance works.
+
+## Tips
+
+- Ask Nucleus to launch a DevBox from a GitHub issue or Azure DevOps ticket
+- Enable host networking when launching to test from your phone at host-ip:port
+- Try: "Open a terminal on DevBox X" to get a live shell
+- Nucleus will confirm launch details with you before creating a DevBox

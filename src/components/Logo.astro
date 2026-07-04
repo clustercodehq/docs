@@ -1,0 +1,104 @@
+---
+/**
+ * ClusterCode logo lockup for the docs site — the non-JSX twin of the
+ * @clustercode/ui <Logo> React component (this repo has no React/JSX). Same
+ * recipe: cube mark + Paytone One wordmark, theme-aware inverted keyline,
+ * two-tone "ClusterCode" fill. Theme follows Starlight's
+ * `:root[data-theme='light'|'dark']`; `theme` pins it (e.g. an always-dark bar).
+ */
+interface Props {
+  variant?: 'full' | 'docs' | 'mark';
+  size?: number;
+  theme?: 'auto' | 'dark' | 'light';
+  class?: string;
+}
+const { variant = 'docs', size = 22, theme = 'auto', class: className } = Astro.props;
+const themeClass = theme === 'dark' ? 'cc-logo--dark' : theme === 'light' ? 'cc-logo--light' : '';
+const label = variant === 'mark' ? 'ClusterCode' : variant === 'full' ? 'ClusterCode' : 'ClusterCode Docs';
+---
+
+<span class:list={['cc-logo', themeClass, className]} style={`--cc-size:${size}px`} role="img" aria-label={label}>
+  <img class="cc-logo__mark" src="/logo-icon.png" alt="" aria-hidden="true" draggable="false" />
+  {variant !== 'mark' && (
+    <span class="cc-logo__wm" aria-hidden="true">
+      {variant === 'full' ? (
+        <Fragment><span class="cc-logo__a">Cluster</span><span class="cc-logo__b">Code</span></Fragment>
+      ) : (
+        <span class="cc-logo__a">Docs</span>
+      )}
+    </span>
+  )}
+</span>
+
+<style is:global>
+  @font-face {
+    font-family: 'Paytone One';
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+    src: url('/assets/fonts/paytone-one.woff2') format('woff2');
+  }
+  /* Light (default) */
+  .cc-logo {
+    --cc-ink: #1f3a5f;
+    --cc-stroke: #ffffff;
+    --cc-stroke-w: 5px;
+    --cc-code-stroke: #1f3a5f;
+    --cc-code-stroke-w: 2px;
+    --cc-grad: linear-gradient(180deg, #1ba9ec 0%, #0c7fd6 55%, #0a63c2 100%);
+    --cc-shadow: 0 2px 2px rgba(20, 40, 70, 0.18);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.42em;
+    line-height: 1;
+    font-size: var(--cc-size, 1.5rem);
+    user-select: none;
+  }
+  :root[data-theme='dark'] .cc-logo {
+    --cc-ink: #ffffff;
+    --cc-stroke: #0c2742;
+    --cc-stroke-w: 6px;
+    --cc-grad: linear-gradient(180deg, #5fd6f7 0%, #1aa6ee 52%, #0a78d8 100%);
+    --cc-shadow: 0 3px 2px rgba(0, 0, 0, 0.5);
+  }
+  .cc-logo.cc-logo--dark {
+    --cc-ink: #ffffff;
+    --cc-stroke: #0c2742;
+    --cc-stroke-w: 6px;
+    --cc-grad: linear-gradient(180deg, #5fd6f7 0%, #1aa6ee 52%, #0a78d8 100%);
+    --cc-shadow: 0 3px 2px rgba(0, 0, 0, 0.5);
+  }
+  .cc-logo.cc-logo--light {
+    --cc-ink: #1f3a5f;
+    --cc-stroke: #ffffff;
+    --cc-stroke-w: 5px;
+    --cc-grad: linear-gradient(180deg, #1ba9ec 0%, #0c7fd6 55%, #0a63c2 100%);
+    --cc-shadow: 0 2px 2px rgba(20, 40, 70, 0.18);
+  }
+  .cc-logo__mark {
+    height: 1.3em;
+    width: auto;
+    display: block;
+    filter: drop-shadow(0 1px 4px rgba(16, 192, 240, 0.3)) drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+  }
+  .cc-logo__wm {
+    font-family: 'Paytone One', system-ui, sans-serif;
+    font-weight: 400;
+    white-space: nowrap;
+    -webkit-text-stroke: var(--cc-stroke-w) var(--cc-stroke);
+    paint-order: stroke fill;
+    filter: var(--cc-shadow);
+  }
+  .cc-logo__a {
+    -webkit-text-fill-color: var(--cc-ink);
+    color: var(--cc-ink);
+  }
+  .cc-logo__b {
+    /* Solid brand-cyan fill wrapped in a thin 1px keyline in the cube's center
+       lime (#9ef102) — ties "Code" to the mark; "Cluster" keeps the inherited
+       navy/white keyline. */
+    -webkit-text-fill-color: #10c0f0;
+    color: #10c0f0;
+    -webkit-text-stroke: 1px #9ef102;
+  }
+</style>

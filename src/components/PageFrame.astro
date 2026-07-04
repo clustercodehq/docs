@@ -1,0 +1,258 @@
+---
+import MobileMenuToggle from 'virtual:starlight/components/MobileMenuToggle';
+import BottomNav from './BottomNav.astro';
+
+const { hasSidebar, entry } = Astro.locals.starlightRoute;
+const isHomePage = !entry?.slug || entry.slug === '';
+const showSidebar = hasSidebar && !isHomePage;
+const currentPath = Astro.url.pathname;
+
+const collapsedItems = [
+  { label: 'Getting Started', href: '/getting-started/quickstart/', prefix: '/getting-started/', icon: 'book' },
+  { label: 'Concepts', href: '/concepts/workers/', prefix: '/concepts/', icon: 'puzzle' },
+  { label: 'Guides', href: '/guides/launch-from-ticket/', prefix: '/guides/', icon: 'map' },
+  { label: 'CLI', href: '/cli/overview/', prefix: '/cli/', icon: 'terminal' },
+  { label: 'Self-Hosting', href: '/self-hosting/worker-agent/', prefix: '/self-hosting/', icon: 'server' },
+  { label: 'Reference', href: '/reference/plans-and-limits/', prefix: '/reference/', icon: 'file' },
+  { label: 'Links', href: 'https://clustercode.io', prefix: '', icon: 'link' },
+];
+
+function isActive(prefix: string) {
+  return prefix !== '' && currentPath.startsWith(prefix);
+}
+---
+
+<div class="page sl-flex">
+	{
+		showSidebar && (
+			<nav class="sidebar print:hidden" aria-label={Astro.locals.t('sidebarNav.accessibleLabel')}>
+				<MobileMenuToggle />
+				<div id="starlight__sidebar" class="sidebar-pane">
+					<div class="sidebar-content sl-flex">
+						<slot name="sidebar" />
+					</div>
+				</div>
+			</nav>
+		)
+	}
+	{
+		showSidebar && (
+			<aside class="sidebar-collapsed-strip print:hidden">
+				<div class="collapsed-icons">
+					{collapsedItems.map((item) => (
+							<a href={item.href} class:list={['collapsed-icon-item', { active: isActive(item.prefix) }]} title={item.label} target={item.icon === 'link' ? '_blank' : undefined} rel={item.icon === 'link' ? 'noopener' : undefined}>
+								{item.icon === 'book' && (
+									<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+										<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+									</svg>
+								)}
+								{item.icon === 'puzzle' && (
+									<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+										<path d="M19.439 7.85c-.049.322.059.648.289.878l1.568 1.568c.47.47.706 1.087.706 1.704s-.235 1.233-.706 1.704l-1.611 1.611a.98.98 0 0 1-.837.276c-.47-.07-.802-.48-.968-.925a2.501 2.501 0 1 0-3.214 3.214c.446.166.855.497.925.968a.979.979 0 0 1-.276.837l-1.61 1.61a2.404 2.404 0 0 1-1.705.707 2.402 2.402 0 0 1-1.704-.706l-1.568-1.568a1.026 1.026 0 0 0-.877-.29c-.493.074-.84.504-1.02.968a2.5 2.5 0 1 1-3.237-3.237c.464-.18.894-.527.967-1.02a1.026 1.026 0 0 0-.289-.877l-1.568-1.568A2.402 2.402 0 0 1 1.998 12c0-.617.236-1.234.706-1.704L4.23 8.77c.24-.24.581-.353.917-.303.515.077.877.528 1.073 1.01a2.5 2.5 0 1 0 3.259-3.259c-.482-.196-.933-.558-1.01-1.073-.05-.336.062-.676.303-.917l1.525-1.525A2.402 2.402 0 0 1 12 1.998c.617 0 1.234.236 1.704.706l1.568 1.568c.23.23.556.338.877.29.493-.074.84-.504 1.02-.968a2.5 2.5 0 1 1 3.237 3.237c-.464.18-.894.527-.967 1.02Z"></path>
+									</svg>
+								)}
+								{item.icon === 'map' && (
+									<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+										<polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"></polygon><line x1="8" y1="2" x2="8" y2="18"></line><line x1="16" y1="6" x2="16" y2="22"></line>
+									</svg>
+								)}
+								{item.icon === 'terminal' && (
+									<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+										<polyline points="4 17 10 11 4 5"></polyline><line x1="12" y1="19" x2="20" y2="19"></line>
+									</svg>
+								)}
+								{item.icon === 'server' && (
+									<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+										<rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect><rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect>
+										<line x1="6" y1="6" x2="6.01" y2="6"></line><line x1="6" y1="18" x2="6.01" y2="18"></line>
+									</svg>
+								)}
+								{item.icon === 'file' && (
+									<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+										<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline>
+										<line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line>
+									</svg>
+								)}
+								{item.icon === 'link' && (
+									<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+										<path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line>
+									</svg>
+								)}
+							</a>
+					))}
+				</div>
+				<button class="collapsed-logo" data-sidebar-expand aria-label="Expand sidebar" title="Expand sidebar">
+					<img src="/logo-icon.png" alt="" width="28" height="28" class="collapsed-logo-img" />
+					<svg class="collapsed-logo-chevron" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+						<path d="M9 18L15 12L9 6"></path>
+					</svg>
+				</button>
+			</aside>
+		)
+	}
+	<div class="right-col">
+		<header class="header"><slot name="header" /></header>
+		<div class="main-frame"><slot /></div>
+	</div>
+	<BottomNav />
+</div>
+
+<script is:inline>
+  (function() {
+    var STORAGE_KEY = 'sidebar-collapsed';
+    var page = document.querySelector('.page');
+    if (!page) return;
+
+    function isDesktop() {
+      return window.matchMedia('(min-width: 50rem)').matches;
+    }
+
+    function getStored() {
+      try { return localStorage.getItem(STORAGE_KEY); } catch(e) { return null; }
+    }
+
+    function setCollapsed(collapsed) {
+      page.setAttribute('data-sidebar-collapsed', String(collapsed));
+      try { localStorage.setItem(STORAGE_KEY, String(collapsed)); } catch(e) {}
+    }
+
+    // Initialize
+    var stored = getStored();
+    if (stored === 'true' && isDesktop()) {
+      setCollapsed(true);
+    } else if (stored === null && !window.matchMedia('(min-width: 64rem)').matches && isDesktop()) {
+      setCollapsed(true);
+    }
+
+    // Collapse/expand buttons
+    document.addEventListener('click', function(e) {
+      var collapseBtn = e.target.closest('[data-sidebar-toggle]');
+      if (collapseBtn) {
+        setCollapsed(true);
+      }
+      var expandBtn = e.target.closest('[data-sidebar-expand]');
+      if (expandBtn) {
+        setCollapsed(false);
+      }
+    });
+  })();
+</script>
+
+<style>
+	@layer starlight.core {
+		.page {
+			flex-direction: column;
+			min-height: 100vh;
+		}
+
+		.right-col {
+			display: flex;
+			flex-direction: column;
+			flex: 1;
+			min-width: 0;
+			min-height: 100vh;
+		}
+
+		.header {
+			z-index: var(--sl-z-index-navbar);
+			position: sticky;
+			top: 0;
+			width: 100%;
+			height: var(--sl-nav-height);
+			border-bottom: 1px solid var(--sl-color-hairline-shade);
+			padding: var(--sl-nav-pad-y) var(--sl-nav-pad-x);
+			background-color: var(--sl-color-bg-nav);
+		}
+
+		.sidebar-pane {
+			visibility: var(--sl-sidebar-visibility, hidden);
+			position: fixed;
+			z-index: var(--sl-z-index-menu);
+			inset-block: var(--sl-nav-height) 0;
+			inset-inline-start: 0;
+			width: 100%;
+			background-color: var(--sl-color-black);
+			overflow-y: auto;
+		}
+
+		:global([aria-expanded='true']) ~ .sidebar-pane {
+			--sl-sidebar-visibility: visible;
+		}
+
+		.sidebar-content {
+			height: 100%;
+			min-height: max-content;
+			padding: 1rem var(--sl-sidebar-pad-x) 0;
+			flex-direction: column;
+			gap: 1rem;
+		}
+
+		@media (min-width: 50rem) {
+			.sidebar-content::after {
+				content: '';
+				padding-bottom: 1px;
+			}
+		}
+
+		.main-frame {
+			padding-top: var(--sl-mobile-toc-height);
+			padding-inline-start: 0;
+			flex: 1;
+		}
+
+		/* Collapsed strip — hidden by default */
+		.sidebar-collapsed-strip {
+			display: none;
+		}
+
+		@media (min-width: 50rem) {
+			.page {
+				flex-direction: row;
+			}
+
+			.sidebar {
+				position: sticky;
+				top: 0;
+				height: 100vh;
+				flex-shrink: 0;
+				width: var(--sl-sidebar-width);
+				transition: width 200ms ease;
+				overflow: hidden;
+			}
+
+			.sidebar-pane {
+				--sl-sidebar-visibility: visible;
+				position: relative;
+				inset-block: auto;
+				width: var(--sl-sidebar-width);
+				height: 100%;
+				background-color: var(--sl-color-bg-sidebar);
+				border-inline-end: 1px solid var(--sl-color-hairline-shade);
+			}
+
+			.main-frame {
+				padding-top: 0;
+			}
+
+		}
+	}
+
+	/* Collapsed state — outside layer to override Starlight defaults */
+	@media (min-width: 50rem) {
+		[data-sidebar-collapsed='true'] .sidebar {
+			display: none !important;
+		}
+
+		[data-sidebar-collapsed='true'] .sidebar-collapsed-strip {
+			display: flex !important;
+			flex-direction: column;
+			position: sticky;
+			top: 0;
+			height: 100vh;
+			width: 48px;
+			flex-shrink: 0;
+			background-color: var(--sl-color-bg-sidebar);
+			border-inline-end: 1px solid var(--sl-color-hairline);
+		}
+	}
+</style>

@@ -1,0 +1,53 @@
+---
+title: Install CLI
+description: Install the ClusterCode CLI to manage workers and connect to your orchestrator.
+---
+
+The `clustercode` CLI is the primary way to bootstrap workers and manage your connection to the orchestrator.
+
+## Prerequisites
+
+- **Node.js 22+** and npm 10+
+- macOS, Windows, or Linux
+
+## Install
+
+The CLI is published to npm. Install it globally:
+
+```bash
+npm install -g @clustercode/cli
+```
+
+## Verify
+
+```bash
+clustercode --version
+```
+
+## What it does
+
+The CLI handles:
+
+| Command | Purpose |
+|---------|---------|
+| `clustercode login` | Authenticate via browser OAuth or API token |
+| `clustercode worker` | Configure tenant and start the worker |
+| `clustercode doctor` | Check system health |
+| `clustercode onboard` | Guided setup wizard |
+| `clustercode config` | Manage CLI configuration |
+| `clustercode status` | Show current state |
+
+## Configuration directory
+
+The CLI stores files in `~/.clustercode/`:
+
+| File | Purpose |
+|------|---------|
+| `credentials.json` | API key + email from authentication |
+| `worker.json` | Worker registration (tenant + identity) |
+| `config.json` | User preferences (e.g. WORKER_NAME) |
+
+## Next steps
+
+- [Register a worker](/getting-started/register-worker) — connect this machine
+- [CLI reference](/cli/overview) — full command documentation

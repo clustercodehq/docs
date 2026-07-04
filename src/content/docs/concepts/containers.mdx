@@ -1,0 +1,60 @@
+---
+title: DevBoxes
+description: Understand ClusterCode DevBox lifecycle — from launch to teardown.
+---
+
+import ThemedImage from '../../../components/ThemedImage.astro';
+import containersDark from '../../../assets/screenshots/containers-list-dark-20260627.png';
+import containersLight from '../../../assets/screenshots/containers-list-light-20260627.png';
+
+A **DevBox** in ClusterCode is an isolated development environment where an AI agent works on a task. Each DevBox gets its own filesystem, network, and runtime — like giving every ticket its own machine.
+
+## Lifecycle
+
+| Phase | What Happens |
+|-------|-------------|
+| Launch | DevBox created from image, repo cloned, agent starts |
+| Running | AI agent works on the task, you can watch via terminal |
+| Complete | Work is done — PR drafted, branch pushed, tests passing |
+| Stopped | DevBox removed, resources freed |
+
+The DevBoxes page shows every DevBox across your workers, with its ticket, branch, capability badges, live resource usage, and status:
+
+<ThemedImage
+  dark={containersDark}
+  light={containersLight}
+  title="DevBoxes"
+  alt="The DevBoxes page listing running and stopped DevBoxes across workers, each card showing the container name, ticket title, branch, capability badges, CPU/memory/disk usage, host worker, and a terminal launcher."
+/>
+
+## What's Inside a DevBox
+
+Every DevBox includes:
+- An AI coding agent (Claude Code, GitHub Copilot, or Codex)
+- Git, GitHub CLI, tmux, neovim
+- The cloned repository with ticket context
+- A generated `CLAUDE.md` with task instructions
+- Network access for package installs and API calls
+
+## Runtime Images
+
+ClusterCode uses Podman container images to define what's inside each DevBox. The default image (`claude-code-terminal`) includes everything needed for general development.
+
+You can build custom images for specialized environments. See [Custom Containerfile](/guides/custom-containerfile). You can also snapshot a running DevBox into a reusable image — see [Build an Image from a DevBox](/guides/build-image-from-container).
+
+## DevBox Limits by Plan
+
+| Plan | Concurrent DevBoxes | History |
+|------|----------------------|---------|
+| Starter | 5 | 14 days |
+| Pro | 15 | 90 days |
+| Enterprise | Unlimited | 365 days |
+
+## Interacting with DevBoxes
+
+From the orchestrator dashboard:
+- **Live terminal** — web-based terminal connected directly to the DevBox
+- **Resource monitoring** — CPU, memory, disk usage in real time
+- **VS Code** — attach VS Code to a running DevBox for full IDE access
+
+See [VS Code Extension](/guides/vscode-extension) for IDE setup.

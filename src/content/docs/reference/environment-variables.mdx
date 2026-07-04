@@ -1,0 +1,34 @@
+---
+title: Environment Variables
+description: Environment variables for connecting your own AI agent and ticket-provider credentials.
+---
+
+You can supply your own credentials for AI agents and ticket providers. These are typically set in the dashboard; the environment-variable names below are provided for reference.
+
+## Ticket Providers
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `GITHUB_TOKEN` | _(none)_ | GitHub PAT — increases rate limit from 60 to 5,000 req/hr |
+| `AZURE_DEVOPS_PAT` | _(none)_ | Azure DevOps personal access token for ticket fetching |
+
+## AI Agent Credentials
+
+| Variable | Agent | Description |
+|----------|-------|-------------|
+| `ANTHROPIC_API_KEY` | Claude Code | Anthropic API key (or authenticate via Claude OAuth token in the dashboard) |
+| `OPENAI_API_KEY` | Codex | OpenAI API key |
+| `COPILOT_GITHUB_TOKEN` | GitHub Copilot | Copilot authentication token |
+| `GH_TOKEN` | GitHub Copilot | GitHub token for CLI operations |
+
+## Worker
+
+You don't configure the worker through environment variables. The `clustercode` CLI sets it up for you — run `clustercode worker` to select a tenant and start it, or `clustercode onboard` for guided setup.
+
+The one adjustable preference is the worker's display name:
+
+```bash
+clustercode config set WORKER_NAME my-worker
+```
+
+See [CLI: config](/cli/config) for details.

@@ -1,0 +1,124 @@
+---
+title: Automate recurring work
+description: Three copy-paste recipes for Schedules — a nightly backlog sweep, a weekly dependency audit, and a nightly flaky-test sweep.
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+Three ready-to-run recipes for **[Schedules](/concepts/schedules)** — recurring,
+autonomous jobs on a cron cadence. Each gives you a prompt to copy, how to set it
+up, and what happens. For what a Schedule is — the pages, run history, limits —
+see the [Schedules concept](/concepts/schedules).
+
+## Nightly backlog sweep
+
+Every night, turn "ready" tickets into draft PRs while you sleep — the recurring
+counterpart of the
+[Runs backlog sweep](/guides/run-on-demand#sweep-the-backlog-until-a-pr).
+
+**The prompt** — paste this into the schedule's prompt field:
+
+```text
+For each open issue labeled `ready-for-dev` that doesn't already have an open
+pull request, implement it in its own DevBox, run the test suite, and open a
+draft PR. Skip anything you can't finish cleanly.
+```
+
+**Set it up**
+
+<Steps>
+
+1. Open the **Schedules** page → **+ Schedule**, and paste the prompt above.
+
+2. **Set the cadence** to `0 2 * * *` (daily at 2am) — the preview confirms the
+   next run time.
+
+3. **Pick the engine** (e.g. **Codex**), a **target worker**, and an **image**, then **Save**.
+
+</Steps>
+
+**How it works** — it appears in the list **enabled**, next run counting down.
+Each night, autonomously and without asking you anything, it works every ready
+ticket end-to-end: a DevBox per ticket, test suite, draft PR, then torn down.
+Test it immediately with **Run now**, and open its
+[run history](/concepts/schedules#the-schedules-pages) to watch any execution's
+timeline. **Disable** it any time without losing the configuration.
+
+## Weekly dependency audit
+
+A different cadence and a different job — every Monday morning, find risky
+dependencies and open **one** PR with the safe upgrades, so security patches
+never pile up.
+
+**The prompt** — paste this into the schedule's prompt field:
+
+```text
+Audit this repo's dependencies for known vulnerabilities and outdated major
+versions. On a new branch, apply only the safe, non-breaking upgrades, run the
+full test suite, and open one pull request summarizing what you changed and what
+you skipped (and why). Never push anything that breaks the build.
+```
+
+**Set it up**
+
+<Steps>
+
+1. **+ Schedule**, and paste the prompt above.
+
+2. **Set the cadence** to `0 7 * * 1` (Mondays at 7am) — a weekly rhythm, unlike
+   the nightly sweep above. The preview confirms the next Monday.
+
+3. **Pick the engine** — **Claude Code** is a good fit (it reasons well over
+   changelogs and breaking-change notes) — plus a **target worker** and **image**,
+   then **Save**.
+
+</Steps>
+
+**How it works** — **Run now** once to see it end-to-end without waiting for
+Monday. On the
+[timeline](/concepts/schedules#the-schedules-pages) you watch it scan the
+dependency tree, open a branch, apply the safe bumps, run the suite, and call
+`gh pr create` — finishing with a single audit PR you can review at your leisure.
+
+## Nightly flaky-test sweep
+
+Wake up to a triaged list of flaky specs instead of chasing intermittent
+failures by hand. This one **files issues** and changes no code.
+
+**The prompt** — paste this into the schedule's prompt field:
+
+```text
+Run the end-to-end test suite three times. Identify any specs that pass and fail
+non-deterministically across the three runs. For each flaky spec, open an issue
+with the failing output, which run it failed in, and a link to the spec. Don't
+change any code.
+```
+
+**Set it up**
+
+<Steps>
+
+1. **+ Schedule**, and paste the prompt above.
+
+2. **Set the cadence** to `0 3 * * *` (nightly at 3am).
+
+3. **Pick the engine** (e.g. **Codex**), a **target worker**, and an **image**, then **Save**.
+
+</Steps>
+
+**How it works** — every night it runs the suite three times, diffs the
+pass/fail results across runs to isolate the non-deterministic specs, and files
+one issue per flaky spec with the trace — no code changes, just triage waiting
+for you in the morning.
+
+<Aside type="tip">
+  Mix cadences and engines: a **nightly** backlog sweep clears tickets, a
+  **weekly** audit keeps dependencies healthy, a **nightly** flaky-test sweep
+  keeps the suite trustworthy. Each is one Schedule.
+</Aside>
+
+## Next
+
+- [Schedules](/concepts/schedules) — how Schedules work (pages, run history, limits).
+- [Run an agent on demand](/guides/run-on-demand) — the same ideas, fired once.
+- [Engines](/concepts/subagents) — pick the right engine per job.

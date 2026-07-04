@@ -1,0 +1,71 @@
+---
+// Override: keep the custom element for sidebar overlay logic,
+// but hide the floating button (replaced by bottom nav "Menu" button)
+---
+
+<starlight-menu-button class="print:hidden">
+	<button
+		aria-expanded="false"
+		aria-label={Astro.locals.t('menuButton.accessibleLabel')}
+		aria-controls="starlight__sidebar"
+		class="sl-flex md:sl-hidden mobile-menu-btn"
+	>
+		<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="open-menu">
+			<line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line>
+		</svg>
+		<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="close-menu">
+			<line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line>
+		</svg>
+	</button>
+</starlight-menu-button>
+
+<script>
+	class StarlightMenuButton extends HTMLElement {
+		btn = this.querySelector('button')!;
+
+		constructor() {
+			super();
+			this.btn.addEventListener('click', () => this.toggleExpanded());
+			const parentNav = this.closest('nav');
+			if (parentNav) {
+				parentNav.addEventListener('keyup', (e) => this.closeOnEscape(e));
+			}
+		}
+
+		setExpanded(expanded: boolean) {
+			this.setAttribute('aria-expanded', String(expanded));
+			document.body.toggleAttribute('data-mobile-menu-expanded', expanded);
+		}
+
+		toggleExpanded() {
+			this.setExpanded(this.getAttribute('aria-expanded') !== 'true');
+		}
+
+		closeOnEscape(e: KeyboardEvent) {
+			if (e.code === 'Escape') {
+				this.setExpanded(false);
+				this.btn.focus();
+			}
+		}
+	}
+
+	customElements.define('starlight-menu-button', StarlightMenuButton);
+</script>
+
+<style>
+	button {
+		display: none;
+	}
+</style>
+
+<style is:global>
+	[data-mobile-menu-expanded] {
+		overflow: hidden;
+	}
+
+	@media (min-width: 50rem) {
+		[data-mobile-menu-expanded] {
+			overflow: auto;
+		}
+	}
+</style>

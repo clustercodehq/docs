@@ -1,0 +1,77 @@
+---
+title: Requirements
+description: Hardware and software requirements for running ClusterCode workers.
+---
+
+## Software
+
+The **CLI** requires Node.js. The **worker agent** is a standalone binary with no runtime dependencies.
+
+| Component | Requirement | Minimum | Recommended |
+|-----------|-------------|---------|-------------|
+| CLI | **Node.js** | 22+ | Latest LTS |
+| CLI | **npm** | 10+ | Latest |
+| Worker agent | _(none)_ | — | — |
+| Both | **container runtime** | Podman 4+ or Docker 24+ | Podman 5+ |
+| Both | **OS** | macOS 13+, Windows 10+, Ubuntu 22.04+ | Latest stable |
+
+The worker agent auto-detects Podman and Docker via PATH — install either one (or both).
+
+### Windows-specific
+
+- **WSL2** is required for Podman on Windows
+- Run `wsl --install` if not already configured
+- The `clustercode doctor` command checks WSL status automatically
+
+## Hardware
+
+| Resource | Minimum | Recommended |
+|----------|---------|-------------|
+| **RAM** | 4 GB free | 8+ GB free |
+| **Disk** | 20 GB free | 50+ GB free |
+| **CPU** | 2 cores | 4+ cores |
+
+DevBox images are ~2-4 GB each. Running multiple DevBoxes simultaneously requires proportionally more resources.
+
+## Network
+
+| Requirement | Details |
+|-------------|---------|
+| **Direction** | Outbound only — no inbound ports needed |
+| **Protocol** | WebSocket (WSS on port 443) |
+| **Firewall** | Must allow outbound HTTPS/WSS |
+| **NAT** | Works behind NAT routers |
+| **Proxy** | HTTP proxies supported via standard env vars |
+
+Workers connect outbound to the orchestrator. No port forwarding, no static IP, no DNS required on the worker side.
+
+## Container Runtime
+
+### Podman (recommended)
+
+```bash
+# macOS
+brew install podman
+podman machine init
+podman machine start
+
+# Ubuntu/Debian
+sudo apt-get install podman
+
+# Windows (requires WSL2)
+winget install RedHat.Podman
+podman machine init
+podman machine start
+```
+
+### Docker
+
+Docker Desktop works but is not recommended for production workers due to licensing requirements. Podman is rootless and license-free.
+
+## Verify
+
+Run the health check to verify all requirements:
+
+```bash
+clustercode doctor
+```

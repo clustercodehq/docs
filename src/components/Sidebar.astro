@@ -1,0 +1,27 @@
+---
+import MobileMenuFooter from 'virtual:starlight/components/MobileMenuFooter';
+import SidebarPersister from '@astrojs/starlight/components/SidebarPersister.astro';
+import SidebarSublist from '@astrojs/starlight/components/SidebarSublist.astro';
+import Logo from './Logo.astro';
+
+const { sidebar } = Astro.locals.starlightRoute;
+---
+
+<SidebarPersister>
+	<SidebarSublist sublist={sidebar} />
+</SidebarPersister>
+
+<div class="sidebar-footer">
+  <a href="/" class="sidebar-footer-logo">
+    <Logo variant="docs" size={22} />
+  </a>
+  <button class="sidebar-collapse-btn" aria-label="Collapse sidebar" data-sidebar-toggle>
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <polyline points="15 18 9 12 15 6"></polyline>
+    </svg>
+  </button>
+</div>
+
+<div class="md:sl-hidden">
+	<MobileMenuFooter />
+</div>

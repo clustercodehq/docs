@@ -1,0 +1,39 @@
+---
+title: clustercode status
+description: Show current user, worker, tenant, and connection state.
+---
+
+## Usage
+
+```bash
+clustercode status
+```
+
+## Description
+
+Displays the current state of your ClusterCode CLI setup at a glance:
+
+```
+  User:          you@example.com
+  Worker:        a1b2c3d4
+  Tenant:        your-tenant
+  Orchestrator:  console.clustercode.io
+  Connection:    Connected
+```
+
+## Fields
+
+| Field | Description |
+|-------|-------------|
+| User | Authenticated email (from `credentials.json`), or "Not logged in" |
+| Worker | First 8 characters of the worker UUID, or "Not registered" |
+| Tenant | Tenant name from worker config |
+| Orchestrator | Orchestrator hostname |
+| Connection | Live health check — Connected, Unhealthy, or Disconnected |
+
+## Use Cases
+
+- Verify you're authenticated after `clustercode login`
+- Check worker configuration after `clustercode worker`
+- Debug connectivity issues
+- Confirm tenant assignment

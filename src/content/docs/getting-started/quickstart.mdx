@@ -1,0 +1,51 @@
+---
+title: Quickstart
+description: Get your cluster running in under 5 minutes.
+---
+
+Everything you need to go from zero to running AI DevBoxes on your own hardware.
+
+## 1. Install the CLI
+
+```bash
+npm install -g @clustercode/cli
+clustercode --version
+```
+
+Requires Node.js 22+. See [Install CLI](/getting-started/install-cli) for details.
+
+## 2. Log in
+
+```bash
+clustercode login
+```
+
+This opens your browser for a secure OAuth sign-in with your ClusterCode account.
+
+## 3. Start a worker
+
+```bash
+clustercode worker
+```
+
+On first run, the CLI walks you through tenant selection and then starts the worker. The worker connects outbound to the orchestrator — no inbound ports, no firewall rules.
+
+Or run the guided wizard that handles everything (login, tenant selection, runtime checks):
+
+```bash
+clustercode onboard
+```
+
+## 4. Launch your first DevBox
+
+1. Open the dashboard at your orchestrator URL
+2. Paste a GitHub issue link into the launch modal
+3. Pick a worker and click **Launch**
+
+Within 30 seconds, a DevBox is running and the web terminal is live. Your AI agent is now working on the ticket.
+
+## What's next?
+
+- [Launch from a ticket](/guides/launch-from-ticket) — full walkthrough of the launch flow
+- [Workers concept](/concepts/workers) — understand self-hosted vs managed
+- [CLI reference](/cli/overview) — all available commands

@@ -1,0 +1,56 @@
+---
+title: Explore your fleet in the Observatory
+description: A hands-on walkthrough of the Observatory galaxy view — switch lenses, pan and zoom, read live stats, and spot unassigned work.
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+The [Observatory](/concepts/observatory) turns your whole ClusterCode fleet into a navigable galaxy. This guide walks you through finding your way around it — switching how it's grouped, moving the camera, reading live telemetry, and spotting work that's still waiting for a home.
+
+<Steps>
+
+1. ### Open the Observatory
+
+   From the orchestrator, open the **Overview** nav and choose **Observatory**. Your tenant appears at the center, with your [workers](/concepts/workers) as glowing suns and their [DevBoxes](/concepts/containers) orbiting as planets. The view follows your app theme automatically.
+
+2. ### Switch between the Workers and Projects lenses
+
+   Use the segmented toggle at the top right to change how the galaxy is grouped:
+
+   - **Workers** clusters DevBoxes under the worker that hosts them — best for "what's running where?"
+   - **Projects** groups bodies by [project](/concepts/projects) as constellations. A worker serving more than one project repeats in each, with a **×N badge** so you know it's the same machine.
+
+   <Aside type="tip">
+     Flip to the **Projects** lens to see at a glance how a single project's
+     work is spread across your fleet, then back to **Workers** to reason about
+     capacity and placement.
+   </Aside>
+
+3. ### Pan and zoom to find a resource
+
+   **Drag** anywhere to pan the camera, and **scroll** to zoom — up to **5.5×**. **Hover** any body to read a quick tooltip. The animation pauses near your cursor, so a busy cluster holds still long enough to read.
+
+4. ### Read live stats and jump to the full page
+
+   **Click** a body to open its **detail card**. The card lazily fetches live telemetry the moment it opens:
+
+   - A **worker** shows live **CPU% and cores** plus **used / total memory**.
+   - A **running DevBox** shows live **CPU% and memory usage**.
+
+   Every card carries a **deep link** into the full page for that resource — worker, DevBox, [run](/concepts/runs), [schedule](/concepts/schedules), or project — so the Observatory is a fast way to *find* something and jump straight to it.
+
+5. ### Spot unassigned work as comets
+
+   Look for **comets** streaking through the **holding belt** around the center. Each comet is a run or schedule that has **no worker or DevBox yet**. If work isn't getting picked up, this is the first place to check.
+
+   <Aside type="note">
+     Remember that only **active** resources orbit — offline workers and stopped
+     DevBoxes sit still. A moving galaxy is a busy fleet; a quiet one is idle.
+   </Aside>
+
+</Steps>
+
+## Next steps
+
+- Learn the full legend on the [Observatory](/concepts/observatory) concept page.
+- Dig into the resources you'll see orbiting: [Workers](/concepts/workers), [DevBoxes](/concepts/containers), [Projects](/concepts/projects), and [Schedules](/concepts/schedules).

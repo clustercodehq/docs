@@ -1,0 +1,59 @@
+---
+title: Engines
+description: The CLI engines that do the coding inside a DevBox — Claude Code (Plan or API credits), Codex, and Copilot — and what each one can do.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+Every [Schedule](/concepts/schedules) and [Run](/concepts/runs) has two layers. The
+**engine** is the inner one — the CLI that does the actual coding inside the
+DevBox.
+
+## Two layers: coordinator and engine
+
+- **Coordinator** — the agent that runs the job: it reads your instruction,
+  picks a host, launches the DevBox, and delegates the coding. In an
+  **interactive [Run](/concepts/runs)** the coordinator owns the **"ask the human"
+  tool**, so it can pause and ask you a question *regardless of which engine you
+  pick*. (A [Schedule](/concepts/schedules) — or an **autonomous** Run — has no
+  human, so it never pauses.)
+- **Engine (subagent)** — the CLI that writes the code inside the DevBox.
+  You choose it per Schedule or per Run.
+
+## The engines
+
+| Engine | Billing | Pauses to ask you? | Notes |
+|---|---|---|---|
+| **Claude Code — Plan** | Your weekly **plan** limit | **Yes, natively** — it can stop mid-task and surface a structured question on its own | Recommended for interactive / exploratory work |
+| **Claude Code — API credits** | Your monthly **API credit** pool | Yes — the coordinator relays its question | Runs a turn straight through |
+| **Codex** | Your OpenAI / Codex auth | Yes — the coordinator relays its question | |
+| **GitHub Copilot** | Your Copilot auth | Yes — the coordinator relays its question | |
+
+<Aside type="note">
+  **Can every engine pause and ask?** In a Run, yes. The difference is *how*:
+  **Claude Code — Plan** can pause itself mid-task with a structured question,
+  while with the others the coordinator asks on their behalf (for an ambiguous
+  instruction, a host/image choice, or to relay a question the engine raised).
+  In a **Schedule** or an **autonomous Run**, none of them ask — there's no
+  human in the loop.
+</Aside>
+
+## The two Claude engines
+
+They run the same Claude Code CLI; the difference is **how the AI is billed and
+how it pauses**:
+
+- **Claude Code — Plan** bills against your **weekly plan limit** and can pause
+  itself mid-task to ask you something. Best when you want a back-and-forth.
+- **Claude Code — API credits** bills against your **monthly API credit pool**
+  and runs each turn to completion. Best for unattended, well-specified work.
+
+## Choosing an engine
+
+- **Auto-detect** (the default) picks the best available CLI on the image.
+- Name an engine explicitly when you care which one runs — e.g. an interactive
+  brainstorm is a good fit for **Claude Code — Plan**, while a tightly-scoped
+  unattended job suits **Claude Code — API credits** or **Codex**.
+
+See [Runs](/concepts/runs) for how a paused question looks, and
+[Schedules](/concepts/schedules) for the autonomous contract.

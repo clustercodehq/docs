@@ -1,0 +1,42 @@
+---
+title: clustercode login
+description: Authenticate with your ClusterCode account.
+---
+
+## Usage
+
+```bash
+clustercode login
+```
+
+## Description
+
+Opens your default browser for a secure OAuth sign-in. After authenticating, the CLI stores your API key in `~/.clustercode/credentials.json`.
+
+If you're already logged in, the CLI asks whether to keep the current session or log in with a different account.
+
+## Options
+
+| Flag | Description |
+|------|-------------|
+| `--no-browser` | Token-based login (for headless/SSH environments) |
+
+## Token-Based Login
+
+For servers or environments without a browser:
+
+```bash
+clustercode login --no-browser
+```
+
+This prompts you to paste an API token and your email address. Generate a token from your orchestrator's settings page.
+
+The CLI also auto-detects headless environments (SSH sessions, display-less Linux) and switches to token-based login automatically.
+
+## Verify
+
+```bash
+clustercode status
+```
+
+Shows your authenticated email and connection state.

@@ -1,0 +1,54 @@
+---
+title: Runtime Catalog
+description: Available AI agent runtimes for your DevBoxes.
+---
+
+ClusterCode supports multiple AI coding agents. Each runtime is a DevBox image with a specific agent pre-installed and configured.
+
+## Available Agents
+
+| Agent | Description | Plan |
+|-------|-------------|------|
+| **Claude Code** | Anthropic's Claude Code CLI for AI-assisted development | Starter+ |
+| **GitHub Copilot** | GitHub Copilot CLI agent | Starter+ |
+| **Codex** | OpenAI Codex CLI agent | Starter+ |
+
+All agents are available on all plans. The difference between plans is resource limits (concurrent DevBoxes, workers), not agent access.
+
+## Authentication
+
+Each agent requires its own API credentials:
+
+| Agent | Required Credential |
+|-------|-------------------|
+| Claude Code | Anthropic API key, Claude OAuth token, or platform credits |
+| GitHub Copilot | `COPILOT_GITHUB_TOKEN` + `GH_TOKEN` |
+| Codex | `OPENAI_API_KEY` |
+
+Credentials are configured in the orchestrator. See [Environment Variables](/reference/environment-variables).
+
+## Default Tools
+
+Every DevBox includes these tools:
+- GitHub CLI (`gh`)
+- Oh My Posh (shell prompt)
+- Nerd Font (terminal icons)
+- Shell Config (bash history, readline, tab completion)
+- Neovim
+
+Infrastructure dependencies (always present):
+- Git, Node.js, curl, tmux
+
+## Custom Runtimes (BYOI)
+
+On Pro and Enterprise plans, you can build your own DevBox images (Bring Your Own Image). This lets you:
+- Add project-specific dependencies
+- Pre-install language runtimes
+- Include proprietary tools
+- Configure custom shell environments
+
+See [Custom Containerfile](/guides/custom-containerfile).
+
+## Supported Agents Matrix
+
+See [Supported Agents](/reference/supported-agents) for the full capability matrix.

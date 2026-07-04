@@ -1,0 +1,82 @@
+---
+title: Custom Containerfile
+description: Build custom DevBox images for specialized development environments.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+The default ClusterCode DevBox image covers general development. For specialized needs, build your own.
+
+<Aside type="note">
+  Custom images (BYOI) require a Pro or Enterprise plan.
+</Aside>
+
+<Aside type="tip">
+  Prefer to capture a DevBox you've already set up by hand? See [Build an Image from a DevBox](/guides/build-image-from-container).
+</Aside>
+
+## Base image
+
+Start from the ClusterCode base image to get all default tools:
+
+```dockerfile
+FROM localhost/claude-code-terminal:latest
+
+# Add your customizations
+RUN npm install -g typescript @angular/cli
+```
+
+## Example: Python data science environment
+
+```dockerfile
+FROM localhost/claude-code-terminal:latest
+
+RUN apt-get update && apt-get install -y python3 python3-pip python3-venv \
+    && pip3 install pandas numpy scikit-learn jupyter \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
+```
+
+## Example: Rust development
+
+```dockerfile
+FROM localhost/claude-code-terminal:latest
+
+RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y \
+    && . $HOME/.cargo/env \
+    && rustup component add clippy rustfmt
+```
+
+## Building
+
+For a custom image to appear in the launch picker it has to be a **managed**
+image — one ClusterCode tags with `io.clustercode.managed`. The orchestrator
+hides unmanaged images by default, so building *through* ClusterCode is the path
+that just works. Trigger a build from the orchestrator dashboard or Nucleus:
+
+> "Build my-custom-image from ./Containerfile"
+
+This builds on your worker and stamps the managed label automatically, so the
+image shows up in the runtime picker.
+
+<Aside type="caution">
+  A bare `podman build` on the worker host also works, but the resulting image
+  is **unmanaged** and won't appear in the launch picker:
+
+  ```bash
+  podman build -t localhost/my-custom-image:latest -f Containerfile .
+  ```
+
+  To make a hand-built image selectable, either build it through ClusterCode
+  (above) or add the managed label yourself in the Containerfile:
+
+  ```dockerfile
+  LABEL io.clustercode.managed=true
+  ```
+</Aside>
+
+## Using your image
+
+A custom image lives on the **worker that built it**, so the launch has to land
+on that worker. Open the launch flow, open the **target** picker, select that
+worker, then pick your image from the runtime list — the same worker-pinning
+flow as [Launch from your golden image](/guides/build-image-from-container#launch-from-your-golden-image).

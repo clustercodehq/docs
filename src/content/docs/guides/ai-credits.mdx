@@ -1,0 +1,48 @@
+---
+title: AI Credits
+description: Understand AI credit usage, BYOK, and budget management.
+---
+
+ClusterCode includes AI credits for Nucleus sessions and DevBox agents. You can use the platform allowance or bring your own API keys.
+
+## Platform Allowance
+
+Each plan includes a monthly AI credit allowance:
+
+| Plan | AI Allowance | Top-ups |
+|------|-------------|---------|
+| Starter | $2/mo | Not available |
+| Pro | $6/mo | Available |
+| Enterprise | $10/user/mo | Available |
+
+Credits are consumed by:
+- Nucleus conversations in the dashboard
+- AI agent activity inside DevBoxes (when using platform keys)
+
+## Bring Your Own Key (BYOK)
+
+On Pro and Enterprise plans, you can provide your own API keys. This means:
+- No platform credit consumption
+- Use your own rate limits and pricing
+- Full control over provider choice
+
+Configure BYOK credentials in the orchestrator settings. See [Environment Variables](/reference/environment-variables) for the specific keys.
+
+## Budget Management
+
+The orchestrator dashboard shows:
+- Current session budget usage (percentage)
+- Monthly allowance remaining
+- Per-session cost breakdown
+
+When approaching your budget limit, Nucleus displays a warning banner suggesting you add your own API key or upgrade your plan.
+
+## Live Sessions
+
+Live sessions are interactive Nucleus conversations:
+
+| Plan | Sessions per DevBox | Total Sessions |
+|------|----------------------|----------------|
+| Starter | 3 | 3 |
+| Pro | 3 | 15 |
+| Enterprise | 3 | Unlimited |

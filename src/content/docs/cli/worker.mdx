@@ -1,0 +1,46 @@
+---
+title: clustercode worker
+description: Select a tenant and start the ClusterCode worker on this machine.
+---
+
+## Usage
+
+```bash
+clustercode worker
+```
+
+## Description
+
+The `worker` command selects a tenant (if needed) and starts the worker on this machine.
+
+On first run, it walks you through setup:
+
+1. Checks that you're logged in (prompts to run `clustercode login` if not)
+2. Fetches the tenants your account can access
+3. If you have more than one, lets you pick which to join
+4. Starts the worker
+
+On later runs, it reuses your saved selection and starts immediately.
+
+## Options
+
+| Flag | Description |
+|------|-------------|
+| `--podman` | Use Podman as the container engine |
+| `--docker` | Use Docker as the container engine |
+
+If you don't pass either flag, the worker uses whichever supported engine it finds on the machine. Pass one — not both — to force the choice.
+
+## Connection
+
+The worker connects **outbound** to the orchestrator — no inbound ports, no firewall rules, works behind NAT. If the connection drops, it reconnects automatically.
+
+Leave the command running to keep the worker online; stop it with `Ctrl+C`.
+
+## Verify
+
+```bash
+clustercode status
+```
+
+Your worker also appears in the dashboard under the Workers panel.
