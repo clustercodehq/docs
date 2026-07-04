@@ -114,10 +114,25 @@ function isActive(prefix: string) {
     var panel = document.querySelector('[data-bottom-nav-panel]');
     var backdrop = document.querySelector('[data-bottom-nav-backdrop]');
 
+    var closeTimer;
+    function finishClose() {
+      if (panel) panel.classList.remove('open', 'closing');
+      if (backdrop) backdrop.classList.remove('open', 'closing');
+    }
     function closeMenu() {
-      if (panel) panel.classList.remove('open');
-      if (backdrop) backdrop.classList.remove('open');
       if (menuBtn) menuBtn.classList.remove('active');
+      var isOpen = panel && panel.classList.contains('open');
+      var reduce = typeof matchMedia !== 'undefined'
+        && matchMedia('(prefers-reduced-motion: reduce)').matches;
+      if (!isOpen || reduce) {
+        finishClose();
+        return;
+      }
+      // Play a matching slide-down/fade exit, then remove .open (display:none).
+      if (panel) panel.classList.add('closing');
+      if (backdrop) backdrop.classList.add('closing');
+      window.clearTimeout(closeTimer);
+      closeTimer = window.setTimeout(finishClose, 130);
     }
 
     function toggleMenu() {

@@ -1081,8 +1081,15 @@ sl-sidebar-state-persist > ul > li:nth-child(8) > details > summary .group-label
   background: rgba(0, 0, 0, 0.4);
 }
 
+/* Backdrop fades in with the menu (item 6) instead of display-snapping. */
 .bottom-nav-backdrop.open {
   display: block;
+  animation: bn-backdrop-in 150ms ease-out;
+}
+
+/* Closing: quick fade-out held on the last frame until the JS removes .open. */
+.bottom-nav-backdrop.open.closing {
+  animation: bn-backdrop-out 120ms ease-in forwards;
 }
 
 .bottom-nav-menu {
@@ -1101,9 +1108,98 @@ sl-sidebar-state-persist > ul > li:nth-child(8) > details > summary .group-label
   display: block;
 }
 
+/* Closing: matching slide-down + fade before the JS sets display:none. */
+.bottom-nav-menu.open.closing {
+  animation: bn-menu-out 120ms ease-in forwards;
+}
+
 @keyframes slide-up {
   from { transform: translateY(8px); opacity: 0; }
   to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes bn-menu-out {
+  from { transform: translateY(0); opacity: 1; }
+  to { transform: translateY(8px); opacity: 0; }
+}
+
+@keyframes bn-backdrop-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes bn-backdrop-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+/* ============================================================
+   MOTION SYSTEM (issue #515 docs pass) — ported from core's
+   packages/ui/src/theme.css motion vocabulary. Durations: 150ms
+   exits/dialogs, 200ms theme cross-fade, 250ms entrances/collapse.
+   ============================================================ */
+
+/* Item 1 — theme toggle cross-fade. `flashThemeTransition` (Header.astro)
+   adds `.theme-transition` to <html> for ~240ms BEFORE flipping data-theme,
+   then removes it, so colors ease between themes instead of snapping — without
+   a permanent transition that would make every hover laggy. The `html` prefix
+   lifts specificity above utility color transitions. No-ops under reduced
+   motion (the helper never adds the class; the blanket gate below also guards). */
+html.theme-transition,
+html.theme-transition *,
+html.theme-transition *::before,
+html.theme-transition *::after {
+  transition: background-color 200ms ease, color 200ms ease,
+    border-color 200ms ease, fill 200ms ease, stroke 200ms ease;
+}
+
+/* Item 3 — sidebar <details> section groups animate open/closed via the
+   grid-template-rows 0fr↔1fr trick (the one sanctioned non-transform collapse
+   — no height:auto thrash). A JS assist in Sidebar.astro wraps each group's
+   content in `.sl-collapse-anim` and keeps `<details open>` through the closing
+   animation so the content isn't UA-hidden mid-transition. */
+.sl-collapse-anim {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 250ms ease-out;
+}
+.sl-collapse-anim[data-open='true'] {
+  grid-template-rows: 1fr;
+}
+.sl-collapse-anim > * {
+  overflow: hidden;
+  min-height: 0;
+}
+
+/* Item 7 — landing scroll-reveal. Below-the-fold splash cards fade + rise in
+   as they enter the viewport, staggered ~40ms each (delay set inline by JS).
+   Gated on `.cc-reveal-init`, which the reveal script adds synchronously only
+   when motion is allowed — so a no-JS or reduced-motion visitor sees the cards
+   immediately, never stuck hidden. */
+:root.cc-reveal-init .card-grid .card {
+  opacity: 0;
+  transform: translateY(12px);
+  transition: opacity 300ms ease-out, transform 300ms ease-out;
+}
+:root.cc-reveal-init .card-grid .card.cc-shown {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Item 0 — reduced-motion safety net (ported verbatim from core). Collapses
+   every animation/transition to imperceptible when the OS asks for reduced
+   motion, auto-gating everything above. Placed last + !important so it wins. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  html { scroll-behavior: auto !important; }
+  :root.cc-reveal-init .card-grid .card {
+    opacity: 1 !important;
+    transform: none !important;
+  }
 }
 
 .bottom-nav-menu-item {

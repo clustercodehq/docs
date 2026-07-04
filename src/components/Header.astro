@@ -137,8 +137,18 @@ const activeNav = activeNavLabel(pathname);
     window.__docsToggleTheme = function() {
       var current = getTheme();
       var next = current === 'dark' ? 'light' : 'dark';
+      var root = document.documentElement;
+      // Cross-fade colors between themes (item 1): add a transient transition
+      // class BEFORE flipping data-theme, remove it after ~240ms. No-op under
+      // reduced motion so the switch stays instant.
+      var reduce = typeof matchMedia !== 'undefined'
+        && matchMedia('(prefers-reduced-motion: reduce)').matches;
+      if (!reduce) {
+        root.classList.add('theme-transition');
+        window.setTimeout(function() { root.classList.remove('theme-transition'); }, 240);
+      }
       if (typeof localStorage !== 'undefined') localStorage.setItem(storageKey, next);
-      document.documentElement.dataset.theme = next;
+      root.dataset.theme = next;
       if (window.StarlightThemeProvider) window.StarlightThemeProvider.updatePickers(next);
       updateIcons();
     };
@@ -231,6 +241,8 @@ const activeNav = activeNavLabel(pathname);
     align-items: center;
     text-decoration: none;
     flex-shrink: 0;
+    /* Item 8 — ease the logo's hover fade instead of snapping. */
+    transition: opacity 200ms ease;
   }
 
   .site-title-link:hover {
