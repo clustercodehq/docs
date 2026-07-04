@@ -41,13 +41,3 @@ clustercode worker
 ```
 
 Leave it running to keep the machine online as a worker. See [Register a Worker](/getting-started/register-worker) to get set up, and [`clustercode doctor`](/cli/doctor) to check its health.
-
-## Files
-
-The agent and CLI share configuration under `~/.clustercode/`:
-
-| File | Purpose |
-|------|---------|
-| `credentials.json` | Your login (from `clustercode login`) |
-| `worker.json` | Worker registration (tenant + identity) |
-| `config.json` | Preferences (e.g. `WORKER_NAME`) |
