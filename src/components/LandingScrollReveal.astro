@@ -1,0 +1,68 @@
+---
+/**
+ * Landing-page-only scroll reveal (issue #515 docs pass, item 7).
+ *
+ * The two below-the-fold `<CardGrid>` blocks on the splash home page fade + rise
+ * in as they scroll into view, staggered ~40ms per card. Uses a plain scroll
+ * listener + getBoundingClientRect (the same approach as LandingHeaderScroll in
+ * this repo) rather than IntersectionObserver — it's simpler, needs no async
+ * callback, and a card can never get stuck hidden: the on-load pass reveals
+ * anything already in view.
+ *
+ * FOUC / no-JS / reduced-motion safety: the initial-hidden CSS is gated on the
+ * `.cc-reveal-init` class, which this script adds to <html> synchronously and
+ * ONLY when motion is allowed. So a reduced-motion visitor, or one with JS off,
+ * never has the class set and sees the cards immediately — they can't get stuck
+ * invisible. Imported (and rendered LAST) from index.mdx so the class lands
+ * before first paint of the below-the-fold cards. The hero is untouched.
+ */
+---
+
+<script is:inline>
+  (function() {
+    if (typeof matchMedia !== 'undefined'
+        && matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+    // Add the gate synchronously so the cards start hidden before first paint.
+    document.documentElement.classList.add('cc-reveal-init');
+
+    function init() {
+      var cards = [];
+      document.querySelectorAll('.card-grid').forEach(function(grid) {
+        grid.querySelectorAll('.card').forEach(function(card, i) {
+          card.style.transitionDelay = (i * 40) + 'ms';
+          cards.push(card);
+        });
+      });
+      if (!cards.length) return;
+
+      function reveal() {
+        var vh = window.innerHeight || document.documentElement.clientHeight;
+        var remaining = 0;
+        cards.forEach(function(card) {
+          if (card.classList.contains('cc-shown')) return;
+          // Reveal once the card's top edge has risen ~32px into the viewport.
+          if (card.getBoundingClientRect().top < vh - 32) {
+            card.classList.add('cc-shown');
+          } else {
+            remaining++;
+          }
+        });
+        if (remaining === 0) {
+          window.removeEventListener('scroll', reveal);
+          window.removeEventListener('resize', reveal);
+        }
+      }
+
+      reveal();
+      window.addEventListener('scroll', reveal, { passive: true });
+      window.addEventListener('resize', reveal, { passive: true });
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', init);
+    } else {
+      init();
+    }
+  })();
+</script>

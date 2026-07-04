@@ -266,6 +266,24 @@ const allItems = groups.flatMap(g => g.items.map(item => ({ ...item, group: g.la
     display: none;
   }
 
+  /* Item 5 — open animation: overlay fades, panel pops (scale .96→1). Runs each
+     time the overlay un-hides. Exit is instant (hidden), matching core dialogs. */
+  .cp-overlay:not([hidden]) {
+    animation: cp-overlay-in 150ms ease-out;
+  }
+  .cp-overlay:not([hidden]) .cp-panel {
+    animation: cp-panel-in 150ms ease-out;
+  }
+
+  @keyframes cp-overlay-in {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+  }
+  @keyframes cp-panel-in {
+    from { opacity: 0; transform: scale(0.96); }
+    to   { opacity: 1; transform: scale(1); }
+  }
+
   .cp-panel {
     width: 100%;
     max-width: 520px;
