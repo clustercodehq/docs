@@ -84,7 +84,9 @@
   /* Keyboard focus ring — accent blue, matches core Button :focus-visible
      (packages/ui/src/theme.css --accent-blue light #005fb8). */
   --docs-focus-ring: #005fb8;
-  --signup-text: #f3f3f3;
+  /* Text on the brand-green primary CTA — black in BOTH themes, matching
+     portal MARKETING_CTA (`text-black`). #000 on #0890b8 is ~6.6:1 (AA). */
+  --signup-text: #000000;
 }
 
 /* Code blocks — match portal code snippet styling */
@@ -628,23 +630,29 @@ header.header {
   margin: 0 auto 2rem;
 }
 
-/* Hero action buttons — override Starlight's border-radius: 999rem
-   to square corners matching portal CTAs */
+/* Hero action buttons — aligned to the portal button canon:
+   • primary = brand-green fill, black label, bold, hover:opacity-85 (transition-opacity 200ms)
+     (portal MARKETING_CTA)
+   • secondary = bordered, hover flips border → brand green (transition-colors)
+   Square-corner radius (0.5rem) is kept intentionally — the docs brand uses
+   rounded-lg CTAs, not Starlight's default 999rem pill. */
 .sl-link-button {
   border-radius: 0.5rem !important;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
   font-weight: 700 !important;
-  transition: opacity 200ms ease !important;
+  transition: opacity 200ms ease, border-color 200ms ease !important;
 }
 
-.sl-link-button:hover {
-  opacity: 0.85;
-}
-
+/* Primary — opacity fade on hover (MARKETING_CTA). Scoped to .primary so the
+   bordered secondary uses a border-color hover instead, not an opacity fade. */
 .sl-link-button.primary {
   background: var(--sl-color-text-accent) !important;
   border-color: var(--sl-color-text-accent) !important;
   color: var(--signup-text) !important;
+}
+
+.sl-link-button.primary:hover {
+  opacity: 0.85;
 }
 
 .sl-link-button.secondary,
@@ -654,6 +662,7 @@ header.header {
   color: var(--sl-color-text) !important;
 }
 
+/* Secondary — hover flips the border to brand green (transition-colors). */
 .sl-link-button.secondary:hover,
 .sl-link-button:not(.primary):not(.minimal):hover {
   border-color: var(--sl-color-accent) !important;
