@@ -124,6 +124,14 @@ function isActive(prefix: string) {
       setCollapsed(true);
     }
 
+    // Enable the collapse transitions only AFTER the initial (restored) state is
+    // painted, so a page that loads already-collapsed doesn't animate on boot.
+    // rAF gives frame-accurate timing on a foreground tab; the setTimeout is a
+    // fallback because rAF is fully paused while a tab is backgrounded.
+    function enableMotion() { page.classList.add('sidebar-motion-ready'); }
+    requestAnimationFrame(function() { requestAnimationFrame(enableMotion); });
+    window.setTimeout(enableMotion, 120);
+
     // Collapse/expand buttons
     document.addEventListener('click', function(e) {
       var collapseBtn = e.target.closest('[data-sidebar-toggle]');
@@ -177,6 +185,15 @@ function isActive(prefix: string) {
 
 		:global([aria-expanded='true']) ~ .sidebar-pane {
 			--sl-sidebar-visibility: visible;
+			/* Item 4 — mobile sidebar pane slides + fades in on open. Only fires
+			   on mobile: on desktop the toggle stays aria-expanded=false and the
+			   pane is statically visible (position:relative override below). */
+			animation: docs-mobile-sidebar-in 250ms ease-out;
+		}
+
+		@keyframes docs-mobile-sidebar-in {
+			from { opacity: 0; transform: translateX(-16px); }
+			to   { opacity: 1; transform: translateX(0); }
 		}
 
 		.sidebar-content {
@@ -216,7 +233,6 @@ function isActive(prefix: string) {
 				height: 100vh;
 				flex-shrink: 0;
 				width: var(--sl-sidebar-width);
-				transition: width 200ms ease;
 				overflow: hidden;
 			}
 
@@ -237,22 +253,53 @@ function isActive(prefix: string) {
 		}
 	}
 
-	/* Collapsed state — outside layer to override Starlight defaults */
+	/* ── Sidebar collapse animation (item 2) ─────────────────────────────
+	   The toggle flips [data-sidebar-collapsed] on .page. Instead of display-
+	   swapping the 240px sidebar and the 48px strip (which snapped), both stay
+	   in flow and animate their width: the sidebar shrinks 240→0 while the strip
+	   grows 0→48 over the same 200ms, so the content column's edge slides
+	   smoothly (sum 240→48, monotonic — no reflow jank). The 240px pane cross-
+	   fades out and the strip cross-fades in. Transitions are gated behind
+	   `.sidebar-motion-ready` (added a frame after the initial collapse-state is
+	   restored) so a page that loads already-collapsed doesn't animate on boot. */
 	@media (min-width: 50rem) {
-		[data-sidebar-collapsed='true'] .sidebar {
-			display: none !important;
-		}
-
-		[data-sidebar-collapsed='true'] .sidebar-collapsed-strip {
+		.sidebar-collapsed-strip {
 			display: flex !important;
 			flex-direction: column;
 			position: sticky;
 			top: 0;
 			height: 100vh;
-			width: 48px;
+			width: 0;
 			flex-shrink: 0;
+			overflow: hidden;
+			opacity: 0;
+			pointer-events: none;
 			background-color: var(--sl-color-bg-sidebar);
+		}
+
+		[data-sidebar-collapsed='true'] .sidebar {
+			width: 0;
+		}
+
+		[data-sidebar-collapsed='true'] .sidebar-pane {
+			opacity: 0;
+		}
+
+		[data-sidebar-collapsed='true'] .sidebar-collapsed-strip {
+			width: 48px;
+			opacity: 1;
+			pointer-events: auto;
 			border-inline-end: 1px solid var(--sl-color-hairline);
+		}
+
+		.sidebar-motion-ready .sidebar {
+			transition: width 200ms ease;
+		}
+		.sidebar-motion-ready .sidebar-pane {
+			transition: opacity 150ms ease;
+		}
+		.sidebar-motion-ready .sidebar-collapsed-strip {
+			transition: width 200ms ease, opacity 150ms ease;
 		}
 	}
 </style>
