@@ -28,14 +28,4 @@ Requires Node.js 22+. Verify the install with `clustercode --version`.
 
 New here? Run [`clustercode onboard`](/cli/onboard) — it checks everything and walks you through login, tenant selection, and container runtime setup in one step.
 
-## Configuration
-
-The CLI keeps its files under `~/.clustercode/`:
-
-| File | Purpose |
-|------|---------|
-| `credentials.json` | Your login (API key + email) |
-| `worker.json` | Worker registration (tenant + identity) |
-| `config.json` | Preferences (e.g. `WORKER_NAME`) |
-
 Run [`clustercode status`](/cli/status) at any time to see your current login, worker, and connection state.
