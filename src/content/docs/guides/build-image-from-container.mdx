@@ -7,6 +7,8 @@ import { Aside, Steps } from '@astrojs/starlight/components';
 
 You've tuned a DevBox by hand — installed tools, cloned a repo, pasted credentials, finished the Windows first-boot install — and now you want every future launch to start from that exact state. **Building an image from a DevBox** snapshots a running DevBox into a reusable image (a "golden image") so you don't have to re-run a build or rewrite a Containerfile.
 
+Think of it as **replicating a tuned DevBox**: spend an afternoon getting one [DevBox](/concepts/runtime-catalog) exactly right — your toolchain, your deps, your weird internal CLI, your fixtures — then stamp out identical machines from it forever. Every DevBox you launch from the image comes up pre-built, with capabilities carried over automatically, and you can launch the clones on [Cloud workers](/concepts/cloud-workers) or your own [BYOM workers](/concepts/workers) — same image, your choice of where.
+
 <Aside type="note">
   Building an image from a DevBox requires a **Pro or Enterprise** plan and the **owner**, **admin**, or **member** role. Starter users see an upgrade prompt in place of the form.
 </Aside>
@@ -62,9 +64,19 @@ Re-declaring a capability the source already carries won't duplicate it — the 
 
 The payoff is large: launching from a Windows golden image skips the 20–30 minute first-boot Windows install and reaches a working desktop in seconds, because the post-install disk is baked into the image.
 
+<Aside type="note">
+  This self-snapshot flow is how you bake **your own** golden on a BYOM worker — pay the one-time Windows first-boot install once, snapshot, and every later launch on your worker comes up fast. Windows DevBoxes on [Cloud workers](/concepts/cloud-workers) already launch from **ClusterCode-maintained golden images**, so there's no first-boot install to wait through there. The same golden images run on both Cloud workers and BYOM workers that support Windows VMs.
+</Aside>
+
 ## Launch from your golden image
 
 A snapshot lives on exactly **one** worker, so the launch has to land on that worker. The launch target picker handles this.
+
+<Aside type="note" title="Launch time is measured, not asserted">
+  Launching from a locally-built golden image is fast — the pre-built disk skips
+  the setup work — but we don't quote a launch-from-image number we haven't timed.
+  See [measured launch time](/concepts/cloud-workers#measured-launch-time).
+</Aside>
 
 <Steps>
 
@@ -111,5 +123,8 @@ Snapshots are tagged with `io.clustercode.managed=true` so they appear in the im
 - [DevBoxes](/concepts/containers)
 - [Custom Containerfile](/guides/custom-containerfile)
 - [Workers](/concepts/workers)
+- [Cloud workers](/concepts/cloud-workers)
+- [Windows Containers](/concepts/windows-containers)
+- [Visual testing](/guides/visual-testing)
 - [Cloud worker](/guides/cloud-worker)
 - [Plans & Limits](/reference/plans-and-limits)

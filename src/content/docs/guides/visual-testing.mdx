@@ -1,0 +1,91 @@
+---
+title: Visual Testing
+description: Give an agent a real desktop — VS Code, a real Chromium, a real screen — so it can open your app, see the rendered UI, and click through it.
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+Headless test suites tell an agent the build is green. They don't show it that the
+button is off-screen, the modal is white-on-white, or the chart never rendered.
+**Visual testing** gives the DevBox a real graphical desktop, so the agent can open
+your running app, *see* the rendered UI, and click through it the way a person
+would.
+
+## What the Display capability ships
+
+Turn on **Display** and the DevBox gets a real graphical desktop:
+
+- **A real graphical desktop** — a headed screen with a window manager, streamed
+  live to your browser so you can watch.
+- **VS Code** — a full IDE running on the desktop, so the agent (and you) can open
+  files, run the editor, and use its tooling.
+- **A real Chromium** — an actual browser, not a headless shell, with the **Claude
+  extension already wired in** so the agent can drive the page.
+
+This isn't a screenshot service bolted on the side — it's a real screen inside the
+DevBox that the agent shares with you.
+
+## Two ways an agent tests visually
+
+| Engine | How it sees the screen |
+|---|---|
+| **Claude** | **Computer-use** — Claude drives the real desktop directly: it looks at the screen, moves the pointer, clicks, and types, reacting to what's actually rendered. |
+| **Codex** | **Playwright** — Codex runs Playwright against the live Chromium render, scripting the browser and asserting on the real DOM/page. |
+
+Either way the agent is acting on a **real render**, not a headless approximation —
+so it catches the visual and end-to-end bugs a headless run sails right past.
+
+## Enabling Display
+
+<Steps>
+
+1. When launching a DevBox (Quick Launch, a [Run](/concepts/runs), or a
+   [Schedule](/concepts/schedules)), pick an image that includes the **Display**
+   capability — the combined image ships it.
+
+2. Launch. The DevBox comes up with the graphical desktop running alongside the
+   usual terminal.
+
+3. Open the **Display** view from the container to watch the desktop stream live in
+   your browser.
+
+</Steps>
+
+<Aside type="note">
+  Display adds a graphical stack (X server, window manager, browser) to the DevBox,
+  so it wants a little more memory than a pure-terminal box. Pick a tier with
+  headroom — see [Cloud workers](/concepts/cloud-workers#pricing).
+</Aside>
+
+## Watching it live
+
+The desktop streams to your browser. You can **watch** the agent open
+your app and click through it in real time, and you can **take over** — grab the
+pointer and keyboard yourself, poke at the same screen the agent is using, then
+hand control back. It's a shared screen, not a recording.
+
+## On Windows
+
+Visual testing works on [Windows DevBoxes](/concepts/windows-containers) too. A
+real Windows VM with the desktop means the agent can verify your app actually
+renders on Windows — useful when "it works on Linux" isn't the same as "it ships."
+
+## Inside Runs and Schedules
+
+Visual testing isn't a separate mode — it's a capability of the DevBox, so it works
+anywhere a DevBox does:
+
+- In an **interactive [Run](/concepts/runs)**, you can watch the agent open the app
+  and step in when something looks off.
+- In a **[Schedule](/concepts/schedules)** or autonomous Run, the agent uses the
+  desktop unattended — e.g. an overnight job that builds a feature and visually
+  verifies the UI before opening a PR.
+- In a [multi-agent run](/guides/multi-agent-runs), one agent in the relay can be
+  the one that opens the app and checks the render.
+
+## Related
+
+- [Multi-agent runs](/guides/multi-agent-runs) — a relay where one agent tests visually
+- [Windows Containers](/concepts/windows-containers)
+- [Runtime Catalog](/concepts/runtime-catalog) — the visual desktop in the DevBox
+- [Runs](/concepts/runs) · [Schedules](/concepts/schedules)

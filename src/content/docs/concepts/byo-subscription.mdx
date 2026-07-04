@@ -1,0 +1,58 @@
+---
+title: Bring Your Own AI Subscription
+description: Connect your own AI credentials — an API key or your Claude / Codex subscription login — so your agents draw on your account instead of platform credits.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+You don't have to run on ClusterCode's platform AI credits. **Bring your own AI
+credentials** — either an **API key** or your **AI subscription** (your Claude or
+Codex OAuth login) — and your [Runs](/concepts/runs),
+[Schedules](/concepts/schedules), and [multi-agent
+orchestration](/guides/multi-agent-runs) will draw on **your** account.
+
+## Connecting your credentials
+
+Add your credentials in **Settings**:
+
+- An **API key** (e.g. an Anthropic or OpenAI key), or
+- Your **AI subscription** — the OAuth login for an official CLI (Claude Code,
+  Codex).
+
+Once connected, [Nova](/concepts/nova) uses them automatically when it runs your
+jobs.
+
+## How it's used — the credential cascade
+
+When a job needs AI, ClusterCode resolves credentials in a defined order:
+
+1. **Your connected subscription / OAuth login** is preferred first.
+2. **Your connected API key** is used next.
+3. **Platform AI credits** are the fallback when you haven't connected anything.
+
+So your own subscription or key is spent **instead of (or before)** the platform
+[AI credits](/guides/ai-credits) — the same cascade the
+[Nova / AI-credits note](/guides/ai-credits) describes. This lets you put your
+existing AI plan to work and keep your platform credits for everything else.
+
+## How your credentials are stored today
+
+Credentials you connect are stored **per user** and **encrypted at rest**.
+They are **never shared across users** — your key or subscription
+authenticates only your own jobs. This applies to both Cloud workers and your own
+[BYOM workers](/concepts/workers).
+
+<Aside type="note" title="Coming soon — fully local, zero-storage passthrough">
+  We're building a path where, on your **own BYOM worker**, your existing **local
+  CLI login** will be used directly — so the token will **never leave your machine
+  and will never be stored in our database** at all. That fully zero-storage
+  local-passthrough model is a **planned** capability, not yet available. Until it
+  ships, connected credentials are stored encrypted at rest as described above.
+</Aside>
+
+## Related
+
+- [AI Credits](/guides/ai-credits) — platform credits and the billing cascade
+- [Nova](/concepts/nova) — the automation agent that runs your jobs
+- [Workers](/concepts/workers) — Cloud vs your own (BYOM) machines
+- [Runs](/concepts/runs) · [Schedules](/concepts/schedules)
