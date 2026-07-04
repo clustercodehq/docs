@@ -1,0 +1,83 @@
+---
+title: Windows Containers
+description: Real Windows VM DevBoxes — .NET, the desktop, the lot. Not a Linux box pretending to be Windows.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+Most cloud agent platforms are Linux-only. ClusterCode boots **real Windows VM
+DevBoxes** — an actual Windows VM under the hood — so if your stack is .NET, your
+tests are Windows-only, or your app has to render on Windows to count, that's a
+tier you pick, not an edge case you work around.
+
+## A real VM, not an emulation layer
+
+A Windows DevBox runs a genuine Windows VM. You get the real desktop,
+the real shell, and the real toolchain — the same Windows a developer would use,
+running on a [Cloud worker](/concepts/cloud-workers) or one of your own
+[BYOM workers](/concepts/workers) that supports Windows VMs.
+
+Everything that works on a Linux DevBox works here: the same
+[Agent Runs](/concepts/runs), the same [Schedules](/concepts/schedules), the same
+live terminal, and the same [visual desktop](/guides/visual-testing) — on Windows.
+
+## When you want one
+
+- **.NET / Visual Studio workflows** — build and test on the platform you ship on.
+- **Windows-only tests** — anything that has to run against the Windows API.
+- **Visual rendering on Windows** — verify the UI actually renders correctly on
+  Windows, not just "the Linux build is green." Pair this with
+  [visual testing](/guides/visual-testing) and the agent can open the running app
+  on the Windows desktop and look at it.
+
+## Pricing
+
+Windows DevBoxes come in three sizes (Small, Medium, Large). They run a full
+Windows VM, so they carry more memory and a higher hourly rate than the
+equivalent Linux tier.
+
+<Aside type="note">
+  The canonical price table for **all** tiers — Linux and Windows — lives on the
+  [Cloud workers](/concepts/cloud-workers#pricing) page. We keep a single source
+  of truth for pricing rather than repeating the numbers here.
+</Aside>
+
+## First boot vs golden image
+
+A real Windows VM normally has to run the Windows install on first boot — a
+one-time **20–30 minute** install from scratch. Whether you ever see that wait
+depends on where the DevBox runs.
+
+### On Cloud workers — no first-boot install
+
+Windows DevBoxes on [Cloud workers](/concepts/cloud-workers) launch from
+**ClusterCode-maintained golden images**: Windows and the standard tooling are
+already installed and baked into the image layer. The post-install disk ships
+inside the image, so the DevBox comes up at a working desktop **in seconds** —
+you never wait through a Windows install. This is the default, and the only, path
+on Cloud workers.
+
+### On your own (BYOM) worker — pay it once, then bake your own golden
+
+On a [BYOM worker](/concepts/workers) with Windows-VM support, the **first** time
+you boot a fresh Windows DevBox from the base, it runs the one-time Windows
+first-boot install (~20–30 minutes — a genuine Windows install from scratch).
+
+You only pay that once. [Snapshot the configured Windows DevBox into your own
+golden image](/guides/build-image-from-container): every future launch on your
+worker then **skips the first-boot install** and comes up at a working desktop
+fast, because the post-install disk is baked into your image. The same golden
+images run on both Cloud workers and BYOM workers that support Windows VMs.
+
+<Aside type="caution">
+  Snapshotting a Windows DevBox stops it briefly to capture a consistent disk, so
+  the snapshot is slower than a Linux one, and the resulting image only runs on
+  workers that support Windows VMs.
+</Aside>
+
+## Related
+
+- [Cloud workers](/concepts/cloud-workers) — canonical pricing + managed compute
+- [Build an Image from a Container](/guides/build-image-from-container) — bake a Windows golden image
+- [Visual testing](/guides/visual-testing) — see the UI render on the Windows desktop
+- [Containers](/concepts/containers)

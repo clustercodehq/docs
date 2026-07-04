@@ -1,54 +1,96 @@
 ---
 title: Runtime Catalog
-description: Available AI agent runtimes for your DevBoxes.
+description: What's inside a DevBox — AI runtimes, languages, terminal tools, the visual desktop, and how to bring your own image.
 ---
 
-ClusterCode supports multiple AI coding agents. Each runtime is a DevBox image with a specific agent pre-installed and configured.
+import { Aside } from '@astrojs/starlight/components';
 
-## Available Agents
+A **DevBox** is the machine an agent works on — a full container (or
+[Windows VM](/concepts/windows-containers)) with a coding agent, a real shell, your
+languages, and an optional graphical desktop. This page is the canonical reference
+for **what's in a DevBox** and what you can add.
 
-| Agent | Description | Plan |
-|-------|-------------|------|
-| **Claude Code** | Anthropic's Claude Code CLI for AI-assisted development | Starter+ |
-| **GitHub Copilot** | GitHub Copilot CLI agent | Starter+ |
-| **Codex** | OpenAI Codex CLI agent | Starter+ |
+## AI runtimes
 
-All agents are available on all plans. The difference between plans is resource limits (concurrent DevBoxes, workers), not agent access.
+Every DevBox ships with an AI coding agent. ClusterCode supports three engines
+today — Claude Code, Codex, and GitHub Copilot — with more coming.
+
+<Aside type="note">
+  We don't repeat the engine details here. See [Engines](/concepts/subagents) for
+  how each engine is billed and how it pauses, and
+  [Supported Agents](/reference/supported-agents) for the full capability matrix.
+</Aside>
+
+## Languages
+
+Add the languages you work in to a DevBox — Python, Go, .NET, Rust, Java, Ruby,
+PHP, and more — so the agent has the toolchain it needs without writing a
+Dockerfile. Select them when you configure the image; they're installed into the
+DevBox and ready to use.
+
+## Terminal tools
+
+Every DevBox comes with a real, comfortable shell out of the box:
+
+- **GitHub CLI** (`gh`)
+- **Neovim** (with NvChad)
+- **Oh My Posh** (shell prompt)
+- **Nerd Font** (terminal icons)
+- **Shell config** — sane history, readline, and tab completion
+
+Infrastructure dependencies are always present:
+
+- **Git, Node.js, tmux, curl**
+
+You can open the **live terminal** on any DevBox and drive it yourself — watch the
+agent work, jump in mid-task, or pair with it line by line.
+
+## Visual desktop
+
+DevBoxes can include a real graphical desktop, with
+VS Code and a Chromium that already has the Claude extension wired in. With the
+**Display** capability on, an agent can open your running app, see the rendered UI,
+and click through it.
+
+See [Visual testing](/guides/visual-testing) for the full capability, and note it
+works on [Windows DevBoxes](/concepts/windows-containers) too.
 
 ## Authentication
 
-Each agent requires its own API credentials:
+Each agent authenticates with its own credentials:
 
-| Agent | Required Credential |
-|-------|-------------------|
+| Agent | Required credential |
+|---|---|
 | Claude Code | Anthropic API key, Claude OAuth token, or platform credits |
 | GitHub Copilot | `COPILOT_GITHUB_TOKEN` + `GH_TOKEN` |
 | Codex | `OPENAI_API_KEY` |
 
-Credentials are configured in the orchestrator. See [Environment Variables](/reference/environment-variables).
+Credentials are configured in the orchestrator. See
+[Environment Variables](/reference/environment-variables).
 
-## Default Tools
+## Bring your own image (BYOI)
 
-Every DevBox includes these tools:
-- GitHub CLI (`gh`)
-- Oh My Posh (shell prompt)
-- Nerd Font (terminal icons)
-- Shell Config (bash history, readline, tab completion)
-- Neovim
+On Pro and Enterprise plans, you can build your own DevBox images to:
 
-Infrastructure dependencies (always present):
-- Git, Node.js, curl, tmux
-
-## Custom Runtimes (BYOI)
-
-On Pro and Enterprise plans, you can build your own DevBox images (Bring Your Own Image). This lets you:
 - Add project-specific dependencies
 - Pre-install language runtimes
 - Include proprietary tools
-- Configure custom shell environments
+- Configure a custom shell environment
 
-See [Custom Containerfile](/guides/custom-containerfile).
+See [Custom Containerfile](/guides/custom-containerfile). You can also
+[snapshot a configured DevBox into a reusable golden
+image](/guides/build-image-from-container) so future launches start from exactly
+the state you set up.
 
-## Supported Agents Matrix
+## Capability matrix
 
-See [Supported Agents](/reference/supported-agents) for the full capability matrix.
+For the full per-agent capability matrix, see
+[Supported Agents](/reference/supported-agents).
+
+## Related
+
+- [Engines](/concepts/subagents) — the engine table (not duplicated here)
+- [Visual testing](/guides/visual-testing)
+- [Windows Containers](/concepts/windows-containers)
+- [Cloud workers](/concepts/cloud-workers) — where a DevBox can run
+- [Build an Image from a Container](/guides/build-image-from-container)

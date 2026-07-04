@@ -1,0 +1,137 @@
+---
+title: Multi-Agent Runs
+description: One run, a whole team of agents — Claude plans, Codex reviews, Copilot tests, Claude fixes — each doing the step it's best at, one at a time.
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+Real work isn't one prompt, so a ClusterCode Run doesn't have to be one agent. Hand
+a Run a job and it can run like a team: one agent plans, another reviews, a third
+writes the tests, and the findings route back to whoever should fix them — all in a
+single Run, on one DevBox.
+
+This works the same way in both [Runs](/concepts/runs) and
+[Schedules](/concepts/schedules).
+
+<Aside type="note">
+  Multi-agent orchestration is driven by **[Nova](/concepts/nova)**,
+  ClusterCode's automation agent — it's Nova that maps the names to engines,
+  threads the sessions, and routes the findings. Nova's coordination consumes
+  **AI credits**, or your **connected AI subscription or key** when you've wired
+  one up in your settings (the platform-credit vs bring-your-own cascade). See
+  [AI Credits](/guides/ai-credits). The in-container engines bill against their
+  own auth.
+</Aside>
+
+## You write plain language, not pseudo-code
+
+You don't call APIs or write any special syntax. You describe the
+relay the way you'd brief a team, naming the agents by their familiar names —
+"Claude," "Codex," "Copilot" — and ClusterCode does the wiring:
+
+- It **maps each name to an engine** — "Claude" → the Run's Claude engine,
+  "Codex" → Codex, "Copilot" → GitHub Copilot. (See [Engines](/concepts/subagents)
+  for the engine table.)
+- It **threads sessions** so "keep the same Claude session" actually resumes that
+  agent's context instead of starting fresh.
+- It **routes findings** from a review step back to the right agent to act on.
+
+## A worked example
+
+Here's a real orchestration instruction — the kind you'd paste straight into the
+**+ New run** composer. It hands a small coding task to a team of three engines and
+takes it end to end:
+
+```text
+Go to the your-org/your-repo repo in the container, find the OPEN issue labelled
+`runs-multiagent`, read it, and deliver it end to end. Work it like a small team —
+don't write the code yourself, hand each step to the right engine and keep context
+flowing between them:
+
+1. Have Claude plan the change — where the code goes, the approach, the test cases.
+   Just a short plan, no code yet.
+2. Have Codex review that plan for gaps and correctness. Keep it brief.
+3. Have Claude implement it per the reviewed plan — keep the same Claude session so
+   it still has the plan in context.
+4. Have Copilot write and run the unit tests, and report pass/fail.
+5. Have Codex code-review the implementation and the tests — keep its earlier review
+   session so it remembers the plan it reviewed — and label each finding as a TEST
+   or an IMPLEMENTATION issue.
+6. If there are implementation findings, have Claude fix them in its implementation
+   session and re-run the tests until they're green. If there are only test findings,
+   hand those to Copilot instead.
+7. Open a PR against main referencing the issue, then report a per-stage summary
+   (plan → review → implement → tests → review → fix).
+
+GH_TOKEN is already in the environment — never run `gh auth login`. If an engine
+can't authenticate or is unavailable, stop and report — don't loop.
+```
+
+Notice there's no special syntax. "Have Claude plan," "have Codex review," "keep
+the same Claude session" — that plain language is the whole interface. ClusterCode
+resolves the names to engines, picks up the right session to resume, and routes the
+review findings.
+
+## How the pieces fit together
+
+### Per-engine session resume
+
+Each agent keeps its **own** session, so context doesn't get re-explained:
+
+- The **plan** stays in Claude's session — when step 3 says "keep the same Claude
+  session," the implementation step picks up with the plan already in context.
+- The **review** stays in Codex's session — when step 5 says "keep its earlier
+  review session," Codex still remembers the plan it reviewed back in step 2.
+
+So Claude is resumed across the plan → implement → fix steps, and Codex is resumed
+across its review → re-review steps — each agent threading its own context forward.
+
+### TEST vs IMPLEMENTATION routing
+
+Step 5 asks Codex to label each finding as a **TEST** issue or an
+**IMPLEMENTATION** issue, and step 6 routes on that label:
+
+- **Implementation** findings go back to **Claude's implementation session** — it
+  fixes them and re-runs the tests until they're green.
+- **Test-only** findings go to **Copilot** — the agent that owns the tests.
+
+The label decides who acts, so a review comment lands with the agent best placed to
+fix it.
+
+### It's sequential — a relay, not a race
+
+This is one agent at a time, each picking up where the last left off — a relay.
+
+<Aside type="caution">
+  Multi-agent runs are **not** parallel and **not** best-of-N. ClusterCode does not
+  race agents against each other and crown a winner; it runs them one at a time and
+  hands the baton along. Exactly one subagent is active at any moment.
+</Aside>
+
+## Trying it
+
+<Steps>
+
+1. Open **+ New run** and paste an orchestration instruction like the example above
+   (point it at your own repo and task).
+
+2. Set the **target** — a worker and an image. The combined image carries all three
+   engines (Claude, Codex, Copilot); make sure each is authenticated before a long
+   run so it doesn't fail partway.
+
+3. **Start Run** and watch the stages land in order — plan → review → implement →
+   tests → review → fix → PR — each on its own engine, resuming the right session.
+
+</Steps>
+
+<Aside type="tip">
+  An agent in the relay can also [visually test](/guides/visual-testing) — e.g. have
+  Claude open the running app on the DevBox desktop and check the render as part of
+  the run.
+</Aside>
+
+## Related
+
+- [Engines](/concepts/subagents) — how each engine is billed and how it pauses
+- [Runs](/concepts/runs) · [Schedules](/concepts/schedules)
+- [Visual testing](/guides/visual-testing) — let an agent in the relay see the screen
