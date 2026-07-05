@@ -5,7 +5,7 @@ export default defineConfig({
   site: 'https://docs.clustercode.io',
   integrations: [
     starlight({
-      title: 'ClusterCode | Docs',
+      title: 'ClusterCode Docs',
       favicon: '/favicon.ico',
       logo: {
         dark: './src/assets/logo-dark.png',
