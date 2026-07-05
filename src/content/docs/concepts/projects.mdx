@@ -77,9 +77,13 @@ schedule, or DevBox you start there inherits it — no copy-pasting into each
 launch.
 
 <Aside type="note">
-  Secret values are write-only: they're **never shown to the AI agent** and
-  never stored in the repository. The agent gets the variables in its
-  environment; it can't read them back out or leak them into a commit.
+  Secret values are **write-only in the UI and API** — encrypted at rest, never
+  shown again after you save them, and never placed in the agent's prompt or your
+  repository. At launch, though, they're injected into the DevBox as ordinary
+  environment variables — that's the whole point: the agent uses them to do the
+  work. So an env var is readable *inside* the DevBox, and you should scope each
+  one like any credential you'd hand to CI: least privilege, rotatable, and a
+  test key wherever a real one isn't needed.
 </Aside>
 
 Env vars are the **first of a family of project-level defaults** — settings the
