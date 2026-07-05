@@ -107,6 +107,20 @@ times, duration, the DevBox(s) used, and a one-paragraph summary of everything
 the Run did. A finished Run can leave its DevBox up so a follow-up continues
 where it left off.
 
+## Sessions that follow you
+
+A Run isn't pinned to the tab you started it in. The work runs on the DevBox,
+not in your browser — so closing the browser doesn't stop the Run, and reopening
+it from another machine reattaches the live timeline and terminal with the full
+context intact.
+
+Every [engine](/concepts/subagents) in the Run keeps its own **durable,
+resumable session** on the DevBox. That's what makes a
+[multi-agent relay](/guides/multi-agent-runs) work — each engine's context is
+threaded forward across hand-offs — and it's what lets you walk away mid-run and
+pick up exactly where you left off, from any browser, later. The session lives
+with the DevBox for as long as the DevBox is up.
+
 ## It can pause and ask you
 
 The headline difference from a Schedule: a Run can **pause mid-flight and ask
