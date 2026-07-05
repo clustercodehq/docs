@@ -4,6 +4,9 @@ description: One run, a whole team of agents — Claude plans, Codex reviews, Co
 ---
 
 import { Aside, Steps } from '@astrojs/starlight/components';
+import ThemedImage from '../../../components/ThemedImage.astro';
+import multiAgentDark from '../../../assets/screenshots/feature-multi-agent-dark-20260629.png';
+import multiAgentLight from '../../../assets/screenshots/feature-multi-agent-light-20260629.png';
 
 Real work isn't one prompt, so a ClusterCode Run doesn't have to be one agent. Hand
 a Run a job and it can run like a team: one agent plans, another reviews, a third
@@ -12,6 +15,13 @@ single Run, on one DevBox.
 
 This works the same way in both [Runs](/concepts/runs) and
 [Schedules](/concepts/schedules).
+
+<ThemedImage
+  dark={multiAgentDark}
+  light={multiAgentLight}
+  title="Runs"
+  alt="A multi-agent Run: Claude plans the change, Codex reviews the plan, Claude implements it, and Copilot writes and runs the tests — each hand-off a stage in the same Run, on one DevBox, with each engine resuming its own session."
+/>
 
 <Aside type="note">
   Multi-agent orchestration is driven by **[Nova](/concepts/nova)**,
