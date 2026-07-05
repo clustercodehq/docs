@@ -4,6 +4,9 @@ description: A Project groups the DevBoxes, runs, and schedules behind one effor
 ---
 
 import { Aside, CardGrid, LinkCard } from '@astrojs/starlight/components';
+import ThemedImage from '../../../components/ThemedImage.astro';
+import projectDark from '../../../assets/screenshots/project-dashboard-dark-20260705.png';
+import projectLight from '../../../assets/screenshots/project-dashboard-light-20260705.png';
 
 A **Project** is the workspace dashboard for one thing you're working on — *the
 billing refactor*, *the v2 migration*, *the flaky-test cleanup*. Instead of
@@ -17,6 +20,13 @@ A Project is a lightweight **grouping**, not a hierarchy. Every
 project — and resources are perfectly happy with no project at all. You reach
 for a Project when an effort grows enough moving parts that a dedicated
 dashboard beats scrolling the global lists.
+
+<ThemedImage
+  dark={projectDark}
+  light={projectLight}
+  title="Project"
+  alt="A project dashboard for one effort: a scoped inbox of notifications for just this project, collapsible sections listing the project's linked DevBoxes, runs, and schedules with create and view actions, and a project-level environment variables section for the vars every launch inherits."
+/>
 
 ## The project dashboard
 
