@@ -835,8 +835,9 @@ header.header {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding-top: 0.5rem;
-  gap: 0.25rem;
+  /* No top padding or inter-item gap — match the shared app sidebar, whose
+     collapsed rail is a flush stack of 48px cells starting at the very top
+     (the first icon is level with the top of the rail, not inset). */
 }
 
 .collapsed-icon-item {
@@ -863,20 +864,32 @@ header.header {
   color: var(--sl-color-text);
 }
 
+/* Active collapsed icon — match the portal/orchestrator shared sidebar (and the
+   expanded state above): the VSCode accent blue, NOT the docs cyan brand accent,
+   and a full-height 2px left bar with a 4px rounded-right edge (not a short
+   centered stub). Keeps the icon rail's active treatment identical across all
+   three apps. */
 .collapsed-icon-item.active {
-  color: var(--sl-color-accent);
+  color: #005fb8;
+}
+
+:root[data-theme='dark'] .collapsed-icon-item.active {
+  color: #569cd6;
 }
 
 .collapsed-icon-item.active::before {
   content: '';
   position: absolute;
   left: 0;
-  top: 50%;
-  transform: translateY(-50%);
+  top: 0;
   width: 2px;
-  height: 24px;
-  background: var(--sl-color-accent);
-  border-radius: 0 1px 1px 0;
+  height: 100%;
+  background: #005fb8;
+  border-radius: 0 4px 4px 0;
+}
+
+:root[data-theme='dark'] .collapsed-icon-item.active::before {
+  background: #569cd6;
 }
 
 .collapsed-logo {
