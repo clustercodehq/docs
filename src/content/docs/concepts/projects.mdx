@@ -66,6 +66,14 @@ launched in the project, **at launch time**. Set `DATABASE_URL`,
 schedule, or DevBox you start there inherits it — no copy-pasting into each
 launch.
 
+Project variables are the **last word**: on a name collision they override
+your personal [global variables](/concepts/settings#environment-variables)
+and even credential-mapped names like `GH_TOKEN`. That's intentional — set a
+personal default globally, override it where a specific project needs a
+different value. See
+[sources & precedence](/reference/environment-variables/#sources--precedence)
+for the full injection order.
+
 <Aside type="note">
   Secret values are write-only: they're **never shown to the AI agent** and
   never stored in the repository. The agent gets the variables in its

@@ -1,0 +1,69 @@
+---
+title: Agent sign-in
+description: Sign the AI coding agents (Claude, Codex, Copilot) into a worker with the per-worker wizard, so runs and schedules can use them.
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+AI agents are signed in **per worker**: each worker keeps its own agent
+credentials on shared config volumes, so a login done once persists across
+every DevBox that worker launches — including the ones runs and schedules
+create for you. This guide walks the wizard that sets that up.
+
+## Starting the wizard
+
+Three ways in, all landing on the same flow:
+
+- **From a worker** — open any worker's page (or a cloud worker's) and click
+  **Manage agent sign-in**. This is the canonical entry point.
+- **From a failed run or schedule** — when an execution fails because an
+  agent isn't authenticated, the remediation banner links straight into the
+  wizard for the right worker.
+- **Directly** — open `/authenticate` in the console and pick a worker.
+
+## The wizard
+
+<Steps>
+
+1. **Agent selection.** Pick which agents to sign in — Claude Code, Codex,
+   GitHub Copilot. You can pre-register credentials instead of signing in
+   interactively: an Anthropic API key or Claude OAuth token under
+   **Settings → Nucleus**, or an OpenAI API key / Copilot GitHub token in the
+   **Agent tokens** step at the end of this wizard.
+
+2. **Build environment.** The wizard builds (or reuses) a DevBox on the
+   worker with the selected agents installed. Credentials created inside it
+   persist across DevBox recreation via the shared config volumes.
+
+3. **Sign each agent in.** For terminal-login agents the wizard embeds a
+   live terminal seeded with the right command (for example
+   `claude auth login`). A **Test** button verifies the login by running the
+   engine once and updating the live status badge.
+
+4. **Summary.** Live status for every selected agent, plus two credential
+   groups you can fill in right here so the *next* failure never happens:
+
+   - **Service access** — the GitHub / Azure DevOps / GitLab / Jira tokens
+     your runs need to reach repositories and tickets. Same store as
+     **Settings → Environment Variables**; see the
+     [environment-variables reference](/reference/environment-variables/#service-access-tokens).
+   - **Agent tokens** — the OpenAI API key (Codex) and Copilot GitHub token
+     (Copilot) for header-based agent auth.
+
+</Steps>
+
+<Aside type="tip">
+  Agent sign-in and service tokens are the two halves of a ready worker: the
+  agent must be able to **think** (signed in) and to **reach your code**
+  (service tokens). The wizard's summary covers both so a brand-new setup is
+  one visit, not two failures.
+</Aside>
+
+## Checking status later
+
+- Worker, cloud-worker, and DevBox cards show a per-agent **auth status
+  badge**; runs and schedules surface it in their create panels.
+- A run or schedule that fails on agent auth pauses (schedules auto-pause
+  after two consecutive auth failures) and links back to the wizard.
+- Asking [Nucleus](/concepts/nucleus) about a worker's readiness reads the
+  same live status.

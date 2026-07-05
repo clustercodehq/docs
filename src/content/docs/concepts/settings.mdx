@@ -1,29 +1,48 @@
 ---
 title: Settings
-description: Your per-user ClusterCode preferences — secrets and BYOK keys, Nucleus behavior, appearance, DevBox display, notifications, and version info.
+description: Your per-user ClusterCode preferences — environment variables and service tokens, Nucleus behavior and BYOK keys, appearance, DevBox display, notifications, and version info.
 ---
 
 import { Aside } from '@astrojs/starlight/components';
 
 **Settings** holds your preferences for the orchestrator — open it from the
-sidebar. Most of it is **per-user** (your secrets, Nucleus instructions,
-theme); the **DevBox Security** profiles are **tenant-level** — shared across
-your team. The page is organised into the sections below (the right-hand nav
-jumps between them).
+sidebar. Most of it is **per-user** (your tokens and variables, Nucleus
+instructions, theme); the **DevBox Security** profiles are **tenant-level** —
+shared across your team. The page is organised into the sections below (the
+right-hand nav jumps between them).
 
-## Secrets
+## Environment Variables
 
-API keys and tokens for external services. Values are **encrypted at rest** and
-are only ever handed to your running DevBox instances and Nucleus — never
-shown back to you once saved (you replace a value by pasting a new one).
+Everything injected into the DevBoxes you launch, in one honest place. Two
+groups:
 
-Each credential you add can be switched on for one or both **uses**:
+- **Service access** — the provider tokens your runs need to reach
+  repositories and tickets: GitHub, Azure DevOps, GitLab, and Jira. Each row
+  names the env var it injects (`GH_TOKEN`, `AZURE_DEVOPS_PAT`,
+  `GITLAB_TOKEN`, `JIRA_API_TOKEN`) and the scopes the token needs. A
+  configured token shows a check mark; a missing one is exactly what makes a
+  run against that provider **skip before spending AI tokens** — see
+  [run readiness & skip reasons](/reference/environment-variables/#run-readiness--skip-reasons).
+- **Global variables** — free-form variables injected into **every** DevBox
+  you launch. Mark a variable **secret** to encrypt it at rest and redact its
+  value from run traces. [Project](/concepts/projects) variables override
+  global ones on a name collision — see
+  [sources & precedence](/reference/environment-variables/#sources--precedence).
 
-- **Use for Nucleus (Bring Your Own Key)** — route Nucleus's own requests
-  through your key. See [Bring your own key](#bring-your-own-key-byok) below.
-- **Use for DevBox authentication** — make the token available **inside** the
-  DevBoxes you launch (for example a GitHub token so an agent can push and open
-  PRs).
+Values are **encrypted at rest** and are only ever handed to your running
+DevBox instances — secret values are never shown back to you once saved (you
+replace a value by pasting a new one).
+
+Agent sign-in (Claude, Codex, Copilot) is **per worker**, not per user — set
+it up from any worker's page via **Manage agent sign-in**, or see the
+[agent sign-in guide](/guides/agent-sign-in).
+
+## Nucleus
+
+Customize [Nucleus](/concepts/nucleus)'s behavior with a personal instruction
+file — a **`NUCLEUS.md`**, conceptually like a `CLAUDE.md`. Use it to set tone,
+standing preferences, or project context the assistant should always keep in
+mind. You can edit it inline and **reset** it back to the default at any time.
 
 ### Bring your own key (BYOK)
 
@@ -36,16 +55,13 @@ beyond your plan** — or to run entirely on your own account. Two options:
 - **Claude OAuth token** — routes Nucleus through your **personal Claude Code
   subscription**. Make sure your usage complies with Anthropic's terms.
 
-Paste the key under **Secrets**, then enable **Use for Nucleus (Bring Your Own
-Key)**. See also [AI Credits](/guides/ai-credits) for how plan allowance and BYOK
-interact.
+Both live here under **Settings → Nucleus**, each with two toggles:
 
-## Nucleus
-
-Customize [Nucleus](/concepts/nucleus)'s behavior with a personal instruction
-file — a **`NUCLEUS.md`**, conceptually like a `CLAUDE.md`. Use it to set tone,
-standing preferences, or project context the assistant should always keep in
-mind. You can edit it inline and **reset** it back to the default at any time.
+- **Use for Nucleus (Bring Your Own Key)** — route Nucleus's own requests
+  through your key. See also [AI Credits](/guides/ai-credits) for how plan
+  allowance and BYOK interact.
+- **Use for DevBox authentication** — inject the key **inside** the DevBoxes
+  you launch, for headless agent auth (no Remote Control support).
 
 ## Appearance
 
