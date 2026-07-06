@@ -1,0 +1,118 @@
+---
+title: Session persistence
+description: Authenticate once and let your AI-engine logins, sessions, and settings follow you to any DevBox on any worker — encrypted end-to-end, with your code never leaving your machine on self-hosted workers.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+**Session persistence** means your agent remembers everything, everywhere.
+Authenticate an AI engine once — Claude, Codex, Copilot — and your logins,
+session history, and settings automatically follow you to the next
+[DevBox](/concepts/containers), on whatever [worker](/concepts/workers) happens
+to run it. No re-logging-in, no lost history when a DevBox stops and a new one
+starts somewhere else.
+
+Under the hood, ClusterCode syncs the config that lives in your DevBox's home
+directory — `~/.claude`, `~/.codex`, your `gh` credentials, and the like — so a
+fresh DevBox picks up right where the last one left off.
+
+## What follows you
+
+- **Engine logins** — the OAuth sessions and tokens your AI engines write to
+  disk, so you stay authenticated across DevBoxes.
+- **Session history** — your Claude / Codex / Copilot transcripts, so the agent
+  keeps its memory of past work.
+- **Settings** — your per-engine configuration and house-style files.
+- **Workspace** *(cloud workers only)* — the files in a DevBox's `/workspace`,
+  restored when you recreate a DevBox of the same name.
+
+## How it behaves per worker type
+
+How much follows you depends on **where** the DevBox runs.
+
+| | **Cloud workers** | **Self-hosted (BYOM) workers** |
+|---|---|---|
+| Engine logins & sessions | ✅ Synced | ✅ Synced *(opt-in)* |
+| Settings & config | ✅ Synced | ✅ Synced *(opt-in)* |
+| Workspace files (`/workspace`) | ✅ Restored on same-name recreate | ❌ Never leaves your machine |
+| Default | On | Off |
+
+**Cloud workers** — ClusterCode hosts the machine, so both your config **and**
+your workspace persist. Stop a DevBox and recreate one with the same name and
+its files come back with it.
+
+**Self-hosted (BYOM) workers** — machines you own and run yourself. Here
+ClusterCode syncs **only** your config and credentials, never your workspace.
+**Your code never leaves your machine.** Because it's your hardware, syncing
+even config from a self-hosted worker is **opt-in** — a separate toggle that's
+**off by default**.
+
+<Aside type="note">
+  Persistence is about **new** DevBoxes. A running DevBox keeps working from the
+  files it started with; the next DevBox you launch is the one that picks up
+  your synced sessions.
+</Aside>
+
+## Settings and defaults
+
+Find these under **Settings → Session persistence**.
+
+- **Persist my sessions** — *default **on***. Your agent config and workspace
+  are saved when a DevBox stops and restored into the next one. Turn it off to
+  start every new DevBox completely fresh.
+- **Include my self-hosted workers** — *default **off***. Also sync config and
+  sessions (never workspace files) from DevBoxes running on your own BYOM
+  machines. Has no effect while *Persist my sessions* is off.
+- **Delete stored data** — permanently removes everything ClusterCode has stored
+  for you. See the recovery window below.
+
+Config changes sync within about **five minutes**, and again whenever a DevBox
+stops. Workspace files are captured when a DevBox stops.
+
+## Privacy & security
+
+Session persistence is built so that ClusterCode's storage never sees your
+data in the clear.
+
+- **Encrypted end-to-end.** Everything is encrypted with a **per-user key**
+  *before* it ever leaves the worker. What ClusterCode stores is ciphertext —
+  the storage service alone can't read it.
+- **Scoped, short-lived access.** Workers receive only short-lived, tightly
+  scoped credentials to write your data, and never hold the account keys.
+- **Your code stays put on self-hosted workers.** Workspace files from BYOM
+  workers are never uploaded — only config, and only if you opt in.
+- **Delete on demand.** *Delete stored data* wipes your stored config and
+  workspaces. Deletes have a **14-day recovery window** so an accidental
+  deletion (or a bad sync) can be undone before it's gone for good.
+
+## FAQ
+
+**Does my code leave my machine on a self-hosted worker?**
+No. On self-hosted (BYOM) workers, only your engine config and credentials are
+ever synced — and only when you opt in. Your workspace files (your code) never
+leave your machine.
+
+**How fast do my changes sync?**
+Config syncs within roughly **five minutes** of a change, and again every time a
+DevBox stops. Workspace files are captured at stop.
+
+**How do I wipe everything ClusterCode has stored for me?**
+Go to **Settings → Session persistence** and choose **Delete stored data**. It
+removes all your stored config and workspaces. There's a **14-day recovery
+window** in case you change your mind.
+
+**Will turning persistence off delete what's already stored?**
+No — turning off *Persist my sessions* just stops future syncing; new DevBoxes
+start fresh. Use **Delete stored data** if you also want to remove what's
+already stored.
+
+**Is my session tied to one specific worker?**
+No. That's the point — any worker can serve any DevBox by restoring your synced
+sessions, so you're never stranded if a particular machine is busy or offline.
+
+## Related
+
+- [Settings](/concepts/settings) — where the Session persistence controls live
+- [DevBoxes](/concepts/containers) — the environments your sessions follow you across
+- [Cloud workers](/concepts/cloud-workers) — managed machines with full config + workspace persistence
+- [Workers](/concepts/workers) — self-hosted (BYOM) vs managed compute
