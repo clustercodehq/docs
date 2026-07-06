@@ -96,6 +96,17 @@ leave your machine.
 Config syncs within roughly **five minutes** of a change, and again every time a
 DevBox stops. Workspace files are captured at stop.
 
+**Why does my workspace only sync when a DevBox stops?**
+A workspace snapshot belongs to a specific DevBox *by name*, and the only thing
+that ever restores one is recreating a DevBox with that same name — which can't
+happen while the original is still running. Syncing mid-run would upload data
+that nothing could ever read. Stop is also the one moment the workspace is
+guaranteed quiet: no half-finished git operations or partially-written files
+end up in the snapshot. (Workspaces are also orders of magnitude larger than
+config, so uploading them continuously would be wasteful.) The trade-off is
+honest: if a machine dies mid-run, workspace changes since launch are lost,
+while your config and logins lose at most about five minutes.
+
 **How do I wipe everything ClusterCode has stored for me?**
 Go to **Settings → Session persistence** and choose **Delete stored data**. It
 removes all your stored config and workspaces. There's a **14-day recovery
