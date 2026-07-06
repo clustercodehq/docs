@@ -52,6 +52,7 @@ export default defineConfig({
             { label: 'Runtime Catalog', slug: 'concepts/runtime-catalog' },
             { label: 'Bring Your Own Subscription', slug: 'concepts/byo-subscription' },
             { label: 'Settings', slug: 'concepts/settings' },
+            { label: 'Session persistence', slug: 'concepts/session-persistence' },
             { label: 'Security Profiles', slug: 'concepts/security-profiles' },
           ],
         },
