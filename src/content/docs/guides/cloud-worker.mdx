@@ -33,20 +33,27 @@ Cloud worker workers appear automatically in your dashboard. No CLI setup, no re
 
 ## Compute Allowance
 
-Each plan includes a monthly compute allowance:
+Each plan includes a monthly allowance of **credits** (real dollars) toward
+compute, and **compute is metered by the second** — you pay only for the exact time
+a DevBox runs, at the [per-tier rate](/concepts/cloud-workers#pricing).
 
-| Plan | Compute Allowance |
-|------|------------------|
-| Starter | 10 hrs/mo |
-| Pro | 50 hrs/mo |
-| Enterprise | 200 hrs/mo |
+| Plan | Included compute credits |
+|------|--------------------------|
+| Starter | $2 / mo |
+| Pro | $6 / mo |
+| Enterprise | $10 / mo |
 
-Top-ups available on Pro and Enterprise plans when you exceed your allowance.
+How long that lasts depends on the tier you run. As an *illustration only*, $2 of
+credit is roughly 33 hours on the cheapest tier (Linux Small at $0.06/hr) and
+proportionally less on larger or Windows tiers — but you're billed per second of
+real run time, not in hour blocks. Top up a wallet to keep running past the
+allowance at the same metered rate. For the full per-tier price table see
+[Cloud workers](/concepts/cloud-workers#pricing).
 
 ## Supported DevBox Types
 
 Cloud worker workers support:
-- **Linux containers** — all standard ClusterCode runtimes
+- **Linux DevBoxes** — all standard ClusterCode runtimes
 - **Windows DevBoxes** — .NET, desktop apps, Visual Studio workflows
 
 For Windows, you can [snapshot a configured DevBox into a golden image](/guides/build-image-from-container) so future launches skip the 20–30 minute first-boot install and reach a working desktop in seconds.

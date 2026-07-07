@@ -1,0 +1,93 @@
+---
+title: Cloud workers
+description: Managed compute for agent runs — Linux or Windows DevBoxes, metered by the second, with nothing to provision. The canonical Cloud workers pricing.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+A **Cloud worker** is a [DevBox](/concepts/runtime-catalog) that ClusterCode hosts
+and meters by the hour, so you can run a fleet of agents without owning a single
+machine. It's the same DevBox you'd run on your own hardware with
+[BYOM](/concepts/workers) — same image, same live terminal, same
+[visual desktop](/guides/visual-testing) — just running on infrastructure we
+manage.
+
+## Why managed compute
+
+Best-of-N parallel agents, overnight [Schedules](/concepts/schedules), a dozen
+DevBoxes at once — they all need machines, and most people don't have a rack of
+them sitting idle. Cloud workers are the on-ramp: spin up Linux DevBoxes from
+**$0.06/hour**, or boot a real [Windows VM DevBox](/concepts/windows-containers)
+when your stack needs one. Outgrow the cloud and you can point the exact same
+DevBox at your own machines with BYOM — nothing in your setup changes.
+
+## Pricing
+
+This is the canonical Cloud workers price list. Rates are quoted per hour but
+**billed by the second** of actual run time, charged against your credits and then
+your wallet top-up.
+
+| Tier | OS | vCPUs | Memory | Price / hour |
+|---|---|---|---|---|
+| Linux Small | Linux | 1 | 2 GB | **$0.06** |
+| Linux Medium | Linux | 2 | 4 GB | **$0.12** |
+| Linux Large | Linux | 4 | 8 GB | **$0.24** |
+| Windows Small | Windows | 2 | 6 GB | **$0.18** |
+| Windows Medium | Windows | 4 | 8 GB | **$0.24** |
+| Windows Large | Windows | 6 | 10 GB | **$0.48** |
+
+<Aside type="note">
+  Windows tiers run a real Windows VM under the hood, so they carry more
+  memory overhead and a higher hourly rate than the equivalent Linux tier. See
+  [Windows Containers](/concepts/windows-containers) for what that gets you.
+</Aside>
+
+## What's included on Starter
+
+Starter is **$9.99/month** and includes **$4 in credits** — split across AI
+assistance and compute. Credits are real dollars, not mystery units, and you
+always see the meter.
+
+**Compute is metered by the second.** You pay only for the exact time a DevBox is
+actually running, charged against your credits at the per-tier rate in the table
+above. Stop the DevBox and the meter stops — there's no hourly rounding. When your
+credits run out, top up a wallet and keep running at the same metered rate.
+
+<Aside type="tip">
+  The $/hr figures above are the **rate**; billing is **per second** of actual run
+  time. AI assistance is metered **separately** from compute, and both draw from
+  your credits. See [Plans &amp; Limits](/reference/plans-and-limits) and the
+  [Cloud worker guide](/guides/cloud-worker) for per-plan details.
+</Aside>
+
+## How billing works
+
+- **Metered by the second** — you pay only for the exact time a DevBox is actually
+  running, at the per-tier rate above. Stop it and the meter stops; no hourly
+  rounding.
+- **Credits first, then wallet** — each plan includes monthly credits; once
+  they're spent, usage draws from your wallet top-up at the metered rate.
+- **Same DevBox, your machines or ours** — move any workload between Cloud workers
+  and your own [BYOM workers](/concepts/workers) without changing the image or the
+  run.
+
+## Measured launch time
+
+Launching a DevBox from a locally-built [golden
+image](/guides/build-image-from-container) is fast — the pre-built disk skips the
+setup work — but we measure that launch time live rather than quote a number we
+haven't timed.
+
+<Aside type="note" title="Launch time is measured, not asserted">
+  We don't publish a launch-from-image speed here. The number is measured live in
+  the demo and filled in once we've timed it in front of you, rather than
+  asserted up front.
+</Aside>
+
+## Related
+
+- [Windows Containers](/concepts/windows-containers) — real Windows VM DevBoxes
+- [Workers](/concepts/workers) — self-hosted (BYOM) vs managed compute
+- [Cloud worker guide](/guides/cloud-worker) — selecting a Cloud worker and per-plan allowance
+- [Plans &amp; Limits](/reference/plans-and-limits)
+- [Build an Image from a Container](/guides/build-image-from-container)

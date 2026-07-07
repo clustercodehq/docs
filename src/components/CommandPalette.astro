@@ -14,8 +14,8 @@ const groups = [
     label: 'Concepts',
     icon: 'puzzle',
     items: [
-      { title: 'Workers', desc: 'Machines that run containers', href: '/concepts/workers/' },
-      { title: 'Containers', desc: 'Isolated execution environments', href: '/concepts/containers/' },
+      { title: 'Workers', desc: 'Machines that run DevBoxes', href: '/concepts/workers/' },
+      { title: 'DevBoxes', desc: 'Isolated execution environments', href: '/concepts/containers/' },
       { title: 'Nucleus', desc: 'AI coding agent', href: '/concepts/nucleus/' },
       { title: 'Tickets', desc: 'Work items from issue trackers', href: '/concepts/tickets/' },
       { title: 'Runtime Catalog', desc: 'Available runtime images', href: '/concepts/runtime-catalog/' },
@@ -25,7 +25,7 @@ const groups = [
     label: 'Guides',
     icon: 'map',
     items: [
-      { title: 'Launch from Ticket', desc: 'Start a container from an issue', href: '/guides/launch-from-ticket/' },
+      { title: 'Launch from Ticket', desc: 'Start a DevBox from an issue', href: '/guides/launch-from-ticket/' },
       { title: 'Custom Containerfile', desc: 'Build your own runtime', href: '/guides/custom-containerfile/' },
       { title: 'Cron Workflows', desc: 'Scheduled automation', href: '/guides/cron-workflows/' },
       { title: 'Team Setup', desc: 'Invite and manage your team', href: '/guides/team-setup/' },
@@ -264,6 +264,24 @@ const allItems = groups.flatMap(g => g.items.map(item => ({ ...item, group: g.la
 
   .cp-overlay[hidden] {
     display: none;
+  }
+
+  /* Item 5 — open animation: overlay fades, panel pops (scale .96→1). Runs each
+     time the overlay un-hides. Exit is instant (hidden), matching core dialogs. */
+  .cp-overlay:not([hidden]) {
+    animation: cp-overlay-in 150ms ease-out;
+  }
+  .cp-overlay:not([hidden]) .cp-panel {
+    animation: cp-panel-in 150ms ease-out;
+  }
+
+  @keyframes cp-overlay-in {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+  }
+  @keyframes cp-panel-in {
+    from { opacity: 0; transform: scale(0.96); }
+    to   { opacity: 1; transform: scale(1); }
   }
 
   .cp-panel {

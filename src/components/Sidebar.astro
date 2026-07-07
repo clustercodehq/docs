@@ -25,3 +25,76 @@ const { sidebar } = Astro.locals.starlightRoute;
 <div class="md:sl-hidden">
 	<MobileMenuFooter />
 </div>
+
+<script is:inline>
+  /* Item 3 — animate the sidebar's <details> section groups open/closed with the
+     grid-template-rows 0fr↔1fr trick instead of the native instant snap. We wrap
+     each group's content (the sublist after <summary>) in a `.sl-collapse-anim`
+     grid wrapper, then drive the fold ourselves:
+       • opening: set <details open> first (so the content isn't UA-hidden), then
+         on the next frame flip the wrapper to data-open="true" → animates to 1fr.
+       • closing: flip the wrapper to data-open="false" → animates to 0fr, and
+         only set open=false once the transition ends (a timeout backstops it),
+         so the content stays visible for the whole close.
+     Native <details>/<summary> keyboard + a11y semantics are preserved — the
+     summary's Enter/Space still fires the same click we intercept, and `open`
+     ends up reflecting the real state. Under reduced motion we skip the JS and
+     let the browser toggle natively (the CSS transition is neutralised anyway). */
+  (function() {
+    if (typeof matchMedia !== 'undefined'
+        && matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+    function enhance(details) {
+      if (details.dataset.slCollapseReady) return;
+      var summary = details.querySelector(':scope > summary');
+      var content = details.querySelector(':scope > summary ~ *');
+      if (!summary || !content) return;
+      details.dataset.slCollapseReady = '1';
+
+      var wrapper = document.createElement('div');
+      wrapper.className = 'sl-collapse-anim';
+      content.parentNode.insertBefore(wrapper, content);
+      wrapper.appendChild(content);
+      wrapper.dataset.open = String(details.open);
+
+      var closeTimer;
+      summary.addEventListener('click', function(e) {
+        e.preventDefault();
+        window.clearTimeout(closeTimer);
+        if (details.open) {
+          // Closing: collapse the grid, then drop `open` after the transition.
+          wrapper.dataset.open = 'false';
+          var done = function() {
+            wrapper.removeEventListener('transitionend', onEnd);
+            details.open = false;
+          };
+          var onEnd = function(ev) {
+            if (ev.propertyName === 'grid-template-rows') done();
+          };
+          wrapper.addEventListener('transitionend', onEnd);
+          closeTimer = window.setTimeout(done, 320);
+        } else {
+          // Opening: reveal the content collapsed (0fr), force a synchronous
+          // reflow so the browser commits that frame, then expand to 1fr — this
+          // triggers the transition without relying on requestAnimationFrame
+          // (which is paused while the tab is backgrounded).
+          details.open = true;
+          wrapper.dataset.open = 'false';
+          void wrapper.offsetHeight;
+          wrapper.dataset.open = 'true';
+        }
+      });
+    }
+
+    function init() {
+      var groups = document.querySelectorAll('.sidebar details, #starlight__sidebar details');
+      groups.forEach(enhance);
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', init);
+    } else {
+      init();
+    }
+  })();
+</script>

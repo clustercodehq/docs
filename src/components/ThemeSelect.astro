@@ -46,6 +46,13 @@
     background-color: var(--sl-color-hairline-light);
   }
 
+  /* Keyboard focus ring — accent blue, matches core Button :focus-visible.
+     --docs-focus-ring is themed in custom.css (#005fb8 light / #569cd6 dark). */
+  .theme-toggle:focus-visible {
+    outline: 2px solid var(--docs-focus-ring, #005fb8);
+    outline-offset: 2px;
+  }
+
   .icon-sun,
   .icon-moon {
     display: none;

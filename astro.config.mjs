@@ -5,7 +5,7 @@ export default defineConfig({
   site: 'https://docs.clustercode.io',
   integrations: [
     starlight({
-      title: 'ClusterCode | Docs',
+      title: 'ClusterCode Docs',
       favicon: '/favicon.ico',
       logo: {
         dark: './src/assets/logo-dark.png',
@@ -42,13 +42,18 @@ export default defineConfig({
           collapsed: true,
           items: [
             { label: 'Workers', slug: 'concepts/workers' },
+            { label: 'Cloud workers', slug: 'concepts/cloud-workers' },
             { label: 'DevBoxes', slug: 'concepts/containers' },
+            { label: 'Windows Containers', slug: 'concepts/windows-containers' },
             { label: 'Projects', slug: 'concepts/projects' },
             { label: 'Nucleus', slug: 'concepts/nucleus' },
             { label: 'Observatory', slug: 'concepts/observatory' },
             { label: 'Tickets', slug: 'concepts/tickets' },
             { label: 'Runtime Catalog', slug: 'concepts/runtime-catalog' },
+            { label: 'Bring Your Own Subscription', slug: 'concepts/byo-subscription' },
             { label: 'Settings', slug: 'concepts/settings' },
+            { label: 'Session persistence', slug: 'concepts/session-persistence' },
+            { label: 'Security Profiles', slug: 'concepts/security-profiles' },
           ],
         },
         {
@@ -62,6 +67,7 @@ export default defineConfig({
             { label: 'Nova', slug: 'concepts/nova' },
             { label: 'Schedules', slug: 'concepts/schedules' },
             { label: 'Runs', slug: 'concepts/runs' },
+            { label: 'Multi-Agent Runs', slug: 'guides/multi-agent-runs' },
             { label: 'Engines', slug: 'concepts/subagents' },
           ],
         },
@@ -76,6 +82,7 @@ export default defineConfig({
             { label: 'Custom Containerfile', slug: 'guides/custom-containerfile' },
             { label: 'Build from DevBox', slug: 'guides/build-image-from-container' },
             { label: 'Windows Golden Image', slug: 'guides/windows-golden-image' },
+            { label: 'Visual Testing', slug: 'guides/visual-testing' },
             { label: 'Team Setup', slug: 'guides/team-setup' },
             { label: 'Agent sign-in', slug: 'guides/agent-sign-in' },
             { label: 'Cloud worker', slug: 'guides/cloud-worker' },

@@ -4,6 +4,9 @@ description: A Project groups the DevBoxes, runs, and schedules behind one effor
 ---
 
 import { Aside, CardGrid, LinkCard } from '@astrojs/starlight/components';
+import ThemedImage from '../../../components/ThemedImage.astro';
+import projectDark from '../../../assets/screenshots/project-dashboard-dark-20260705.png';
+import projectLight from '../../../assets/screenshots/project-dashboard-light-20260705.png';
 
 A **Project** is the workspace dashboard for one thing you're working on — *the
 billing refactor*, *the v2 migration*, *the flaky-test cleanup*. Instead of
@@ -17,6 +20,13 @@ A Project is a lightweight **grouping**, not a hierarchy. Every
 project — and resources are perfectly happy with no project at all. You reach
 for a Project when an effort grows enough moving parts that a dedicated
 dashboard beats scrolling the global lists.
+
+<ThemedImage
+  dark={projectDark}
+  light={projectLight}
+  title="Project"
+  alt="A project dashboard for one effort: a scoped inbox of notifications for just this project, collapsible sections listing the project's linked DevBoxes, runs, and schedules with create and view actions, and a project-level environment variables section for the vars every launch inherits."
+/>
 
 ## The project dashboard
 
@@ -75,9 +85,13 @@ different value. See
 for the full injection order.
 
 <Aside type="note">
-  Secret values are write-only: they're **never shown to the AI agent** and
-  never stored in the repository. The agent gets the variables in its
-  environment; it can't read them back out or leak them into a commit.
+  Secret values are **write-only in the UI and API** — encrypted at rest, never
+  shown again after you save them, and never placed in the agent's prompt or your
+  repository. At launch, though, they're injected into the DevBox as ordinary
+  environment variables — that's the whole point: the agent uses them to do the
+  work. So an env var is readable *inside* the DevBox, and you should scope each
+  one like any credential you'd hand to CI: least privilege, rotatable, and a
+  test key wherever a real one isn't needed.
 </Aside>
 
 Env vars are the **first of a family of project-level defaults** — settings the

@@ -88,6 +88,15 @@ here you set that **default**. You can still **override the profile or add extra
 allowed domains per DevBox at launch time**. Changing the tenant default
 requires the right role (e.g. owner/admin).
 
+## Session persistence
+
+Keep your engine logins, session history, and settings so a new DevBox picks up
+where the last one left off — on any worker. **Persist my sessions** is on by
+default; **Include my self-hosted workers** is off by default (config only, your
+code never leaves your machine); **Delete stored data** wipes everything with a
+14-day recovery window. See [Session persistence](/concepts/session-persistence)
+for the full picture, including how it's encrypted end-to-end.
+
 ## Notifications
 
 Control which **email** notifications you receive:

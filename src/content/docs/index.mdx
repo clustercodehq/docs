@@ -23,6 +23,7 @@ hero:
 import { Card, CardGrid } from '@astrojs/starlight/components';
 import AgentMeshBackground from '../../components/AgentMeshBackground.astro';
 import LandingHeaderScroll from '../../components/LandingHeaderScroll.astro';
+import LandingScrollReveal from '../../components/LandingScrollReveal.astro';
 
 <AgentMeshBackground />
 <LandingHeaderScroll />
@@ -81,3 +82,46 @@ down — on a schedule or on demand, all on infrastructure you own.
     [Engines →](/concepts/subagents)
   </Card>
 </CardGrid>
+
+<div class="automation-intro">
+
+## The platform
+
+Everything around the DevBox: your machines, your projects, your whole fleet — visible, portable, yours.
+
+</div>
+
+<CardGrid>
+  <Card title="DevBoxes in seconds" icon="rocket">
+    A full, isolated dev environment — repo, toolchain, agent — typically ready in under 10 seconds from a local image.
+
+    [DevBoxes →](/concepts/containers)
+  </Card>
+  <Card title="Bring Your Own Machine" icon="laptop">
+    A spare laptop, a home server, a $6 VPS — register it and it's part of your cluster. Or rent a Cloud worker.
+
+    [Workers →](/concepts/workers)
+  </Card>
+  <Card title="A team of agents" icon="puzzle">
+    Claude plans, Codex reviews, Copilot tests — one run, real handoffs, each engine keeping its own session.
+
+    [Multi-agent runs →](/guides/multi-agent-runs)
+  </Card>
+  <Card title="Projects" icon="open-book">
+    One workspace per effort — DevBoxes, runs, schedules, and environment variables every launch inherits.
+
+    [Projects →](/concepts/projects)
+  </Card>
+  <Card title="The Observatory" icon="star">
+    Your fleet as a navigable galaxy — workers as suns, DevBoxes as planets, schedules as comets.
+
+    [Observatory →](/concepts/observatory)
+  </Card>
+  <Card title="Sessions that follow you" icon="cloud-download">
+    Close the browser — the DevBox keeps running and the agent keeps its context. Resume from any machine.
+
+    [DevBoxes →](/concepts/containers)
+  </Card>
+</CardGrid>
+
+<LandingScrollReveal />
