@@ -37,8 +37,10 @@ Three ways in, all landing on the same flow:
 
 3. **Sign each agent in.** For terminal-login agents the wizard embeds a
    live terminal seeded with the right command (for example
-   `claude auth login`). A **Test** button verifies the login by running the
-   engine once and updating the live status badge.
+   `claude auth login`). Verification is **automatic** — after you finish the
+   login the wizard polls and flips the live status badge (a "Checking
+   authentication…" indicator shows while it checks), with a **Check now**
+   button to probe immediately.
 
 4. **Summary.** Live status for every selected agent, plus a reference link to
    **Settings → Environment Variables** for the stored agent secrets and

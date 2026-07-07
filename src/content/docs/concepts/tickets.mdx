@@ -40,7 +40,7 @@ For GitHub Issues, a personal access token increases rate limits:
 |--------------|-----------|
 | 60 requests/hour | 5,000 requests/hour |
 
-Add your GitHub token under [Settings → Secrets](/concepts/settings#secrets) and enable **Use for DevBox authentication**.
+Add your GitHub token under [Settings → Environment Variables → Service access](/concepts/settings#environment-variables) — once set, it's injected as `GH_TOKEN` and used for authenticated GitHub requests.
 
 ## Automation with Cron
 
