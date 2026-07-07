@@ -1246,3 +1246,22 @@ html.theme-transition *::after {
   height: 20px;
   flex-shrink: 0;
 }
+
+/* "Barely there" Beta badge — mirrors the orchestrator/portal beta label:
+   teal text, no fill, no border, uppercase. Teal = --accent-teal
+   (#388a34 light / #4ec9b0 dark), kept in sync via check:tokens. */
+.sl-badge.beta-badge,
+.beta-badge {
+  background-color: transparent;
+  border-color: transparent;
+  color: #388a34;
+  text-transform: uppercase;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  padding-inline: 0.15em;
+}
+
+:root[data-theme='dark'] .sl-badge.beta-badge,
+:root[data-theme='dark'] .beta-badge {
+  color: #4ec9b0;
+}
