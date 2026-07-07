@@ -58,6 +58,9 @@ different model than the one that wrote the code.
   stays human.
 </Aside>
 
+Want the gears? [How a Loop run works](/concepts/loop-run-lifecycle) walks
+this cycle step by step — every guardrail, check, and stop condition.
+
 ## Gates — the definition of done
 
 | Gate | What it checks |
@@ -66,12 +69,19 @@ different model than the one that wrote the code.
 | `build-succeeds` | Your build/typecheck command exits 0 |
 | `lint-clean` | Your lint command exits 0 |
 | `eval-script` | Any command you supply — your own eval, benchmark, or acceptance script |
+| `agent-check` | A plain-English assertion you write ("the migration is reversible") — the independent verifier rules on it with evidence |
 | `verifier-approves` | The independent verifier approves every gate, with evidence (always on) |
 
 Deterministic gates carry **fully-resolved pinned commands** — e.g.
 `npx vitest run --config vitest.config.ts`, never `npm test`. A command that
 dispatches through `package.json` scripts could be redefined by the code under
 test; a pinned command can't.
+
+`agent-check` gates work the other way around: instead of a command, you write
+a checkable assertion in plain English, and the **verifier** — never the maker
+— rules on it with evidence. The rubric lives in the loop's definition of
+done, not in the repository, so the maker can't edit it; and like all judgment
+gates it's only evaluated once every deterministic gate is green.
 
 ### Gates are defended, not just run
 
@@ -104,8 +114,11 @@ can't negotiate with it:
 
 Progress is measured by **fingerprinting each iteration's diff** (normalized so
 whitespace and comment churn don't count as change) together with the set of
-failing gates. Two equivalent attempts in a row and the loop stops — long
-before the budget would have.
+failing gates. The first equivalent attempt triggers a **replanning turn** — a
+short read-only model turn that writes a revised approach into the next
+iteration's brief (it may change the approach, never the goal, gates, or
+budgets). A second equivalent attempt stops the loop — long before the budget
+would have.
 
 **Budgets** are set at creation and enforced by the controller:
 
@@ -132,6 +145,7 @@ control and transparency are free on every tier.
 
 ## Next steps
 
+- [How a Loop run works](/concepts/loop-run-lifecycle) — the full anatomy of an iteration, guardrail by guardrail
 - [Create a Loop](/guides/create-a-loop) — the practical walkthrough
 - [Runs](/concepts/runs) — what each iteration looks like under the hood
 - [Nova](/concepts/nova) — the automation agent that executes maker turns
