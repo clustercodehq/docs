@@ -36,8 +36,8 @@ Variables are assembled at **launch time** in this order — later sources
 ## Service access tokens
 
 Tokens for the repository and ticket services your runs touch. Set them once
-under **Settings → Environment Variables → Service access** (also available
-in the last step of the per-worker [agent sign-in wizard](/guides/agent-sign-in));
+under **Settings → Environment Variables → Service access** (the per-worker
+[agent sign-in wizard](/guides/agent-sign-in) links here from its summary);
 they're injected under these names:
 
 | Credential | Injected as | Required scopes | Used for |
@@ -89,11 +89,14 @@ leaving the page.
   blocked — you just see a hint if `jira_api_token` isn't set.
 </Aside>
 
-## AI agent credentials
+## Agent secrets
 
-Credentials for the agents themselves. Claude keys live under
-**Settings → Nucleus → Bring Your Own Key**; Codex and Copilot tokens are in
-the **Agent tokens** step of the [agent sign-in wizard](/guides/agent-sign-in).
+Credentials for the agents themselves — all four live under
+**Settings → Environment Variables → Agent Secrets**. The **Claude OAuth
+token** and **Anthropic API key** additionally carry two toggles: **Use for
+Nucleus (Bring Your Own Key)** routes Nucleus's own requests through your key,
+and **Use for DevBox authentication** injects the key into the DevBoxes you
+launch; the **OpenAI** and **Copilot** tokens are plain injected tokens.
 Alternatively, sign in interactively inside a DevBox — those logins persist
 across DevBox recreation via shared config volumes.
 

@@ -27,9 +27,9 @@ Three ways in, all landing on the same flow:
 
 1. **Agent selection.** Pick which agents to sign in — Claude Code, Codex,
    GitHub Copilot. You can pre-register credentials instead of signing in
-   interactively: an Anthropic API key or Claude OAuth token under
-   **Settings → Nucleus**, or an OpenAI API key / Copilot GitHub token in the
-   **Agent tokens** step at the end of this wizard.
+   interactively: set the agent's API key or token under
+   **Settings → Environment Variables → Agent Secrets** (Claude OAuth token,
+   Anthropic API key, OpenAI API key, or Copilot GitHub token).
 
 2. **Build environment.** The wizard builds (or reuses) a DevBox on the
    worker with the selected agents installed. Credentials created inside it
@@ -40,23 +40,27 @@ Three ways in, all landing on the same flow:
    `claude auth login`). A **Test** button verifies the login by running the
    engine once and updating the live status badge.
 
-4. **Summary.** Live status for every selected agent, plus two credential
-   groups you can fill in right here so the *next* failure never happens:
+4. **Summary.** Live status for every selected agent, plus a reference link to
+   **Settings → Environment Variables** for the stored agent secrets and
+   service tokens. The summary doesn't embed the credential forms — sign-in
+   itself is per worker, while the stored keys and tokens are global. Fill in
+   any that are still missing there so the *next* failure never happens:
 
    - **Service access** — the GitHub / Azure DevOps / GitLab / Jira tokens
-     your runs need to reach repositories and tickets. Same store as
-     **Settings → Environment Variables**; see the
-     [environment-variables reference](/reference/environment-variables/#service-access-tokens).
-   - **Agent tokens** — the OpenAI API key (Codex) and Copilot GitHub token
-     (Copilot) for header-based agent auth.
+     your runs need to reach repositories and tickets; see the
+     [service access tokens](/reference/environment-variables/#service-access-tokens)
+     reference.
+   - **Agent Secrets** — the Claude, Anthropic, OpenAI, and Copilot API keys
+     and tokens; see the
+     [agent secrets](/reference/environment-variables/#agent-secrets) reference.
 
 </Steps>
 
 <Aside type="tip">
   Agent sign-in and service tokens are the two halves of a ready worker: the
   agent must be able to **think** (signed in) and to **reach your code**
-  (service tokens). The wizard's summary covers both so a brand-new setup is
-  one visit, not two failures.
+  (service tokens). The wizard's summary links you to both so a brand-new
+  setup is one visit, not two failures.
 </Aside>
 
 ## Checking status later
