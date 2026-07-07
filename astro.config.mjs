@@ -68,6 +68,7 @@ export default defineConfig({
             { label: 'Schedules', slug: 'concepts/schedules' },
             { label: 'Runs', slug: 'concepts/runs' },
             { label: 'Loops', slug: 'concepts/loops' },
+            { label: 'How a Loop run works', slug: 'concepts/loop-run-lifecycle' },
             { label: 'Multi-Agent Runs', slug: 'guides/multi-agent-runs' },
             { label: 'Engines', slug: 'concepts/subagents' },
           ],

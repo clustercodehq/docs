@@ -42,6 +42,11 @@ its branch and open the PR for you.
    acceptance script, a benchmark threshold, a smoke test. If you can script
    "done", the loop can chase it.
 
+   For the things you *can't* script, add `agent-check` gates: plain-English
+   assertions ("no new dependency was added", "error messages include the
+   account id") that the independent verifier rules on with evidence. Give
+   each one a label if you add several.
+
    The `verifier-approves` gate is **always added** — a separate model must
    approve the result with evidence before the loop can finish.
 
@@ -77,9 +82,10 @@ its branch and open the PR for you.
   **pull request is open** with the iteration history in the body. Loops never
   merge — review and merge on your terms.
 - **`no_progress`** — the loop caught itself producing equivalent attempts
-  against the same failures and stopped. Read the last iteration's verdicts;
-  the goal usually needs more constraints, or the gate is testing the wrong
-  thing.
+  against the same failures and stopped (after giving itself one
+  [replanning turn](/concepts/loop-run-lifecycle#the-replanning-turn) to
+  change course). Read the last iteration's verdicts; the goal usually needs
+  more constraints, or the gate is testing the wrong thing.
 - **`budget_exhausted`** — the iteration or dollar cap hit first. The branch
   holds the best attempt so far; resume with a bigger budget or take it over
   by hand.
@@ -102,3 +108,7 @@ its branch and open the PR for you.
 - **The verifier rejects with "approved without evidence"** — that's the
   system working: the verifier must cite what it read or ran. It re-runs
   automatically with a corrective prompt.
+
+Curious what happens between "arm it" and "PR opened"? Every step of the
+cycle — guardrails, brief, gates, verifier, fingerprints — is documented in
+[How a Loop run works](/concepts/loop-run-lifecycle).
