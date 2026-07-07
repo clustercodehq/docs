@@ -18,7 +18,7 @@ groups:
 
 - **Service access** — the provider tokens your runs need to reach
   repositories and tickets: GitHub, Azure DevOps, GitLab, and Jira. Each row
-  names the env var it injects (`GH_TOKEN`, `AZURE_DEVOPS_PAT`,
+  names the env var it injects (`GH_TOKEN`, `AZURE_DEVOPS_EXT_PAT`,
   `GITLAB_TOKEN`, `JIRA_API_TOKEN`) and the scopes the token needs. A
   configured token shows a check mark; a missing one is exactly what makes a
   run against that provider **skip before spending AI tokens** — see

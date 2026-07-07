@@ -17,7 +17,7 @@ Variables are assembled at **launch time** in this order — later sources
 
 1. **Service access tokens** — the provider credentials from
    **Settings → Environment Variables**, injected under well-known names
-   (`GH_TOKEN`, `AZURE_DEVOPS_PAT`, …; see the table below).
+   (`GH_TOKEN`, `AZURE_DEVOPS_EXT_PAT`, …; see the table below).
 2. **Global variables** — your free-form user-scope variables from
    **Settings → Environment Variables → Global variables**. Injected into
    **every** DevBox you launch.
@@ -43,7 +43,7 @@ they're injected under these names:
 | Credential | Injected as | Required scopes | Used for |
 |---|---|---|---|
 | GitHub Personal Access Token | `GH_TOKEN` | `Contents` (read/write), `Issues` | GitHub CLI (`gh`) — clone, push, PRs, issues |
-| Azure DevOps PAT | `AZURE_DEVOPS_PAT` | Work Items (Read), Code (Read & Write) | Azure DevOps repos and work items |
+| Azure DevOps PAT | `AZURE_DEVOPS_EXT_PAT` | Work Items (Read), Code (Read & Write) | Azure DevOps repos and work items |
 | GitLab Personal Access Token | `GITLAB_TOKEN` | `api` | GitLab CLI (`glab`) — issues, MRs |
 | Jira API Token | `JIRA_API_TOKEN` | — (token from id.atlassian.com) | Jira CLI (`jira`). Also set `JIRA_SERVER` and your login email as project env vars |
 
@@ -103,7 +103,7 @@ across DevBox recreation via shared config volumes.
 | Variable | Agent | Description |
 |----------|-------|-------------|
 | `ANTHROPIC_API_KEY` | Claude Code | API key from console.anthropic.com (pay-as-you-go). Injected only when **Use for DevBox authentication** is enabled on the credential |
-| `CLAUDE_CODE_OAUTH_TOKEN` | Claude Code | Long-lived OAuth token from `claude setup-token` — uses your Claude Pro/Max subscription |
+| `CLAUDE_CODE_OAUTH_TOKEN` | Claude Code | Long-lived OAuth token from `claude setup-token` — uses your Claude Pro/Max subscription. Injected only when **Use for DevBox authentication** is enabled on the credential |
 | `OPENAI_API_KEY` | Codex | API key from platform.openai.com. Or run `codex login --device-auth` inside a DevBox to use a ChatGPT subscription |
 | `COPILOT_GITHUB_TOKEN` | GitHub Copilot | Optional fine-grained PAT with `Copilot Requests` (Account permission). Set it if your GitHub PAT is a classic token (`ghp_`) or lacks Copilot access; falls back to `GH_TOKEN` |
 
