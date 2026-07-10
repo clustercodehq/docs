@@ -29,7 +29,16 @@ export const onRequest = defineRouteMiddleware((context) => {
   const pageTitle = isHome ? BRAND : `${BRAND} · ${starlightRoute.entry.data.title}`;
 
   const titleTag = starlightRoute.head.find((tag) => tag.tag === 'title');
-  if (titleTag) {
-    titleTag.content = `${envPrefix}${pageTitle}`;
-  }
+  if (!titleTag) return;
+
+  // A page that sets its own `head: - tag: title` in frontmatter is making a
+  // deliberate (usually SEO) choice — respect it instead of silently
+  // clobbering it with the generic brand-first title. The dev env prefix is
+  // still applied so local tabs stay identifiable.
+  const hasFrontmatterTitle = (starlightRoute.entry.data.head ?? []).some(
+    (tag) => tag.tag === 'title',
+  );
+  titleTag.content = hasFrontmatterTitle
+    ? `${envPrefix}${titleTag.content ?? ''}`
+    : `${envPrefix}${pageTitle}`;
 });
