@@ -6,6 +6,10 @@ export default defineConfig({
   integrations: [
     starlight({
       title: 'ClusterCode Docs',
+      // Rewrites the generated <title> tag to the brand-first
+      // "ClusterCode Docs · Page" order (+ a "[LOCAL Docs] " dev prefix),
+      // matching the other ClusterCode apps. See src/routeData.ts.
+      routeMiddleware: './src/routeData.ts',
       favicon: '/favicon.ico',
       logo: {
         dark: './src/assets/logo-dark.png',
