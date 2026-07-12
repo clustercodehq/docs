@@ -138,6 +138,62 @@ would have.
   day rather than dying)
 - **Wall-clock limit per iteration** — the hard kill for a runaway attempt
 
+## Steering a running loop
+
+Owning the outer loop means more than pause and cancel — you can **steer a loop
+while it runs**. From the loop's detail page, **Edit / steer** lets you change
+three things on an `active` or `paused` loop:
+
+- the **goal**,
+- the **completion gates** (add, remove, or edit them), and
+- the **budget** (iteration cap and the dollar / wall-clock caps).
+
+Everything else — the target machine, the DevBox or image, the repository and
+branch, and the maker and verifier engines — is fixed for the loop's life.
+Those choices anchor branch continuity and DevBox reuse; to change them, create
+a new loop.
+
+### Changes apply at the next iteration boundary
+
+An edit **never lands mid-iteration**. When an iteration starts, it takes an
+immutable snapshot of the goal, gates, and budget, and it is graded against
+that snapshot for its whole life. So:
+
+> **The current iteration finishes under the previous settings; your change
+> takes effect from the next iteration.**
+
+The next iteration's brief tells the maker exactly what you changed, so it can
+adjust its approach rather than discovering the new rules by failing them.
+
+### Re-aiming resets the no-progress counter
+
+Changing the **goal or the gates** re-aims the loop, so the "no progress"
+detector (which watches for the same failing gates and an oscillating diff)
+resets — a freshly-steered loop gets clean runway instead of being stopped for
+repeating work it did *before* you changed the target. A **budget-only** edit
+changes nothing about progress detection. Infrastructure-error counting (the
+circuit breaker) is never affected by a steer.
+
+### Tightening a cap winds the loop down
+
+Lowering **max iterations** (or a dollar cap) *below what the loop has already
+spent* is allowed and intentional: the next pre-iteration check stops the loop
+as **budget exhausted**. That is the supported way to wind a loop down
+gracefully — the timeline records the steer and the stop, so it is clear why it
+ended.
+
+### What you cannot steer away
+
+An edit can never remove the last **checker**. At least one of
+`verifier-approves` or an `agent-check` gate must always remain — the
+maker/checker split is the core of the design, so the one thing you are never
+allowed to do is let the maker be the only judge of its own work. Attempting it
+is rejected with a clear validation error.
+
+Every steer — and every pause, resume, and cancel — is written to the loop's
+timeline with who did it and when, interleaved with the iterations, so the
+audit trail of owner interventions is part of the glass box.
+
 ## Glass box, not black box
 
 Every iteration is recorded permanently: its brief, its commit, its cost, each
@@ -154,8 +210,8 @@ stable, but expect the surface to keep evolving.</Aside>
 
 Loops are available on **every plan**, with a per-tier cap on how many can be
 active at once: **Free 1 · Starter 3 · Pro 5 · Enterprise unlimited**. Viewing,
-pausing, resuming, and cancelling an existing loop is never gated — control and
-transparency are free on every tier.
+pausing, resuming, cancelling, and **steering** an existing loop is never gated
+— control and transparency are free on every tier.
 
 ## Next steps
 

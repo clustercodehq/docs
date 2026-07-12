@@ -10,7 +10,7 @@ short version, read that first — this page walks one iteration end to end, in
 the order the controller actually runs it, including every guardrail, every
 verdict, and every way a loop can stop.
 
-**TL;DR** — every minute the orchestrator sweeps for due loops. For each one it
+**TL;DR** — ClusterCode picks up each due loop automatically. For each one it
 checks the guardrails, builds a fresh brief from persisted state, runs one
 maker attempt in a DevBox (with a live dollar watchdog), then grades the
 committed result: deterministic gates first, an independent verifier second.
@@ -19,10 +19,10 @@ next brief, and iterates — unless the loop is repeating itself, out of budget,
 or broken, in which case it stops and tells you why.
 
 ```text
-sweep (every minute)
+loop is due
  └─▶ guardrails ──✗──▶ stop / park
       └─▶ cold-start brief
-           └─▶ maker turn (autonomous Run)      ◀── $ watchdog every 10 s
+           └─▶ maker turn (autonomous Run)      ◀── live $ watchdog
                 └─▶ clean tree? tamper screen
                      └─▶ deterministic gates (exit codes)
                           ├─ required gate fails ────────────▶ RED
@@ -37,18 +37,14 @@ RED ──▶ fingerprint the attempt ──▶ new approach → iterate immedia
 ERROR ─▶ 5-minute backoff ─▶ 3 consecutive → stop (circuit_broken)
 ```
 
-## 1. The sweep
+## 1. Picking up a due loop
 
-A loop doesn't run *on* anything — it *is run by* the orchestrator. A
-controller job fires **every minute**, finds active loops whose next iteration
-is due, and drives one full cycle for each. The controller is deterministic
-code, not a model: budgets, progress detection, and the circuit breaker all
-live here, where the agent can't negotiate with them.
-
-The sweep is deliberately bounded: at most **3 new iterations start per tick**
-and at most **8 loops run concurrently** per orchestrator, and a database
-uniqueness guarantee makes it impossible for two controllers to spawn the same
-loop's iteration twice — even across restarts.
+A loop doesn't run *on* anything — it *is run by* ClusterCode. When a loop's
+next iteration comes due, the controller drives one full cycle for it. The
+controller is deterministic code, not a model: budgets, progress detection,
+and the circuit breaker all live here, where the agent can't negotiate with
+them. An iteration is claimed exactly once — a loop can never run the same
+iteration twice, even across restarts.
 
 ## 2. Pre-flight guardrails
 
@@ -84,9 +80,9 @@ the controller assembles a compact brief from the loop's persisted state:
 - **Revised approach** — if the previous iteration triggered a
   [replanning turn](#the-replanning-turn), its output is injected here.
 
-Because the brief is rebuilt from database rows rather than a live session, a
-crashed orchestrator or worker never loses the thread — the next iteration
-picks up from the branch and the recorded history.
+Because the brief is rebuilt from persisted state rather than a live session,
+an interruption never loses the thread — the next iteration picks up from the
+branch and the recorded history.
 
 ## 4. The maker turn
 
@@ -106,11 +102,11 @@ live.
 
 ### The live budget watchdog
 
-While the maker runs, the controller polls its **actual billed spend every 10
-seconds** — AI plus compute, attributed to the iteration. The moment live
-spend crosses `maxCostUsdPerIteration`, the maker is halted mid-run, the
-iteration is closed, and the loop stops with `budget_exhausted`. A runaway
-maker cannot burn past the cap and settle up later.
+While the maker runs, the controller meters its **actual billed spend live** —
+AI plus compute, attributed to the iteration. The moment live spend crosses
+`maxCostUsdPerIteration`, the maker is halted mid-run, the iteration is
+closed, and the loop stops with `budget_exhausted`. A runaway maker cannot
+burn past the cap and settle up later.
 
 A budget overrun is treated as *money exhausted*, not *code failed* — it does
 **not** feed the circuit breaker.
@@ -142,7 +138,7 @@ first is the convention, and judgment gates always come after all of them.
 Each command:
 
 - runs **detached** with its own output capture, so a long test suite isn't
-  limited by any RPC timeout (each gate gets a 10-minute budget, then a kill);
+  cut off mid-run (each gate gets a 10-minute budget, then a kill);
 - is **fully resolved and pinned** — the loop stores the exact argv; nothing
   dispatches through `package.json` scripts the maker could have edited;
 - passes on **exit code 0**, fails otherwise. No model is involved.
@@ -286,10 +282,9 @@ as an `error`, back the loop off for **5 minutes**, and increment the circuit
 counter. **Three consecutive** error iterations stop the loop:
 `circuit_broken`. Any successful iteration resets the counter.
 
-Crashes are reconciled, not lost: at boot and every 5 minutes, the controller
-finds iterations whose execution ended without a recorded verdict (orchestrator
-restart, worker crash), closes them as errors, and lets the loop's normal
-bookkeeping decide — retry after backoff, or trip the breaker.
+Crashes are reconciled, not lost: an iteration interrupted mid-flight (a
+restart, a worker crash) is automatically closed as an error, and the loop's
+normal bookkeeping decides — retry after backoff, or trip the breaker.
 
 ## Every way a loop stops
 
@@ -325,9 +320,14 @@ told to try next.
 
 ## What a loop needs from you
 
-- **A GitHub token** (saved in Settings) — injected into the DevBox as
-  `GH_TOKEN`, used to clone, push the loop's branch after every iteration, and
-  open the PR on `verified`.
+- **Access to wherever your code and reviews live.** If that's GitHub, save a
+  token in Settings — it's injected into the DevBox as `GH_TOKEN` and the loop
+  uses it to clone, push its branch after every iteration, and open the PR on
+  `verified`. On a different stack, provide whatever credentials your tools
+  need (project env vars work well) — agents provision their own tooling on
+  demand. See the
+  [Jira + Confluence + Bitbucket case study](https://clustercode.io/blog/foreign-stack-case-study)
+  for a full delivery with none of GitHub's tooling installed.
 - **Engine credentials** for the maker and verifier CLIs — your API key or
   [bring-your-own-subscription](/concepts/byo-subscription), same as any Run.
 
