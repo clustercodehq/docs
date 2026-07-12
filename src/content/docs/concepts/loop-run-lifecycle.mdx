@@ -26,7 +26,7 @@ sweep (every minute)
                 └─▶ clean tree? tamper screen
                      └─▶ deterministic gates (exit codes)
                           ├─ required gate fails ────────────▶ RED
-                          └─▶ verifier turn (different model, read-only)
+                          └─▶ verifier turn (separate session, read-only)
                                ├─ any gate fails ────────────▶ RED
                                └─ all pass ─▶ gates re-run once (flake check)
                                               └─▶ VERIFIED → PR opened, stop
@@ -155,12 +155,24 @@ invoked for a result that already failed on facts.
 ## 7. The verifier turn
 
 If the deterministic gates are green, an **independent verifier** takes over:
-a fresh CLI session in the same container, on a **different engine than the
-maker** (configurable, but different-by-default — the controller even probes
-which CLIs the image actually ships and falls back to the most-different one
-available). The verifier's prompt is adversarial and **read-only**: *you did
-not write this code; find reasons the goal is NOT genuinely met; never trust
-the maker's claims.*
+a fresh CLI session in the same container — a blank one-shot print session that
+never sees the maker's conversation — on a **different engine than the maker**
+whenever one is available. Resolution runs per iteration:
+
+- a **verifier CLI you pinned** always wins;
+- otherwise the default crosses engines — a **Codex** maker is verified by
+  **Claude**, and a **Claude** or **Copilot** maker by **Codex**;
+- the controller **probes the DevBox** for installed CLIs, and if only **one**
+  engine family is present it falls back to that same family — still a separate,
+  blank-context print session, and the case where you should pin a **distinct
+  verifier model** so the check isn't the maker's twin;
+- if the container has **no AI CLI at all**, the iteration fails with *no AI CLI
+  available for the verifier turn* — a loop never skips judgment, and
+  `verifier-approves` can't be disabled on either the client or the server.
+
+The verifier's prompt is adversarial and **read-only**: *you did not write this
+code; find reasons the goal is NOT genuinely met; never trust the maker's
+claims.*
 
 The verifier cannot finish with prose. Its only accepted output is a single
 fenced `report_verdict` block:

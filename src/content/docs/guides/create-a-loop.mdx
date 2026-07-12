@@ -57,10 +57,22 @@ its branch and open the PR for you.
 
    Pick the worker and either a container image + repository URL (each
    iteration clones fresh and works on the loop's branch) or a pinned existing
-   DevBox. Then choose the **maker engine** — and leave the **verifier** on its
-   default, which automatically picks a *different* engine than the maker. You
-   can pin a specific verifier CLI/model, but keeping them different is the
-   point.
+   DevBox. Then choose the **maker engine** and leave the **Verifier CLI** on
+   **Auto — different from maker (recommended)**: the loop verifies a Codex
+   maker with Claude, and a Claude or Copilot maker with Codex. You can pin a
+   specific verifier CLI/model, but keeping the two engines different is the
+   point — if you pin the maker and verifier to the *same* engine with no
+   distinct verifier model, the panel shows an inline recommendation to pick a
+   different verifier engine or at least a distinct verifier model. It's
+   advisory and never blocks submit.
+
+   <Aside type="note">
+     If the DevBox has only one AI CLI installed, the verifier still runs — as
+     a separate, blank-context session on that same engine — so setting a
+     distinct verifier *model* is worth it. A loop never skips the verifier: if
+     the container has no AI CLI at all, the iteration fails rather than passing
+     unjudged.
+   </Aside>
 
 5. **Set the budget.**
 

@@ -24,14 +24,24 @@ Every iteration splits the work between two roles that never collapse into one:
   attempt at the goal in a DevBox: implement, commit, push the loop's branch.
 - **The checker** — after the maker finishes, **deterministic gates** run your
   test/build/eval commands and read exit codes (no model involved), and then an
-  **independent verifier on a different model** rules on every gate. The
+  **independent verifier** rules on every gate from a separate, blank-context
+  session — a different engine from the maker whenever the DevBox has one. The
   verifier must cite evidence — file and line, a command it ran, output it
   observed. An approval without evidence is rejected and re-run.
 
 An agent asked to grade its own work tends to praise it. The maker/checker
 split is structural, not a prompt suggestion — the verdict comes from a
-separate session, an adversarial read-only prompt, and (by default) a
-different model than the one that wrote the code.
+separate session, an adversarial read-only prompt, and, by default, a
+different engine than the one that wrote the code.
+
+That different-engine default is resolved per iteration: a verifier CLI you pin
+always wins; otherwise Codex makers are checked by Claude, and Claude or
+Copilot makers by Codex. If the DevBox ships only one AI CLI family, the
+verifier falls back to that family — still a separate, blank-context session
+that never sees the maker's conversation, and best paired with a distinct
+verifier model. What never happens is no judgment: with no AI CLI in the
+container the iteration fails instead of skipping the verifier, and
+`verifier-approves` can't be removed.
 
 ## One iteration, end to end
 
