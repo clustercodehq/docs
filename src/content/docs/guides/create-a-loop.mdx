@@ -1,0 +1,129 @@
+---
+title: Create a Loop
+description: Set up a run-until-verified loop — write a goal worth iterating on, pick gates that actually prove it's done, and arm it with sane budgets.
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+This guide walks through creating your first [Loop](/concepts/loops) — a
+standing goal that iterates until its definition of done verifiably holds.
+
+<Aside type="note" title="Beta">Loops is in beta. It's available on every
+plan — Free 1 active loop, Starter 3, Pro 5, Enterprise unlimited.</Aside>
+
+**Prerequisites:** any plan (Loops are available on every tier), a connected
+[worker](/concepts/workers) or [cloud worker](/concepts/cloud-workers), and a
+GitHub personal access token saved in Settings if you want the loop to push
+its branch and open the PR for you.
+
+<Steps>
+
+1. **Open Loops and click "+ Loop".**
+
+   Loops has its own entry in the sidebar, next to Schedules. The create panel
+   asks for exactly four things: the goal, the definition of done, the target,
+   and the budget. Everything else has a conservative default.
+
+2. **Write the goal as an outcome, not a task list.**
+
+   The maker cold-starts every iteration from your goal plus what failed last
+   time — so put the *destination* in the goal and let the gates supply the
+   direction. Good: "Make the `payments` unit suite pass. The failing tests
+   are legitimate — fix the implementation, not the tests." Weak: "Look into
+   the test failures."
+
+3. **Pick gates that prove it — with pinned commands.**
+
+   Add at least one deterministic gate (`tests-pass`, `build-succeeds`,
+   `lint-clean`, or `eval-script`). Each needs a **fully-resolved command**:
+
+   - ✅ `npx vitest run --config vitest.config.ts`
+   - ✅ `npx jest --config jest.config.js --runTestsByPath src/payments`
+   - ❌ `npm test` — dispatches through `package.json`, which the maker can edit
+
+   An `eval-script` gate can run anything that exits 0 on success — your own
+   acceptance script, a benchmark threshold, a smoke test. If you can script
+   "done", the loop can chase it.
+
+   For the things you *can't* script, add `agent-check` gates: plain-English
+   assertions ("no new dependency was added", "error messages include the
+   account id") that the independent verifier rules on with evidence. Give
+   each one a label if you add several.
+
+   The `verifier-approves` gate is **always added** — a separate model must
+   approve the result with evidence before the loop can finish.
+
+4. **Choose the target and engines.**
+
+   Pick the worker and either a container image + repository URL (each
+   iteration clones fresh and works on the loop's branch) or a pinned existing
+   DevBox. Then choose the **maker engine** and leave the **Verifier CLI** on
+   **Auto — different from maker (recommended)**: the loop verifies a Codex
+   maker with Claude, and a Claude or Copilot maker with Codex. You can pin a
+   specific verifier CLI/model, but keeping the two engines different is the
+   point — if you pin the maker and verifier to the *same* engine with no
+   distinct verifier model, the panel shows an inline recommendation to pick a
+   different verifier engine or at least a distinct verifier model. It's
+   advisory and never blocks submit.
+
+   <Aside type="note">
+     If the DevBox has only one AI CLI installed, the verifier still runs — as
+     a separate, blank-context session on that same engine — so setting a
+     distinct verifier *model* is worth it. A loop never skips the verifier: if
+     the container has no AI CLI at all, the iteration fails rather than passing
+     unjudged.
+   </Aside>
+
+5. **Set the budget.**
+
+   The defaults are deliberately conservative: **3 iterations**, **$10 per
+   iteration**, **$25 per day**, **60 minutes wall-clock per iteration**. Three
+   iterations is usually enough to know whether the loop is converging — you
+   can always resume with a higher cap once you've seen it work.
+
+6. **Arm it and watch the first iteration.**
+
+   Creating the loop arms it; the first iteration starts within a minute. Open
+   the loop's detail page: each iteration appears on the timeline with its
+   gate results, the verifier's per-gate reasoning, cost, and a link to the
+   underlying Run. Pause, resume, or cancel from the header at any time.
+
+</Steps>
+
+## What you get when it finishes
+
+- **`verified`** — all gates green (confirmed by a flake-catching re-run) and
+  the verifier approved with evidence. The loop's branch is pushed and a
+  **pull request is open** with the iteration history in the body. Loops never
+  merge — review and merge on your terms.
+- **`no_progress`** — the loop caught itself producing equivalent attempts
+  against the same failures and stopped (after giving itself one
+  [replanning turn](/concepts/loop-run-lifecycle#the-replanning-turn) to
+  change course). Read the last iteration's verdicts; the goal usually needs
+  more constraints, or the gate is testing the wrong thing.
+- **`budget_exhausted`** — the iteration or dollar cap hit first. The branch
+  holds the best attempt so far; resume with a bigger budget or take it over
+  by hand.
+
+<Aside type="note">
+  Every iteration pushes the loop's branch, so nothing is ever trapped in a
+  container — a crashed worker, a cancelled loop, or an exhausted budget still
+  leaves the work on the remote, ready to pick up.
+</Aside>
+
+## Troubleshooting
+
+- **The first iteration errors immediately** — check that the repository URL is
+  reachable with the saved token and that the worker is online. Loops back off
+  five minutes after an infrastructure error and trip a circuit breaker after
+  three in a row.
+- **A gate always fails but the code looks right** — run the pinned command
+  yourself in a DevBox. Remember gates execute against the *committed* state;
+  uncommitted changes fail the iteration by design.
+- **The verifier rejects with "approved without evidence"** — that's the
+  system working: the verifier must cite what it read or ran. It re-runs
+  automatically with a corrective prompt.
+
+Curious what happens between "arm it" and "PR opened"? Every step of the
+cycle — guardrails, brief, gates, verifier, fingerprints — is documented in
+[How a Loop run works](/concepts/loop-run-lifecycle).

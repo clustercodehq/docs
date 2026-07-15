@@ -6,6 +6,10 @@ export default defineConfig({
   integrations: [
     starlight({
       title: 'ClusterCode Docs',
+      // Rewrites the generated <title> tag to the brand-first
+      // "ClusterCode Docs · Page" order (+ a "[LOCAL Docs] " dev prefix),
+      // matching the other ClusterCode apps. See src/routeData.ts.
+      routeMiddleware: './src/routeData.ts',
       favicon: '/favicon.ico',
       logo: {
         dark: './src/assets/logo-dark.png',
@@ -24,6 +28,34 @@ export default defineConfig({
         { icon: 'github', label: 'GitHub', href: 'https://github.com/orgs/clustercodehq' },
         { icon: 'discord', label: 'Discord', href: 'https://discord.gg/BRPt2DXM' },
         { icon: 'x.com', label: 'X', href: 'https://x.com/clustercode' },
+      ],
+      // Site-wide branded social link-preview image (same card used by the
+      // portal + orchestrator). Applies to every page — deep links keep their
+      // own Starlight-derived og:title/og:description; only the image is
+      // forced consistent here. The docs home page additionally overrides
+      // og:title/og:description via its own frontmatter `head` (see
+      // src/content/docs/index.mdx) so it shows the fixed share message.
+      head: [
+        {
+          tag: 'meta',
+          attrs: { property: 'og:image', content: 'https://docs.clustercode.io/og-card.png' },
+        },
+        {
+          tag: 'meta',
+          attrs: { property: 'og:image:width', content: '1200' },
+        },
+        {
+          tag: 'meta',
+          attrs: { property: 'og:image:height', content: '630' },
+        },
+        {
+          tag: 'meta',
+          attrs: { name: 'twitter:card', content: 'summary_large_image' },
+        },
+        {
+          tag: 'meta',
+          attrs: { name: 'twitter:image', content: 'https://docs.clustercode.io/og-card.png' },
+        },
       ],
       customCss: ['./src/styles/custom.css'],
       sidebar: [
@@ -67,6 +99,8 @@ export default defineConfig({
             { label: 'Nova', slug: 'concepts/nova' },
             { label: 'Schedules', slug: 'concepts/schedules' },
             { label: 'Runs', slug: 'concepts/runs' },
+            { label: 'Loops', slug: 'concepts/loops', badge: { text: 'Beta', variant: 'default', class: 'beta-badge' } },
+            { label: 'How a Loop run works', slug: 'concepts/loop-run-lifecycle', badge: { text: 'Beta', variant: 'default', class: 'beta-badge' } },
             { label: 'Multi-Agent Runs', slug: 'guides/multi-agent-runs' },
             { label: 'Engines', slug: 'concepts/subagents' },
           ],
@@ -79,6 +113,7 @@ export default defineConfig({
             { label: 'Explore your fleet in the Observatory', slug: 'guides/explore-observatory' },
             { label: 'Run an agent on demand', slug: 'guides/run-on-demand' },
             { label: 'Automate recurring work', slug: 'guides/recurring-work' },
+            { label: 'Create a Loop', slug: 'guides/create-a-loop', badge: { text: 'Beta', variant: 'default', class: 'beta-badge' } },
             { label: 'Custom Containerfile', slug: 'guides/custom-containerfile' },
             { label: 'Build from DevBox', slug: 'guides/build-image-from-container' },
             { label: 'Windows Golden Image', slug: 'guides/windows-golden-image' },

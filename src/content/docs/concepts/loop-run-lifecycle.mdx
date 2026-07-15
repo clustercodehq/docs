@@ -1,0 +1,338 @@
+---
+title: How a Loop run works
+description: The full anatomy of a loop iteration — sweep, guardrails, cold-start brief, maker turn, gate execution, verifier verdict, fingerprints, replanning, and every way a loop can stop.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+This is the deep-dive companion to [Loops](/concepts/loops). If you want the
+short version, read that first — this page walks one iteration end to end, in
+the order the controller actually runs it, including every guardrail, every
+verdict, and every way a loop can stop.
+
+**TL;DR** — ClusterCode picks up each due loop automatically. For each one it
+checks the guardrails, builds a fresh brief from persisted state, runs one
+maker attempt in a DevBox (with a live dollar watchdog), then grades the
+committed result: deterministic gates first, an independent verifier second.
+Green opens a pull request and stops. Red fingerprints the attempt, steers the
+next brief, and iterates — unless the loop is repeating itself, out of budget,
+or broken, in which case it stops and tells you why.
+
+```text
+loop is due
+ └─▶ guardrails ──✗──▶ stop / park
+      └─▶ cold-start brief
+           └─▶ maker turn (autonomous Run)      ◀── live $ watchdog
+                └─▶ clean tree? tamper screen
+                     └─▶ deterministic gates (exit codes)
+                          ├─ required gate fails ────────────▶ RED
+                          └─▶ verifier turn (separate session, read-only)
+                               ├─ any gate fails ────────────▶ RED
+                               └─ all pass ─▶ gates re-run once (flake check)
+                                              └─▶ VERIFIED → PR opened, stop
+
+RED ──▶ fingerprint the attempt ──▶ new approach → iterate immediately
+                                    1st repeat  → replanning turn, iterate
+                                    2nd repeat  → stop (no_progress)
+ERROR ─▶ 5-minute backoff ─▶ 3 consecutive → stop (circuit_broken)
+```
+
+## 1. Picking up a due loop
+
+A loop doesn't run *on* anything — it *is run by* ClusterCode. When a loop's
+next iteration comes due, the controller drives one full cycle for it. The
+controller is deterministic code, not a model: budgets, progress detection,
+and the circuit breaker all live here, where the agent can't negotiate with
+them. An iteration is claimed exactly once — a loop can never run the same
+iteration twice, even across restarts.
+
+## 2. Pre-flight guardrails
+
+Before anything is spawned, the controller checks — in this order:
+
+| Check | If it trips |
+|---|---|
+| Iteration cap reached (`maxIterations`) | Stop: `budget_exhausted` |
+| Two consecutive equivalent attempts already recorded | Stop: `no_progress` |
+| Three consecutive failed iterations | Stop: `circuit_broken` |
+| Daily USD budget spent (`maxCostUsdDaily`) | **Park** until UTC midnight, then resume — a daily cap pauses, it never kills |
+| Your account's concurrent-run limit is full | **Park** for 5 minutes and retry — not counted as a failure |
+
+All budgets are **US dollars** (plus the iteration cap and a wall-clock limit)
+— never tokens. The daily window rolls over at **UTC midnight**.
+
+## 3. The brief — cold start, every time
+
+Each iteration gets a **fresh maker with no memory**. Instead of resuming the
+previous session — which anchors the agent on reasoning that already failed —
+the controller assembles a compact brief from the loop's persisted state:
+
+- **The goal**, verbatim, and the full **definition of done** (every gate,
+  with its pinned command).
+- **Working rules**: work on the loop's branch, commit everything and push
+  (uncommitted work fails the iteration), never weaken a gate to pass it,
+  never open a PR or merge — the controller does that after verification.
+- **What failed last time**: each failing gate with its reason, exit code, and
+  a tail of its output.
+- **Approaches already tried**: one line per prior iteration (the last 10),
+  with an explicit warning on any attempt that was effectively identical to
+  its predecessor.
+- **Revised approach** — if the previous iteration triggered a
+  [replanning turn](#the-replanning-turn), its output is injected here.
+
+Because the brief is rebuilt from persisted state rather than a live session,
+an interruption never loses the thread — the next iteration picks up from the
+branch and the recorded history.
+
+## 4. The maker turn
+
+The brief becomes the system prompt of a normal **autonomous
+[Run](/concepts/runs)** — it appears in your Runs list as
+*Loop "name" — iteration N*, and you can open it and watch the transcript
+live.
+
+- **DevBox reuse**: if the previous iteration's container is still running,
+  the new iteration reuses it — warm working state, no re-clone. If it died,
+  a fresh container is launched from the loop's image (or the loop's pinned
+  DevBox is used).
+- **Wall-clock limit**: the iteration's Run is capped at the loop's
+  `wallClockMsPerIteration` (default 60 minutes, clamped between 5 minutes and
+  24 hours). The controller grants a short grace window past it, then
+  hard-kills the maker.
+
+### The live budget watchdog
+
+While the maker runs, the controller meters its **actual billed spend live** —
+AI plus compute, attributed to the iteration. The moment live spend crosses
+`maxCostUsdPerIteration`, the maker is halted mid-run, the iteration is
+closed, and the loop stops with `budget_exhausted`. A runaway maker cannot
+burn past the cap and settle up later.
+
+A budget overrun is treated as *money exhausted*, not *code failed* — it does
+**not** feed the circuit breaker.
+
+## 5. Post-maker checks — before any gate runs
+
+When the maker finishes, the controller inspects the container directly:
+
+1. **Clean tree** — `git status` must be empty. Uncommitted changes fail the
+   iteration immediately: gates only ever grade the **committed SHA**.
+2. **Diff base** — the iteration's diff is computed against the previous
+   iteration's commit (or the merge base with the default branch on the first
+   one).
+3. **Branch push** — the controller pushes the branch itself as a backstop,
+   even though the brief already told the maker to. Every iteration's work
+   lands on the remote; nothing is ever trapped in a container.
+4. **Tamper screen** — the diff's file list is matched against the *tamper
+   set*: test and spec files, test-runner configs, lint config, `tsconfig`,
+   `package.json`, lockfiles, CI pipelines, git hooks, coverage thresholds.
+   Touching any of these never auto-passes — each file is surfaced to the
+   verifier with an explicit instruction to rule on whether the change weakens
+   a check.
+
+## 6. Deterministic gates — exit codes, no opinions
+
+Your command-bearing gates (`tests-pass`, `build-succeeds`, `lint-clean`,
+`eval-script`) run **inside the DevBox, sequentially, in order** — cheap gates
+first is the convention, and judgment gates always come after all of them.
+Each command:
+
+- runs **detached** with its own output capture, so a long test suite isn't
+  cut off mid-run (each gate gets a 10-minute budget, then a kill);
+- is **fully resolved and pinned** — the loop stores the exact argv; nothing
+  dispatches through `package.json` scripts the maker could have edited;
+- passes on **exit code 0**, fails otherwise. No model is involved.
+
+Every gate runs even after one fails: the complete failing set is what
+fingerprints the attempt and steers the next brief. If any **required**
+deterministic gate fails, the iteration goes red here — the verifier is never
+invoked for a result that already failed on facts.
+
+## 7. The verifier turn
+
+If the deterministic gates are green, an **independent verifier** takes over:
+a fresh CLI session in the same container — a blank one-shot print session that
+never sees the maker's conversation — on a **different engine than the maker**
+whenever one is available. Resolution runs per iteration:
+
+- a **verifier CLI you pinned** always wins;
+- otherwise the default crosses engines — a **Codex** maker is verified by
+  **Claude**, and a **Claude** or **Copilot** maker by **Codex**;
+- the controller **probes the DevBox** for installed CLIs, and if only **one**
+  engine family is present it falls back to that same family — still a separate,
+  blank-context print session, and the case where you should pin a **distinct
+  verifier model** so the check isn't the maker's twin;
+- if the container has **no AI CLI at all**, the iteration fails with *no AI CLI
+  available for the verifier turn* — a loop never skips judgment, and
+  `verifier-approves` can't be disabled on either the client or the server.
+
+The verifier's prompt is adversarial and **read-only**: *you did not write this
+code; find reasons the goal is NOT genuinely met; never trust the maker's
+claims.*
+
+The verifier cannot finish with prose. Its only accepted output is a single
+fenced `report_verdict` block:
+
+```json
+{
+  "per_gate": [
+    { "kind": "tests-pass", "passed": true,
+      "evidence": "ran npx vitest run --config vitest.config.ts — 214 passed" },
+    { "kind": "verifier-approves", "passed": false,
+      "failing_reason": "goal requires retry logic; none present",
+      "file_line": "src/payments/client.ts:88" }
+  ],
+  "overall": "pass" | "fail",
+  "notes": "optional, non-blocking observations"
+}
+```
+
+The block is schema-validated, and then held to semantic rules: **every
+required gate must be ruled on**, every approval **must cite evidence** (a
+file and line, a command and its output), every failure must give a reason. A
+malformed or evidence-free verdict is rejected and the verifier gets **one
+corrective retry** in the same session; a second failure records the iteration
+as an infrastructure error — the controller never guesses a verdict out of
+free text.
+
+### `agent-check` gates — your rubric, the verifier's judgment
+
+Alongside the built-in `verifier-approves` gate, you can add **`agent-check`**
+gates: plain-English assertions you write yourself — *"error messages mention
+the failing account id"*, *"no new dependency was added"*, *"the migration is
+reversible"*. Each one becomes a gate the **verifier** (never the maker) must
+rule on individually, with evidence, through the same `report_verdict`
+contract.
+
+Two properties make the rubric trustworthy:
+
+- **Maker-immutable** — the rubric lives in the loop's definition of done,
+  not in the repository. The maker never sees a file it could edit to weaken
+  an assertion; it only sees the assertions as targets to satisfy.
+- **Judged last** — like all judgment gates, `agent-check` gates are only
+  evaluated once every deterministic gate is green, so model judgment is never
+  spent on an attempt that already failed on exit codes.
+
+Add as many as you need; an optional **label** distinguishes them in verdicts
+and on the timeline.
+
+## 8. Green — verify, then open the door
+
+When every required gate passes and the verifier approves:
+
+1. **Flake backstop** — the deterministic gates run **once more**,
+   back-to-back. A gate that flips between runs marks the suite flaky: if it
+   now fails, the iteration goes red; if it recovers, the flake is called out
+   in the PR body rather than silently passing on a lucky green.
+2. **Pull request** — the controller opens a PR from the loop's branch via
+   `gh`, with the goal, iteration count, and gate summary in the body. If PR
+   creation fails (say, a missing token), the loop still finishes `verified`
+   with a note to open it manually — the branch is already pushed.
+3. **Stop: `verified`** — and the loop's DevBoxes are shut down.
+
+<Aside type="tip">
+  **Loops never merge.** `verified` opens a pull request; merging stays a
+  human decision, every time.
+</Aside>
+
+## 9. Red — fingerprints, replanning, and refusing to spin
+
+A red iteration isn't just retried — it's **fingerprinted** first, from two
+components:
+
+- the **normalized diff** — whitespace collapsed, comment-only lines dropped,
+  context ignored — so cosmetic churn doesn't read as progress, and
+- the **failing-gate signature** — which kinds of gate failed.
+
+If the fingerprint differs from the previous iteration's, that's progress: the
+next iteration is scheduled immediately, with the failing output in its brief.
+If it **matches** — same effective change, same failures — the loop is
+spinning, and a two-step ladder kicks in:
+
+| Repeat | What happens |
+|---|---|
+| **1st repeat** | A **replanning turn** runs, and the loop gets one more try with a revised approach |
+| **2nd repeat** | Stop: `no_progress` |
+
+### The replanning turn
+
+On the first repeat, a short **read-only model turn** reviews the loop's
+history and writes a revised plan as a fenced `report_replan` block:
+
+```json
+{ "approach": "stop patching the retry helper; replace the queue consumer's ack path",
+  "hypotheses": ["failure is in ack ordering, not retry count"] }
+```
+
+That plan is injected into the next iteration's brief as a **Revised
+approach** section. Its power is deliberately narrow: it may rewrite the
+*approach* — never the goal, the gates, or the budgets. And it's best-effort:
+if the replanning turn itself fails, the loop just proceeds without it (and
+the no-progress ladder still protects you).
+
+Independently of fingerprints, a red iteration also stops the loop when it was
+the **last budgeted iteration** (`budget_exhausted`) or when its final cost
+exceeded the per-iteration cap.
+
+## 10. Errors — backoff, circuit breaker, crash recovery
+
+Infrastructure failures — dispatch failure, a dead container, an unreachable
+worker, a verifier that never produced a valid verdict — record the iteration
+as an `error`, back the loop off for **5 minutes**, and increment the circuit
+counter. **Three consecutive** error iterations stop the loop:
+`circuit_broken`. Any successful iteration resets the counter.
+
+Crashes are reconciled, not lost: an iteration interrupted mid-flight (a
+restart, a worker crash) is automatically closed as an error, and the loop's
+normal bookkeeping decides — retry after backoff, or trip the breaker.
+
+## Every way a loop stops
+
+| Stop reason | Meaning |
+|---|---|
+| `verified` | All gates green, confirmed by re-run, verifier approved — PR opened |
+| `budget_exhausted` | Iteration cap, per-iteration USD cap (including a mid-run halt), or the last budgeted iteration went red |
+| `no_progress` | Two consecutive equivalent attempts after the replanning turn — the loop refused to spin |
+| `circuit_broken` | Three consecutive infrastructure failures |
+| `error` | An unrecoverable failure outside the iteration cycle |
+| `user_cancelled` | You cancelled it — the in-flight iteration is killed immediately |
+
+Pausing is separate from stopping: a **paused** loop finishes nothing new and
+keeps all its state; resuming re-arms it on the next sweep. When a loop stops
+for any reason, the DevBoxes it launched are shut down (a pinned, pre-existing
+DevBox is yours and is never touched).
+
+## The glass-box record
+
+Every decision above is written down as it happens:
+
+- Each controller step — gate results with exit codes, tamper warnings, the
+  verifier's verdict and notes, budget halts, the final outcome — is appended
+  to the iteration's Run as timeline events, right next to the maker's own
+  transcript.
+- Each iteration is snapshotted permanently: its brief, commit SHA, cost, both
+  fingerprint halves, and every per-gate verdict with evidence.
+
+The loop's detail page renders this as the iteration timeline; each entry
+links to the underlying Run. When a loop claims "done", you can audit exactly
+why — and when it stops "stuck", you can see what it tried and what it was
+told to try next.
+
+## What a loop needs from you
+
+- **Access to wherever your code and reviews live.** If that's GitHub, save a
+  token in Settings — it's injected into the DevBox as `GH_TOKEN` and the loop
+  uses it to clone, push its branch after every iteration, and open the PR on
+  `verified`. On a different stack, provide whatever credentials your tools
+  need (project env vars work well) — agents provision their own tooling on
+  demand. See the
+  [Jira + Confluence + Bitbucket case study](https://clustercode.io/blog/foreign-stack-case-study)
+  for a full delivery with none of GitHub's tooling installed.
+- **Engine credentials** for the maker and verifier CLIs — your API key or
+  [bring-your-own-subscription](/concepts/byo-subscription), same as any Run.
+
+## Next steps
+
+- [Loops](/concepts/loops) — the concept overview
+- [Create a Loop](/guides/create-a-loop) — the practical walkthrough
+- [Runs](/concepts/runs) — what a maker turn is under the hood

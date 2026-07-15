@@ -1,0 +1,222 @@
+---
+title: Loops
+description: Run-until-verified standing goals — a maker agent iterates, deterministic gates check every attempt, and a separate model grades the result. Glass-box verdicts, hard budgets, and a PR at the end.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+A **Loop** is a standing goal with a verifiable definition of done. Instead of
+prompting an agent and shepherding it turn by turn, you describe the outcome
+("the payments test suite passes", "the build is green with zero type errors")
+and the checks that prove it — and the loop iterates until those checks hold,
+or until one of its guardrails says stop.
+
+Loops are ClusterCode's take on **loop engineering**: you stop being the person
+who prompts the agent and design the system that prompts it instead. If you
+want the full reasoning, read our essay
+[Loop Engineering](https://clustercode.io/blog/loop-engineering).
+
+## The core rule: the writer never grades its own homework
+
+Every iteration splits the work between two roles that never collapse into one:
+
+- **The maker** — your chosen engine (Claude, Codex, or Copilot) takes one
+  attempt at the goal in a DevBox: implement, commit, push the loop's branch.
+- **The checker** — after the maker finishes, **deterministic gates** run your
+  test/build/eval commands and read exit codes (no model involved), and then an
+  **independent verifier** rules on every gate from a separate, blank-context
+  session — a different engine from the maker whenever the DevBox has one. The
+  verifier must cite evidence — file and line, a command it ran, output it
+  observed. An approval without evidence is rejected and re-run.
+
+An agent asked to grade its own work tends to praise it. The maker/checker
+split is structural, not a prompt suggestion — the verdict comes from a
+separate session, an adversarial read-only prompt, and, by default, a
+different engine than the one that wrote the code.
+
+That different-engine default is resolved per iteration: a verifier CLI you pin
+always wins; otherwise Codex makers are checked by Claude, and Claude or
+Copilot makers by Codex. If the DevBox ships only one AI CLI family, the
+verifier falls back to that family — still a separate, blank-context session
+that never sees the maker's conversation, and best paired with a distinct
+verifier model. What never happens is no judgment: with no AI CLI in the
+container the iteration fails instead of skipping the verifier, and
+`verifier-approves` can't be removed.
+
+## One iteration, end to end
+
+1. **Brief** — the loop builds a compact, cold-start brief: the goal, the
+   definition of done, a summary of what failed last time, and a log of
+   approaches already tried. Each iteration starts fresh — no inherited
+   context rot, and the brief is rebuilt from persisted state, so a crashed
+   orchestrator never loses the thread.
+2. **Maker turn** — one agent execution (a normal ClusterCode
+   [Run](/concepts/runs) you can open and watch) implements against the loop's
+   branch and commits. The branch is pushed after every iteration.
+3. **Deterministic gates** — your pinned commands run against the *committed*
+   code. A dirty tree fails the iteration; uncommitted work never gets graded.
+4. **Verifier turn** — if the gates are green, the verifier rules per-gate with
+   evidence, through a structured verdict (never free text a parser has to
+   guess at).
+5. **Decision** — any required gate failed: the failing output steers the next
+   brief and the loop iterates. Everything green: the gates run **once more**
+   to catch flaky suites, and then the loop opens a **pull request**.
+
+<Aside type="tip">
+  **Loops never merge.** `verified` means "the gates and the verifier agree
+  this is done" — the pull request is where your judgment enters. That door
+  stays human.
+</Aside>
+
+Want the gears? [How a Loop run works](/concepts/loop-run-lifecycle) walks
+this cycle step by step — every guardrail, check, and stop condition.
+
+## Gates — the definition of done
+
+| Gate | What it checks |
+|---|---|
+| `tests-pass` | Your test command exits 0 |
+| `build-succeeds` | Your build/typecheck command exits 0 |
+| `lint-clean` | Your lint command exits 0 |
+| `eval-script` | Any command you supply — your own eval, benchmark, or acceptance script |
+| `agent-check` | A plain-English assertion you write ("the migration is reversible") — the independent verifier rules on it with evidence |
+| `verifier-approves` | The independent verifier approves every gate, with evidence (always on) |
+
+Deterministic gates carry **fully-resolved pinned commands** — e.g.
+`npx vitest run --config vitest.config.ts`, never `npm test`. A command that
+dispatches through `package.json` scripts could be redefined by the code under
+test; a pinned command can't.
+
+`agent-check` gates work the other way around: instead of a command, you write
+a checkable assertion in plain English, and the **verifier** — never the maker
+— rules on it with evidence. The rubric lives in the loop's definition of
+done, not in the repository, so the maker can't edit it; and like all judgment
+gates it's only evaluated once every deterministic gate is green.
+
+### Gates are defended, not just run
+
+A maker with write access could try to "pass" by weakening the checks —
+editing a failing test, adding a lint suppression, loosening a config. Loops
+treat that as a first-class threat:
+
+- Gates run against the **committed SHA**, after a clean-tree check.
+- Every iteration's diff is screened against a **tamper set** (test files,
+  lint/CI config, lockfiles, `package.json`, thresholds). Touching them never
+  auto-passes — the verifier is pointed at each touched file and told to rule
+  on whether the change weakens a check.
+- Before `verified`, the deterministic gates are **re-run once**. If a gate
+  flips between runs, the flake is called out in the PR body instead of
+  silently passing on a lucky green.
+
+## Guardrails — deterministic, not model judgment
+
+The loop's controller is orchestrator-side, deterministic code. The agent
+can't negotiate with it:
+
+| Stop reason | What happened |
+|---|---|
+| `verified` | All gates green, confirmed by re-run, verifier approved — PR opened |
+| `budget_exhausted` | Iteration cap or a dollar cap was reached |
+| `no_progress` | Consecutive iterations produced equivalent diffs with the same failures — the loop detected it was spinning and stopped itself |
+| `circuit_broken` | Repeated infrastructure failures tripped the circuit breaker |
+| `error` | An unrecoverable dispatch/infrastructure error |
+| `user_cancelled` | You cancelled it |
+
+Progress is measured by **fingerprinting each iteration's diff** (normalized so
+whitespace and comment churn don't count as change) together with the set of
+failing gates. The first equivalent attempt triggers a **replanning turn** — a
+short read-only model turn that writes a revised approach into the next
+iteration's brief (it may change the approach, never the goal, gates, or
+budgets). A second equivalent attempt stops the loop — long before the budget
+would have.
+
+**Budgets** are set at creation and enforced by the controller:
+
+- **Max iterations** (default 3)
+- **Max cost per iteration** and **max cost per day** (in dollars; the daily
+  window rolls over at UTC midnight — a capped loop parks and resumes the next
+  day rather than dying)
+- **Wall-clock limit per iteration** — the hard kill for a runaway attempt
+
+## Steering a running loop
+
+Owning the outer loop means more than pause and cancel — you can **steer a loop
+while it runs**. From the loop's detail page, **Edit / steer** lets you change
+three things on an `active` or `paused` loop:
+
+- the **goal**,
+- the **completion gates** (add, remove, or edit them), and
+- the **budget** (iteration cap and the dollar / wall-clock caps).
+
+Everything else — the target machine, the DevBox or image, the repository and
+branch, and the maker and verifier engines — is fixed for the loop's life.
+Those choices anchor branch continuity and DevBox reuse; to change them, create
+a new loop.
+
+### Changes apply at the next iteration boundary
+
+An edit **never lands mid-iteration**. When an iteration starts, it takes an
+immutable snapshot of the goal, gates, and budget, and it is graded against
+that snapshot for its whole life. So:
+
+> **The current iteration finishes under the previous settings; your change
+> takes effect from the next iteration.**
+
+The next iteration's brief tells the maker exactly what you changed, so it can
+adjust its approach rather than discovering the new rules by failing them.
+
+### Re-aiming resets the no-progress counter
+
+Changing the **goal or the gates** re-aims the loop, so the "no progress"
+detector (which watches for the same failing gates and an oscillating diff)
+resets — a freshly-steered loop gets clean runway instead of being stopped for
+repeating work it did *before* you changed the target. A **budget-only** edit
+changes nothing about progress detection. Infrastructure-error counting (the
+circuit breaker) is never affected by a steer.
+
+### Tightening a cap winds the loop down
+
+Lowering **max iterations** (or a dollar cap) *below what the loop has already
+spent* is allowed and intentional: the next pre-iteration check stops the loop
+as **budget exhausted**. That is the supported way to wind a loop down
+gracefully — the timeline records the steer and the stop, so it is clear why it
+ended.
+
+### What you cannot steer away
+
+An edit can never remove the last **checker**. At least one of
+`verifier-approves` or an `agent-check` gate must always remain — the
+maker/checker split is the core of the design, so the one thing you are never
+allowed to do is let the maker be the only judge of its own work. Attempting it
+is rejected with a clear validation error.
+
+Every steer — and every pause, resume, and cancel — is written to the loop's
+timeline with who did it and when, interleaved with the iterations, so the
+audit trail of owner interventions is part of the glass box.
+
+## Glass box, not black box
+
+Every iteration is recorded permanently: its brief, its commit, its cost, each
+gate's exit code and output tail, and the verifier's per-gate reasoning and
+evidence. The loop's detail page shows the full timeline, and each iteration
+links to its Run so you can open the actual transcript. When a loop says
+"done", you can see exactly why it believes that — and when it says "stuck",
+you can see what it tried.
+
+## Availability
+
+<Aside type="note" title="Beta">Loops is in beta — the mechanics below are
+stable, but expect the surface to keep evolving.</Aside>
+
+Loops are available on **every plan**, with a per-tier cap on how many can be
+active at once: **Free 1 · Starter 3 · Pro 5 · Enterprise unlimited**. Viewing,
+pausing, resuming, cancelling, and **steering** an existing loop is never gated
+— control and transparency are free on every tier.
+
+## Next steps
+
+- [How a Loop run works](/concepts/loop-run-lifecycle) — the full anatomy of an iteration, guardrail by guardrail
+- [Create a Loop](/guides/create-a-loop) — the practical walkthrough
+- [Runs](/concepts/runs) — what each iteration looks like under the hood
+- [Nova](/concepts/nova) — the automation agent that executes maker turns
+- [Loop Engineering](https://clustercode.io/blog/loop-engineering) — why we built this

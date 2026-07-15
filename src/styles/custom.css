@@ -1086,12 +1086,15 @@ sl-sidebar-state-persist > ul > li:nth-child(8) > details > summary .group-label
   }
 }
 
+/* Transparent tap-catcher — closes the menu on an outside tap without dimming
+   the page. Matches the console/portal bottom nav, which dropped the dim
+   backdrop so the menu reads as a panel above the bar, not a modal. */
 .bottom-nav-backdrop {
   display: none;
   position: fixed;
   inset: 0;
   z-index: 9997;
-  background: rgba(0, 0, 0, 0.4);
+  background: transparent;
 }
 
 /* Backdrop fades in with the menu (item 6) instead of display-snapping. */
@@ -1112,6 +1115,12 @@ sl-sidebar-state-persist > ul > li:nth-child(8) > details > summary .group-label
   left: 0;
   right: 0;
   z-index: 9998;
+  /* Cap to the space above the bar (bar = 3.5rem, plus a small top gap) and
+     scroll inside, so a long item list stays fully reachable instead of
+     running off the top of the screen. The bar (z-9999) still paints in
+     front, so the menu tucks behind it. */
+  max-height: calc(100dvh - 4rem);
+  overflow-y: auto;
   background: var(--sl-color-bg-sidebar);
   border-top: 1px solid var(--sl-color-hairline);
   animation: slide-up 150ms ease-out;
@@ -1245,4 +1254,23 @@ html.theme-transition *::after {
   width: 20px;
   height: 20px;
   flex-shrink: 0;
+}
+
+/* "Barely there" Beta badge — mirrors the orchestrator/portal beta label:
+   teal text, no fill, no border, uppercase. Teal = --accent-teal
+   (#388a34 light / #4ec9b0 dark), kept in sync via check:tokens. */
+.sl-badge.beta-badge,
+.beta-badge {
+  background-color: transparent;
+  border-color: transparent;
+  color: #388a34;
+  text-transform: uppercase;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  padding-inline: 0.15em;
+}
+
+:root[data-theme='dark'] .sl-badge.beta-badge,
+:root[data-theme='dark'] .beta-badge {
+  color: #4ec9b0;
 }
