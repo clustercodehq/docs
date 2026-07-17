@@ -1,0 +1,167 @@
+---
+title: How a Prototype race works
+description: The full anatomy of a prototype race — creation, queued admission, isolated dispatch, the autonomous attempts, honest terminal status, compare and preview, fix & resume, and promotion.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+This is the deep-dive companion to [Prototyping](/concepts/prototyping). If you
+want the short version, read that first — this page walks one race end to end,
+in the order the orchestrator actually runs it: how contenders are admitted,
+what isolation each one really gets, how the parent decides what the race's
+outcome was, and exactly what promotion does.
+
+**TL;DR** — creating a prototype fans your brief out into one autonomous
+[Run](/concepts/runs) per contender. Contenders are admitted oldest-first as
+your plan's run slots allow, each in its own fresh DevBox on its own branch,
+committing locally and never pushing. When the last contender lands, the
+parent derives an honest terminal status from what actually happened. You
+compare the finished attempts, preview any of them live, fix-and-resume a
+failed one if it deserves a second shot — and promote exactly one, which
+pushes its branch and opens the PR.
+
+```text
+create (name · brief · target · contenders)
+ └─▶ cap & billing preflight ──✗──▶ refused up front (nothing half-created)
+      └─▶ one child Run per contender, oldest-first admission
+           ├─ run slot free   ─▶ DISPATCH: fresh DevBox · own branch · same brief
+           └─ slots exhausted ─▶ QUEUED: waits, auto-admits when a slot frees
+                └─▶ the attempt runs autonomously (commits stay LOCAL)
+                     ├─ done    ─▶ card shows the agent's own summary + cost
+                     └─ failed  ─▶ card shows the run's real error detail
+                          └─▶ fix & resume (operator) — same DevBox, or a
+                              fresh one if the original is gone
+last contender lands ─▶ parent status derived from the children:
+    any done → Completed · all cancelled → Cancelled · otherwise → Failed
+         └─▶ compare · preview (containers stay up) · ★ promote ONE
+              └─▶ winner's run resumes → pushes its branch → opens the PR
+                  losers torn down · the race never merges
+```
+
+## 1. Creation — everything is checked before anything exists
+
+The create panel collects the brief, the target (a worker with a fresh image,
+or a pinned existing DevBox), the repository (optional), and the contender
+list — engine+model pairs, up to your plan's **contenders-per-prototype** cap.
+Two gates run before the prototype row is written:
+
+| Check | If it trips |
+|---|---|
+| **Active prototypes** cap (per-user; counts races still in flight) | Creation refused with the cap message — finished races never count |
+| **Contenders per prototype** cap | The picker stops you inline at the cap |
+
+The prototype and all of its contender lanes are created in one transaction —
+you can never observe a prototype with half its contenders missing.
+
+## 2. Admission — the race respects your concurrency, one lane at a time
+
+Each contender needs a real run slot under your plan's **concurrent-runs**
+limit, exactly like any other Run. The admission loop claims slots
+**oldest-first**: contenders that fit start immediately; the rest sit
+**queued**, and their cards say so — including the plan concurrency they're
+waiting on. Admission is event-driven: the moment a sibling (or any other run
+of yours) finishes, the next queued contender starts, typically within
+seconds and never by manual refresh.
+
+<Aside type="note">
+  On Free (one concurrent run) a race literally runs one lane at a time. On
+  any plan, a prototype can never starve your other work of every slot — the
+  cap is shared, and the queue is visible.
+</Aside>
+
+## 3. Dispatch — what isolation each contender really gets
+
+Each admitted contender becomes an autonomous Run with:
+
+- **Its own fresh DevBox.** The run's briefing carries a mandatory
+  one-DevBox-per-run directive: launch exactly one, reuse it for every
+  delegation in that run, never target a sibling's. (When the prototype pins
+  an existing DevBox instead, that directive is withheld and the pinned-DevBox
+  instruction governs.)
+- **Its own branch**, `proto/<slug>/<engine>` — with the model appended when
+  the same engine races twice, so names can never collide.
+- **The same brief**, verbatim, plus branch instructions: commit locally,
+  **never push**. A repo-less prototype gets fresh-workspace instructions
+  instead (init a local repo, commit there).
+- **Its configured engine and model, enforced.** The engine is named
+  explicitly on every delegation, and the configured model is authoritative:
+  a failing model is a *terminal* failure the card reports honestly — the
+  agent is refused if it tries to quietly substitute another model. Only your
+  fix-and-resume may correct it.
+
+Nothing is shared between lanes at runtime. Two contenders can't converge on
+one container, can't see each other's diffs, and can't inherit each other's
+mistakes.
+
+## 4. The race — live cards, honest errors
+
+While lanes run, each comparison card polls its underlying run: a live
+latest-activity line while working, then the agent's **own end-of-run
+summary**, the duration, and the run's real dollar cost. Failures surface the
+run's actual error detail — including the engine CLI's own words (the tail of
+its output), so "there's an issue with the selected model (sonet-5)" reaches
+you verbatim instead of a bare exit code.
+
+## 5. The parent's verdict — derived, never asserted
+
+When the last contender reaches a terminal state (with a ≤60-second backstop
+sweep in case a terminal event is missed), the prototype derives its status
+from what actually happened:
+
+| Children | Parent |
+|---|---|
+| At least one **done** | **Completed** — there's something to judge |
+| Every lane **cancelled** | **Cancelled** |
+| Anything else (no winner, ≥1 failure) | **Failed** — the race is honest about producing nothing |
+
+## 6. Compare & preview — the containers stay up
+
+A finished race keeps its contenders' DevBoxes alive so you can genuinely
+inspect before judging: each card opens the shared side panel with the run
+transcript, a live **Terminal**, and the **Display** desktop — one contender
+at a time (the display relay focuses a single DevBox). A finished prototype
+has already released its **active prototypes** slot; keeping previews up
+costs you nothing against that cap.
+
+## 7. Fix & resume — second chances without a restart
+
+A failed lane offers **Fix & resume**: you send a corrective instruction and
+the *same run* resumes with its history intact — in its original DevBox if
+it's still alive, or a fresh replacement if it was torn down. This is also the
+one sanctioned path for correcting a bad configured model: the resumed run may
+apply the model your instruction names. The parent flips back to active while
+the retry runs, and the card's old error is cleared, not recycled.
+
+## 8. Promotion — one winner, one PR, your merge button
+
+**Promote** (creator-only, on a done card) resumes the winner's run with a
+single injected instruction: *push your branch and open a pull request*. The
+agent that did the work — full context intact — pushes the branch it's been
+committing to and opens the PR; the prototype records the PR URL
+(first-write-wins, so a retried promote can't clobber it). This is the only
+moment push credentials are needed: a GitHub PAT saved in Settings.
+
+Everything else is retired: the losing lanes' DevBoxes are torn down (a
+pinned target DevBox is never touched — it's yours), while the winner keeps
+its container so the resumed run can finish the push.
+
+<Aside type="tip">
+  **Promotion opens a PR — it never merges.** Same door policy as Loops: the
+  merge button stays human.
+</Aside>
+
+## Every way a race ends
+
+| End | What it means |
+|---|---|
+| **Completed** | ≥1 contender finished; compare, preview, promote at your leisure |
+| **Failed** | No lane produced a result — each card says why, fix & resume any lane to reopen the race |
+| **Cancelled** | You stopped it: running lanes aborted, queued lanes dropped, containers torn down |
+| **Archived** | You're done comparing: previews torn down, the record stays in history |
+| **Deleted** | The record and **every contender's run** (transcripts included) are permanently removed — refused while any lane is still live, so a delete can never kill a running attempt |
+
+## Next steps
+
+- [Prototyping](/concepts/prototyping) — the concept overview
+- [Create a Prototype](/guides/create-a-prototype) — the practical walkthrough
+- [Runs](/concepts/runs) — what each contender is underneath

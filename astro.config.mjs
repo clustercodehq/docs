@@ -102,6 +102,7 @@ export default defineConfig({
             { label: 'Loops', slug: 'concepts/loops', badge: { text: 'Beta', variant: 'default', class: 'beta-badge' } },
             { label: 'How a Loop run works', slug: 'concepts/loop-run-lifecycle', badge: { text: 'Beta', variant: 'default', class: 'beta-badge' } },
             { label: 'Prototyping', slug: 'concepts/prototyping', badge: { text: 'Beta', variant: 'default', class: 'beta-badge' } },
+            { label: 'How a Prototype race works', slug: 'concepts/prototype-race-lifecycle', badge: { text: 'Beta', variant: 'default', class: 'beta-badge' } },
             { label: 'Multi-Agent Runs', slug: 'guides/multi-agent-runs' },
             { label: 'Engines', slug: 'concepts/subagents' },
           ],
