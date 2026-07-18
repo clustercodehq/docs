@@ -55,8 +55,8 @@ export default defineConfig({
       },
       social: [
         { icon: 'github', label: 'GitHub', href: 'https://github.com/orgs/clustercodehq' },
-        { icon: 'discord', label: 'Discord', href: 'https://discord.gg/BRPt2DXM' },
-        { icon: 'x.com', label: 'X', href: 'https://x.com/clustercode' },
+        { icon: 'discord', label: 'Discord', href: 'https://discord.gg/M6d7yPz4GJ' },
+        { icon: 'x.com', label: 'X', href: 'https://x.com/theclustercode' },
       ],
       // Site-wide branded social link-preview image (same card used by the
       // portal + orchestrator). Applies to every page — deep links keep their
