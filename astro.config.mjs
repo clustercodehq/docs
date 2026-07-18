@@ -1,6 +1,31 @@
 import { defineConfig } from 'astro/config';
 import starlight from '@astrojs/starlight';
 
+// GA4 measurement ID — public by nature (it ships in every page's HTML).
+// Empty string disables all analytics script injection.
+const GA_ID = 'G-XXXXXXXXXX'; // TODO(before merge): replace with the real ID from Task 9
+
+const consentInitScript = `
+window.dataLayer = window.dataLayer || [];
+window.gtag = window.gtag || function () { window.dataLayer.push(arguments); };
+window.gtag('consent', 'default', {
+  analytics_storage: 'denied',
+  ad_storage: 'denied',
+  ad_user_data: 'denied',
+  ad_personalization: 'denied'
+});
+(function () {
+  try {
+    var m = document.cookie.match(/(?:^|; )cc_consent=([^;]*)/);
+    if (!m) return;
+    var rec = JSON.parse(decodeURIComponent(m[1]));
+    if (rec && rec.categories && rec.categories.analytics === true) {
+      window.gtag('consent', 'update', { analytics_storage: 'granted' });
+    }
+  } catch (e) {}
+})();
+`;
+
 export default defineConfig({
   site: 'https://docs.clustercode.io',
   integrations: [
@@ -56,6 +81,23 @@ export default defineConfig({
           tag: 'meta',
           attrs: { name: 'twitter:image', content: 'https://docs.clustercode.io/og-card.png' },
         },
+        // Consent Mode v2 defaults + gtag.js loader. The consent-default script
+        // MUST stay before the googletagmanager.com loader below so gtag() has
+        // already been shimmed with denied defaults by the time GA's script
+        // runs. Empty GA_ID (see top of file) disables injection entirely.
+        ...(GA_ID
+          ? [
+              { tag: 'script', content: consentInitScript },
+              {
+                tag: 'script',
+                attrs: { src: `https://www.googletagmanager.com/gtag/js?id=${GA_ID}`, async: true },
+              },
+              {
+                tag: 'script',
+                content: `window.gtag('js', new Date()); window.gtag('config', '${GA_ID}');`,
+              },
+            ]
+          : []),
       ],
       customCss: ['./src/styles/custom.css'],
       sidebar: [
