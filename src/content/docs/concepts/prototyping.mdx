@@ -5,7 +5,6 @@ description: Race your favorite agents on the same brief — one prompt fans out
 
 import { Aside } from '@astrojs/starlight/components';
 import ThemedImage from '../../../components/ThemedImage.astro';
-import ThemedVideo from '../../../components/ThemedVideo.astro';
 import compareDark from '../../../assets/screenshots/prototype-compare-dark-20260717.png';
 import compareLight from '../../../assets/screenshots/prototype-compare-light-20260717.png';
 
@@ -21,15 +20,11 @@ It's "vibe coding" packaged for professionals: instead of committing to one
 model and hoping, you let Claude, Codex, and Copilot each take a swing at the
 same goal and let the results decide.
 
-<ThemedVideo
-  darkWebm="/assets/media/prototype-race-dark-20260717.webm"
-  darkMp4="/assets/media/prototype-race-dark-20260717.mp4"
-  darkPoster="/assets/media/prototype-race-dark-poster-20260717.png"
-  lightWebm="/assets/media/prototype-race-light-20260717.webm"
-  lightMp4="/assets/media/prototype-race-light-20260717.mp4"
-  lightPoster="/assets/media/prototype-race-light-poster-20260717.png"
+<ThemedImage
+  dark={compareDark}
+  light={compareLight}
   title="Prototyping"
-  alt="A prototype being built on the Prototypes page: a name and a one-paragraph brief for a coffee-brand landing page are filled in, Claude is entered as a contender with the sonnet model, Codex CLI is added as a second contender — the panel confirming two contenders will race on separate branches — and a worker plus a fresh DevBox image are picked as the target. Building raises a toast that links through to the prototype's own page, where the two contenders start out running on their own branches, then finish as DONE cards side by side, each showing its branch name, duration, cost and a written summary of the landing page it built. The clip ends with one contender's run panel opened, showing that agent's own account of the work it did. The stretch where the engines are working is time-compressed."
+  alt="A finished two-contender prototype compared side by side on the Prototypes page: Claude (sonnet) and Codex both Done, each card showing its branch, duration, and real dollar cost with the agent's own summary — and the shared side panel opened on Display, streaming the live desktop of a finished DevBox with the coffee-brand landing page that contender actually built rendered in the browser."
 />
 
 ## One prompt, N contenders
@@ -117,13 +112,6 @@ strip, so you're weighing like against like. Each card carries, top to bottom:
   live latest-activity line while it's still running, or the queue explanation
   while it waits, and
 - the **preview** and **promote** actions.
-
-<ThemedImage
-  dark={compareDark}
-  light={compareLight}
-  title="Prototypes"
-  alt="A prototype's comparison strip: three equal cards for the same brief — Claude (opus) and Codex (gpt-5.5-codex) both Done with their end-of-run summaries, branch, DevBox, duration and cost, each offering Promote winner; GitHub Copilot still Running with a live latest-activity line and a Cancel action."
-/>
 
 Because each contender is a real Run, its cost and summary are read straight from
 the run — the card never invents its own numbers.

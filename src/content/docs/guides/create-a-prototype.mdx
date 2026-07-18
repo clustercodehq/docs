@@ -4,6 +4,9 @@ description: Race several agents on one brief — write a prompt worth comparing
 ---
 
 import { Aside, Steps } from '@astrojs/starlight/components';
+import ThemedImage from '../../../components/ThemedImage.astro';
+import compareDark from '../../../assets/screenshots/prototype-compare-dark-20260717.png';
+import compareLight from '../../../assets/screenshots/prototype-compare-light-20260717.png';
 
 This guide walks through creating your first [Prototype](/concepts/prototyping) —
 one prompt raced across several engine+model contenders, compared side by side,
@@ -88,6 +91,13 @@ push), but promoting the winner pushes its branch and opens the PR.
 </Steps>
 
 ## What you get when it finishes
+
+<ThemedImage
+  dark={compareDark}
+  light={compareLight}
+  title="Prototypes"
+  alt="A finished two-contender prototype compared side by side: Claude (sonnet) and Codex both Done, each card showing its branch, duration, and real dollar cost with the agent's own summary — and the shared side panel opened on Display, streaming the live desktop of a finished DevBox with the coffee-brand landing page that contender actually built rendered in the browser."
+/>
 
 - **A promoted PR** — the winning contender's run reopened to push its branch and
   open a pull request, with the losers retired. Prototyping never merges — review
