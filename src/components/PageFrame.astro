@@ -99,8 +99,8 @@ function isActive(prefix: string) {
 
 <div id="cc-banner" hidden role="dialog" aria-label="Cookie consent" data-testid="cookie-consent-banner">
   <span>
-    We use optional Google Analytics cookies to understand which pages are visited — only if you
-    allow it.
+    We use an optional functional preference and Google Analytics cookies to understand which pages
+    are visited — only if you allow it.
     <a href="https://clustercode.io/cookie-policy" target="_blank" rel="noopener">Cookie Policy</a>
   </span>
   <span class="cc-actions">
@@ -131,12 +131,28 @@ function isActive(prefix: string) {
         timestamp: Date.now(),
       };
       var host = location.hostname;
+      var domain = (host === 'clustercode.io' || host.endsWith('.clustercode.io')) ? '.clustercode.io' : null;
       var cookie =
         NAME + '=' + encodeURIComponent(JSON.stringify(record)) +
         '; Path=/; Max-Age=' + 365 * 86400 + '; SameSite=Lax';
-      if (host === 'clustercode.io' || host.endsWith('.clustercode.io')) cookie += '; Domain=.clustercode.io';
+      if (domain) cookie += '; Domain=' + domain;
       if (location.protocol === 'https:') cookie += '; Secure';
       document.cookie = cookie;
+      if (analytics === false) {
+        // GA sets _ga/_ga_* on .clustercode.io in prod but host-only in dev —
+        // an expiry cookie only matches when its Domain attribute matches the
+        // one it was set with, so clear both forms.
+        var gaNames = document.cookie.split('; ').map(function (pair) {
+          return pair.slice(0, pair.indexOf('='));
+        }).filter(function (name) {
+          return /^_ga/.test(name);
+        });
+        gaNames.forEach(function (name) {
+          document.cookie = name + '=; Path=/; Max-Age=0';
+          if (domain) document.cookie = name + '=; Path=/; Max-Age=0; Domain=' + domain;
+        });
+      }
+      try { localStorage.removeItem(NAME); } catch (e) {}
       if (typeof window.gtag === 'function') {
         window.gtag('consent', 'update', { analytics_storage: analytics ? 'granted' : 'denied' });
       }
