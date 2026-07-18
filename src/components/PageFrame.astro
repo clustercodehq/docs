@@ -97,6 +97,119 @@ function isActive(prefix: string) {
 	<BottomNav />
 </div>
 
+<div id="cc-banner" hidden role="dialog" aria-label="Cookie consent" data-testid="cookie-consent-banner">
+  <span>
+    We use an optional functional preference and Google Analytics cookies to understand which pages
+    are visited — only if you allow it.
+    <a href="https://clustercode.io/cookie-policy" target="_blank" rel="noopener">Cookie Policy</a>
+  </span>
+  <span class="cc-actions">
+    <button id="cc-reject" data-testid="cookie-reject-btn">Only necessary</button>
+    <button id="cc-accept" data-testid="cookie-accept-btn">Accept all</button>
+  </span>
+</div>
+
+<script is:inline>
+  (function () {
+    var NAME = 'cc_consent';
+    function read() {
+      var m = document.cookie.match(/(?:^|; )cc_consent=([^;]*)/);
+      if (!m) return null;
+      try {
+        var rec = JSON.parse(decodeURIComponent(m[1]));
+        var c = rec && rec.categories;
+        if (!c || c.necessary !== true || typeof c.functional !== 'boolean' || typeof c.analytics !== 'boolean') return null;
+        if (typeof rec.timestamp !== 'number' || Date.now() - rec.timestamp > 365 * 864e5) return null;
+        if (rec.timestamp - Date.now() > 3e5) return null; // reject future stamps (5-min skew allowance)
+        return rec;
+      } catch (e) {
+        return null;
+      }
+    }
+    function write(analytics) {
+      var record = {
+        categories: { necessary: true, functional: analytics, analytics: analytics },
+        timestamp: Date.now(),
+      };
+      var host = location.hostname;
+      var domain = (host === 'clustercode.io' || host.endsWith('.clustercode.io')) ? '.clustercode.io' : null;
+      var cookie =
+        NAME + '=' + encodeURIComponent(JSON.stringify(record)) +
+        '; Path=/; Max-Age=' + 365 * 86400 + '; SameSite=Lax';
+      if (domain) cookie += '; Domain=' + domain;
+      if (location.protocol === 'https:') cookie += '; Secure';
+      document.cookie = cookie;
+      if (analytics === false) {
+        // GA sets _ga/_ga_* on .clustercode.io in prod but host-only in dev —
+        // an expiry cookie only matches when its Domain attribute matches the
+        // one it was set with, so clear both forms.
+        var gaNames = document.cookie.split('; ').map(function (pair) {
+          return pair.slice(0, pair.indexOf('='));
+        }).filter(function (name) {
+          return /^_ga/.test(name);
+        });
+        gaNames.forEach(function (name) {
+          document.cookie = name + '=; Path=/; Max-Age=0';
+          if (domain) document.cookie = name + '=; Path=/; Max-Age=0; Domain=' + domain;
+        });
+      }
+      try { localStorage.removeItem(NAME); } catch (e) {}
+      if (typeof window.gtag === 'function') {
+        window.gtag('consent', 'update', { analytics_storage: analytics ? 'granted' : 'denied' });
+      }
+      banner.hidden = true;
+    }
+    var banner = document.getElementById('cc-banner');
+    if (!banner || read()) return;
+    banner.hidden = false;
+    document.getElementById('cc-accept').addEventListener('click', function () { write(true); });
+    document.getElementById('cc-reject').addEventListener('click', function () { write(false); });
+  })();
+</script>
+
+<style>
+  #cc-banner[hidden] {
+    display: none;
+  }
+  #cc-banner {
+    position: fixed;
+    inset: auto 0 0 0;
+    z-index: 200;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    font-size: var(--sl-text-sm);
+    background: var(--sl-color-bg-nav);
+    border-top: 1px solid var(--sl-color-hairline);
+    color: var(--sl-color-gray-2);
+  }
+  #cc-banner a {
+    color: var(--sl-color-text-accent);
+  }
+  #cc-banner .cc-actions {
+    display: flex;
+    gap: 0.5rem;
+  }
+  #cc-banner button {
+    padding: 0.25rem 0.75rem;
+    border-radius: 0.375rem;
+    border: 1px solid var(--sl-color-hairline);
+    background: transparent;
+    color: var(--sl-color-white);
+    cursor: pointer;
+    font-size: var(--sl-text-sm);
+  }
+  #cc-banner #cc-accept {
+    background: var(--sl-color-text-accent);
+    color: var(--sl-color-black);
+    border-color: transparent;
+    font-weight: 600;
+  }
+</style>
+
 <script is:inline>
   (function() {
     var STORAGE_KEY = 'sidebar-collapsed';

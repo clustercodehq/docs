@@ -1,0 +1,196 @@
+---
+title: Prototyping
+description: Race your favorite agents on the same brief — one prompt fans out to N engine+model contenders, each runs autonomously on its own branch, and you compare, preview, and promote the winner to a PR.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+import ThemedImage from '../../../components/ThemedImage.astro';
+import compareDark from '../../../assets/screenshots/prototype-compare-dark-20260717.png';
+import compareLight from '../../../assets/screenshots/prototype-compare-light-20260717.png';
+
+A **Prototype** is one prompt raced across several agents at once. You write a
+single brief — "build a marketing site", "add dark mode to the settings page" —
+pick which engine+model contenders should attempt it, and ClusterCode runs the
+**same** brief through each one autonomously, each on its own branch in its own
+DevBox. When they finish, you compare the results side by side, preview any
+contender live, and **promote** the one you like — which opens a pull request
+from its branch.
+
+It's "vibe coding" packaged for professionals: instead of committing to one
+model and hoping, you let Claude, Codex, and Copilot each take a swing at the
+same goal and let the results decide.
+
+<ThemedImage
+  dark={compareDark}
+  light={compareLight}
+  title="Prototyping"
+  alt="A finished two-contender prototype compared side by side on the Prototypes page: Claude (sonnet) and Codex both Done, each card showing its branch, duration, and real dollar cost with the agent's own summary — and the shared side panel opened on Display, streaming the live desktop of a finished DevBox with the coffee-brand landing page that contender actually built rendered in the browser."
+/>
+
+## One prompt, N contenders
+
+You define a prototype once — the prompt, the target (worker + image or DevBox),
+the repository, and the security profile — and then choose the **contenders**: a
+list of **engine + model** pairs. The same CLI with two different models is a
+valid matchup, so "Claude Sonnet vs Claude Opus vs Codex GPT-5" is a legal race.
+
+Each contender becomes an independent, autonomous [Run](/concepts/runs):
+
+- It gets its **own branch**, named `proto/<slug>/<engine>` (with `-<model>`
+  appended when the same engine appears more than once, so the branches never
+  collide).
+- It works in its **own DevBox**, cloned fresh from your repository.
+- It runs to completion on its own — no turn-by-turn shepherding — committing
+  its work to its branch **locally** as it goes. Nothing is pushed during the
+  race: your remote never sees N speculative branches, and no push credentials
+  are needed until you promote.
+
+Nothing about the contenders is shared at runtime: they don't see each other's
+work, so each result is an honest, independent attempt at your brief.
+
+## How it works
+
+```text
+                      your brief (one prompt)
+                              │
+              ┌───────────────┼───────────────┐
+              ▼               ▼               ▼
+        claude · opus   codex · gpt-5   copilot · sonnet     ← contenders
+        ┌──────────┐    ┌──────────┐    ┌──────────┐           (engine+model)
+        │ DevBox A │    │ DevBox B │    │ DevBox C │          each isolated
+        │ branch A │    │ branch B │    │ branch C │          commits stay local
+        └────┬─────┘    └────┬─────┘    └────┬─────┘
+             ▼               ▼               ▼
+           done            done            failed
+             │               │               │
+             └───────┬───────┘         (error surfaced
+                     ▼                  on its card —
+          compare · preview · pick      fix & resume,
+                     │                  or let it lose)
+                     ▼
+            ★ promote the winner
+                     │
+        winner's run resumes → pushes its branch → opens the PR
+        losers' DevBoxes torn down · the race never merges
+```
+
+More contenders than your plan's run slots? The extras wait as **queued** and
+enter the race automatically as slots free — see the next section.
+
+Want the gears? [How a Prototype race works](/concepts/prototype-race-lifecycle)
+walks one race end to end — admission, isolation, the parent's verdict,
+fix & resume, and promotion.
+
+## Queued admission — concurrency is respected, not exceeded
+
+Contenders don't all start at once if your plan won't allow it. Each prototype
+respects your plan's **concurrent-run limit** the same way every other run does:
+children that can't get a run slot wait as **queued** and are admitted
+**automatically, oldest-first**, as slots free up.
+
+<Aside type="note">
+  On the **Free** plan (one concurrent run) the contenders naturally run **one
+  at a time** — the queued card shows the plan's concurrency and its position,
+  and the next contender starts the moment the previous one finishes. Nothing is
+  lost; the race just runs in sequence.
+</Aside>
+
+Each card tells you where it stands: a **running** card shows a live latest-activity
+line, a **queued** card explains it's waiting for a run slot (with the plan's
+concurrency and its queue position), and a **done** card shows the finished
+result.
+
+## Compare — the comparison cards
+
+The detail page lays out the contenders as **equal comparison cards** in a
+strip, so you're weighing like against like. Each card carries, top to bottom:
+
+- the **engine + model**,
+- the **branch**, the **duration**, and the **cost** so far,
+- a **status pill** (queued · running · done · failed),
+- a **summary block** — the agent's own end-of-run summary when it's done, or the
+  live latest-activity line while it's still running, or the queue explanation
+  while it waits, and
+- the **preview** and **promote** actions.
+
+Because each contender is a real Run, its cost and summary are read straight from
+the run — the card never invents its own numbers.
+
+## Preview any contender, one at a time
+
+Any card can be opened in the shared side panel — the **same** Run / Terminal /
+Display panel that Runs and [Loops](/concepts/loops) use. **Preview in Display**
+opens the contender's live desktop, **Preview in Terminal** opens its shell, and
+clicking the card opens its **Run** transcript. The Run tab's header selector
+switches between sibling contenders, so you can flip from one engine's transcript
+to another's without leaving the panel.
+
+Preview is **one contender at a time** by design — the display relay focuses a
+single DevBox. That's why the contenders' containers are **kept alive after they
+finish**: a done prototype is still fully inspectable until you decide.
+
+## Promote the winner → a pull request
+
+When you've picked a winner, **Promote** it. Promoting **resumes that
+contender's run** with a single injected instruction: *push your branch and open
+a pull request*. The agent that did the work — with its full context intact —
+pushes the branch it's been committing to and opens the PR, and the prototype
+records the resulting PR URL. This is the one moment push credentials are
+needed: a GitHub personal access token saved in Settings.
+
+<Aside type="tip">
+  **Promotion opens a PR — it never merges.** As with Loops, the pull request is
+  where your judgment enters; that door stays human.
+</Aside>
+
+Promotion is a **creator-only** action — the person who started the prototype
+decides the winner.
+
+### Losers are retired; the lifecycle stays tidy
+
+- **Promote** tears down the losing contenders' DevBoxes — the compute is
+  freed, and the winner keeps its container so the resumed run can push and
+  open the PR from it.
+- **Cancel** stops a still-racing prototype: running contenders are aborted,
+  queued ones are dropped, and their containers are torn down.
+- **Archive** a finished prototype once you're done comparing: its preview
+  containers are torn down (Terminal/Display previews stop working) and it
+  moves out of the main list. The record stays.
+- **Delete** permanently removes a finished prototype **and every run its
+  contenders produced** — execution records and full traces included. Anything
+  pushed to GitHub (a promoted branch or PR) stays. The confirm dialog spells
+  this out; it can't be undone.
+
+A prototype counts as **active** only while contenders are still working (or
+queued). The moment the race finishes — every contender done, failed, or
+cancelled — it stops counting against the per-plan cap below, even though its
+preview DevBoxes stay alive for inspection. Container load is governed by your
+container limits; the prototype cap bounds concurrent *races*, not finished
+results.
+
+## Availability
+
+<Aside type="note" title="Beta">Prototyping is in beta — the mechanics below are
+stable, but expect the surface to keep evolving.</Aside>
+
+Prototyping is available on **every plan**. Two per-tier caps apply:
+
+- **Active prototypes** — how many races can be *in flight* (contenders still
+  working or queued) at once: **Free 1 · Starter 2 · Pro 5 · Enterprise 10**.
+  A finished prototype frees its slot immediately — you never have to archive
+  or delete a result just to start the next race.
+- **Contenders per prototype** — how many engine+model pairs a single prototype
+  may race: **Free 2 · Starter 3 · Pro 4 · Enterprise 6**.
+
+Concurrency itself is still governed by your plan's [concurrent-run
+limit](/reference/plans-and-limits) — the queueing above is how the Free and
+Starter tiers experience a race with more contenders than run slots.
+
+## Next steps
+
+- [Create a Prototype](/guides/create-a-prototype) — the practical walkthrough
+- [How a Prototype race works](/concepts/prototype-race-lifecycle) — the lifecycle deep-dive
+- [Runs](/concepts/runs) — what each contender looks like under the hood
+- [Engines](/concepts/subagents) — the Claude / Codex / Copilot runtimes you race
+- [Loops](/concepts/loops) — the sibling feature: one goal, iterated until verified
+- [Plans & Limits](/reference/plans-and-limits) — the per-tier caps in full

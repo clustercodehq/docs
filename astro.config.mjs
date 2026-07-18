@@ -1,6 +1,35 @@
 import { defineConfig } from 'astro/config';
 import starlight from '@astrojs/starlight';
 
+// GA4 measurement ID — public by nature (it ships in every page's HTML).
+// Empty string disables all analytics script injection.
+const GA_ID = 'G-KSEZLN4P22'; // ClusterCode web stream (analytics.google.com)
+
+const consentInitScript = `
+window.dataLayer = window.dataLayer || [];
+window.gtag = window.gtag || function () { window.dataLayer.push(arguments); };
+window.gtag('consent', 'default', {
+  analytics_storage: 'denied',
+  ad_storage: 'denied',
+  ad_user_data: 'denied',
+  ad_personalization: 'denied'
+});
+(function () {
+  try {
+    var m = document.cookie.match(/(?:^|; )cc_consent=([^;]*)/);
+    if (!m) return;
+    var rec = JSON.parse(decodeURIComponent(m[1]));
+    var c = rec && rec.categories;
+    if (!c || c.necessary !== true || typeof c.functional !== 'boolean' || typeof c.analytics !== 'boolean') return;
+    if (typeof rec.timestamp !== 'number' || Date.now() - rec.timestamp > 365 * 864e5) return;
+    if (rec.timestamp - Date.now() > 3e5) return; // reject future stamps (5-min skew allowance)
+    if (c.analytics === true) {
+      window.gtag('consent', 'update', { analytics_storage: 'granted' });
+    }
+  } catch (e) {}
+})();
+`;
+
 export default defineConfig({
   site: 'https://docs.clustercode.io',
   integrations: [
@@ -26,8 +55,8 @@ export default defineConfig({
       },
       social: [
         { icon: 'github', label: 'GitHub', href: 'https://github.com/orgs/clustercodehq' },
-        { icon: 'discord', label: 'Discord', href: 'https://discord.gg/BRPt2DXM' },
-        { icon: 'x.com', label: 'X', href: 'https://x.com/clustercode' },
+        { icon: 'discord', label: 'Discord', href: 'https://discord.gg/M6d7yPz4GJ' },
+        { icon: 'x.com', label: 'X', href: 'https://x.com/theclustercode' },
       ],
       // Site-wide branded social link-preview image (same card used by the
       // portal + orchestrator). Applies to every page — deep links keep their
@@ -56,6 +85,23 @@ export default defineConfig({
           tag: 'meta',
           attrs: { name: 'twitter:image', content: 'https://docs.clustercode.io/og-card.png' },
         },
+        // Consent Mode v2 defaults + gtag.js loader. The consent-default script
+        // MUST stay before the googletagmanager.com loader below so gtag() has
+        // already been shimmed with denied defaults by the time GA's script
+        // runs. Empty GA_ID (see top of file) disables injection entirely.
+        ...(GA_ID
+          ? [
+              { tag: 'script', content: consentInitScript },
+              {
+                tag: 'script',
+                attrs: { src: `https://www.googletagmanager.com/gtag/js?id=${GA_ID}`, async: true },
+              },
+              {
+                tag: 'script',
+                content: `window.gtag('js', new Date()); window.gtag('config', '${GA_ID}');`,
+              },
+            ]
+          : []),
       ],
       customCss: ['./src/styles/custom.css'],
       sidebar: [
@@ -101,6 +147,8 @@ export default defineConfig({
             { label: 'Runs', slug: 'concepts/runs' },
             { label: 'Loops', slug: 'concepts/loops', badge: { text: 'Beta', variant: 'default', class: 'beta-badge' } },
             { label: 'How a Loop run works', slug: 'concepts/loop-run-lifecycle', badge: { text: 'Beta', variant: 'default', class: 'beta-badge' } },
+            { label: 'Prototyping', slug: 'concepts/prototyping', badge: { text: 'Beta', variant: 'default', class: 'beta-badge' } },
+            { label: 'How a Prototype race works', slug: 'concepts/prototype-race-lifecycle', badge: { text: 'Beta', variant: 'default', class: 'beta-badge' } },
             { label: 'Multi-Agent Runs', slug: 'guides/multi-agent-runs' },
             { label: 'Engines', slug: 'concepts/subagents' },
           ],
@@ -114,6 +162,7 @@ export default defineConfig({
             { label: 'Run an agent on demand', slug: 'guides/run-on-demand' },
             { label: 'Automate recurring work', slug: 'guides/recurring-work' },
             { label: 'Create a Loop', slug: 'guides/create-a-loop', badge: { text: 'Beta', variant: 'default', class: 'beta-badge' } },
+            { label: 'Create a Prototype', slug: 'guides/create-a-prototype', badge: { text: 'Beta', variant: 'default', class: 'beta-badge' } },
             { label: 'Custom Containerfile', slug: 'guides/custom-containerfile' },
             { label: 'Build from DevBox', slug: 'guides/build-image-from-container' },
             { label: 'Windows Golden Image', slug: 'guides/windows-golden-image' },
