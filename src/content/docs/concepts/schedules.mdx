@@ -111,6 +111,18 @@ From the **Schedules** page, **+ Schedule** opens the form:
 A schedule can be **enabled** or **disabled** at any time without deleting it —
 disabled schedules keep their config but never fire.
 
+## Skipped runs
+
+Before each firing, the dispatcher runs pre-flight checks — target reachable,
+plan allowance, and the **service tokens** the run's repository or ticket
+requires. If a check fails, the execution records a **skip** with a specific
+reason (visible in the execution list, the timeline popover, and the
+execution's detail page) **before any AI tokens are spent**. A missing
+GitHub / Azure DevOps / GitLab token is the most common cause for a new
+setup — the detail page shows a remediation banner that resolves live once
+you add the token. See the
+[skip-reason reference](/reference/environment-variables/#run-readiness--skip-reasons).
+
 ## Limits
 
 Two limits apply per plan: **how many** schedules you can have, and **how often**

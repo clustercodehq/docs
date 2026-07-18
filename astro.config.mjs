@@ -168,6 +168,7 @@ export default defineConfig({
             { label: 'Windows Golden Image', slug: 'guides/windows-golden-image' },
             { label: 'Visual Testing', slug: 'guides/visual-testing' },
             { label: 'Team Setup', slug: 'guides/team-setup' },
+            { label: 'Agent sign-in', slug: 'guides/agent-sign-in' },
             { label: 'Cloud worker', slug: 'guides/cloud-worker' },
             { label: 'VS Code Extension', slug: 'guides/vscode-extension' },
             { label: 'AI Credits', slug: 'guides/ai-credits' },

@@ -1,44 +1,51 @@
 ---
 title: Settings
-description: Your per-user ClusterCode preferences — secrets and BYOK keys, Nucleus behavior, appearance, DevBox display, notifications, and version info.
+description: Your per-user ClusterCode preferences — environment variables, service tokens and agent secrets, Nucleus instructions, appearance, DevBox display, notifications, and version info.
 ---
 
 import { Aside } from '@astrojs/starlight/components';
 
 **Settings** holds your preferences for the orchestrator — open it from the
-sidebar. Most of it is **per-user** (your secrets, Nucleus instructions,
-theme); the **DevBox Security** profiles are **tenant-level** — shared across
-your team. The page is organised into the sections below (the right-hand nav
-jumps between them).
+sidebar. Most of it is **per-user** (your tokens and variables, Nucleus
+instructions, theme); the **DevBox Security** profiles are **tenant-level** —
+shared across your team. The page is organised into the sections below (the
+right-hand nav jumps between them).
 
-## Secrets
+## Environment Variables
 
-API keys and tokens for external services. Values are **encrypted at rest** and
-are only ever handed to your running DevBox instances and Nucleus — never
-shown back to you once saved (you replace a value by pasting a new one).
+Everything injected into the DevBoxes you launch, in one honest place. Three
+groups:
 
-Each credential you add can be switched on for one or both **uses**:
+- **Service access** — the provider tokens your runs need to reach
+  repositories and tickets: GitHub, Azure DevOps, GitLab, and Jira. Each row
+  names the env var it injects (`GH_TOKEN`, `AZURE_DEVOPS_EXT_PAT`,
+  `GITLAB_TOKEN`, `JIRA_API_TOKEN`) and the scopes the token needs. A
+  configured token shows a check mark; a missing one is exactly what makes a
+  run against that provider **skip before spending AI tokens** — see
+  [run readiness & skip reasons](/reference/environment-variables/#run-readiness--skip-reasons).
+- **Agent Secrets** — the AI coding agents' own API keys and tokens, an
+  alternative to signing each agent in per worker: the **Claude OAuth token**
+  (`CLAUDE_CODE_OAUTH_TOKEN`), **Anthropic API key** (`ANTHROPIC_API_KEY`),
+  **GitHub Copilot token** (`COPILOT_GITHUB_TOKEN`), and **OpenAI API key**
+  (`OPENAI_API_KEY`). The Claude and Anthropic keys additionally carry two
+  toggles — **Use for Nucleus (Bring Your Own Key)** routes Nucleus's own
+  requests through your key, and **Use for DevBox authentication** injects the
+  key into the DevBoxes you launch; the Copilot and OpenAI tokens are plain
+  injected tokens. See
+  [agent secrets](/reference/environment-variables/#agent-secrets).
+- **Global variables** — free-form variables injected into **every** DevBox
+  you launch. Mark a variable **secret** to encrypt it at rest and redact its
+  value from run traces. [Project](/concepts/projects) variables override
+  global ones on a name collision — see
+  [sources & precedence](/reference/environment-variables/#sources--precedence).
 
-- **Use for Nucleus (Bring Your Own Key)** — route Nucleus's own requests
-  through your key. See [Bring your own key](#bring-your-own-key-byok) below.
-- **Use for DevBox authentication** — make the token available **inside** the
-  DevBoxes you launch (for example a GitHub token so an agent can push and open
-  PRs).
+Values are **encrypted at rest** and are only ever handed to your running
+DevBox instances — secret values are never shown back to you once saved (you
+replace a value by pasting a new one).
 
-### Bring your own key (BYOK)
-
-Nucleus is built on **Anthropic (Claude)** models. Every plan includes a
-monthly AI allowance, but you can add your own credential for **additional usage
-beyond your plan** — or to run entirely on your own account. Two options:
-
-- **Anthropic API key** — billed to your Anthropic account, used directly for
-  Nucleus requests.
-- **Claude OAuth token** — routes Nucleus through your **personal Claude Code
-  subscription**. Make sure your usage complies with Anthropic's terms.
-
-Paste the key under **Secrets**, then enable **Use for Nucleus (Bring Your Own
-Key)**. See also [AI Credits](/guides/ai-credits) for how plan allowance and BYOK
-interact.
+Agent sign-in (Claude, Codex, Copilot) is **per worker**, not per user — set
+it up from any worker's page via **Manage agent sign-in**, or see the
+[agent sign-in guide](/guides/agent-sign-in).
 
 ## Nucleus
 
@@ -46,6 +53,17 @@ Customize [Nucleus](/concepts/nucleus)'s behavior with a personal instruction
 file — a **`NUCLEUS.md`**, conceptually like a `CLAUDE.md`. Use it to set tone,
 standing preferences, or project context the assistant should always keep in
 mind. You can edit it inline and **reset** it back to the default at any time.
+This section holds the `NUCLEUS.md` only.
+
+Nucleus is built on **Anthropic (Claude)** models. Every plan includes a
+monthly AI allowance, but you can **bring your own key** for usage beyond your
+plan — or to run entirely on your own account. The keys live under
+[Environment Variables → Agent Secrets](#environment-variables): add an
+**Anthropic API key** or a **Claude OAuth token** and enable **Use for Nucleus
+(Bring Your Own Key)**. The OAuth option routes Nucleus through your personal
+Claude Code subscription — make sure your usage complies with Anthropic's
+terms. See also [AI Credits](/guides/ai-credits) for how plan allowance and
+BYOK interact.
 
 ## Appearance
 

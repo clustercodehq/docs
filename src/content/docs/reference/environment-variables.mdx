@@ -1,29 +1,118 @@
 ---
 title: Environment Variables
-description: Environment variables for connecting your own AI agent and ticket-provider credentials.
+description: Every env var your DevBoxes receive — service access tokens, global and project variables, precedence, secret handling, and the run-readiness skip reasons.
 ---
 
-You can supply your own credentials for AI agents and ticket providers. These are typically set in the dashboard; the environment-variable names below are provided for reference.
+import { Aside } from '@astrojs/starlight/components';
 
-## Ticket Providers
+Every DevBox you launch receives environment variables from three sources,
+all managed in the app. This page is the canonical reference: where each
+variable comes from, which one wins on a name collision, which tokens the
+services you use require, and what happens when a required token is missing.
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `GITHUB_TOKEN` | _(none)_ | GitHub PAT — increases rate limit from 60 to 5,000 req/hr |
-| `AZURE_DEVOPS_PAT` | _(none)_ | Azure DevOps personal access token for ticket fetching |
+## Sources & precedence
 
-## AI Agent Credentials
+Variables are assembled at **launch time** in this order — later sources
+**override** earlier ones when names collide:
+
+1. **Service access tokens** — the provider credentials from
+   **Settings → Environment Variables**, injected under well-known names
+   (`GH_TOKEN`, `AZURE_DEVOPS_EXT_PAT`, …; see the table below).
+2. **Global variables** — your free-form user-scope variables from
+   **Settings → Environment Variables → Global variables**. Injected into
+   **every** DevBox you launch.
+3. **Project variables** — the [project](/concepts/projects)'s env vars,
+   injected into every DevBox launched in that project. **Project always
+   wins**: a project variable with the same name overrides your global value
+   — and can even override a credential-mapped name like `GH_TOKEN`.
+
+<Aside type="tip">
+  The override chain is intentional. Set your personal default globally, then
+  override it per project where a specific effort needs a different value —
+  for example a project-specific `GH_TOKEN` for a repo that lives in another
+  GitHub org.
+</Aside>
+
+## Service access tokens
+
+Tokens for the repository and ticket services your runs touch. Set them once
+under **Settings → Environment Variables → Service access** (the per-worker
+[agent sign-in wizard](/guides/agent-sign-in) links here from its summary);
+they're injected under these names:
+
+| Credential | Injected as | Required scopes | Used for |
+|---|---|---|---|
+| GitHub Personal Access Token | `GH_TOKEN` | `Contents` (read/write), `Issues` | GitHub CLI (`gh`) — clone, push, PRs, issues |
+| Azure DevOps PAT | `AZURE_DEVOPS_EXT_PAT` | Work Items (Read), Code (Read & Write) | Azure DevOps repos and work items |
+| GitLab Personal Access Token | `GITLAB_TOKEN` | `api` | GitLab CLI (`glab`) — issues, MRs |
+| Jira API Token | `JIRA_API_TOKEN` | — (token from id.atlassian.com) | Jira CLI (`jira`). Also set `JIRA_SERVER` and your login email as project env vars |
+
+## Global variables
+
+Free-form variables under **Settings → Environment Variables → Global
+variables** — injected into **every** DevBox you launch, regardless of
+project. Use them for personal defaults you'd otherwise paste into each
+launch: a database URL, a feature flag, an API key for a tool your agents
+always use.
+
+Each variable can be marked **secret**:
+
+- Secret values are **encrypted at rest** and write-only — once saved they're
+  never shown back to you (paste a new value to replace; leaving the masked
+  field untouched keeps the existing value).
+- Secret values are **redacted from run traces**: the agent gets the variable
+  in its environment, but the value is masked in the event stream and in what
+  the model sees, so it can't leak into a summary or a commit.
+
+## Run readiness & skip reasons
+
+Before a run or schedule execution starts, ClusterCode checks that the
+service tokens it will need are configured — derived from the repository and
+ticket URLs the run targets. If a required token is missing, the run **skips
+before any AI tokens are spent**, with one of these reasons:
+
+| Skip reason | Meaning | Fix |
+|---|---|---|
+| `missing_github_pat` | The run targets a GitHub repository or issue, but no GitHub PAT is set | Add a PAT with `Contents` (read/write) and `Issues` scopes under **Settings → Environment Variables**, then re-trigger |
+| `missing_azure_devops_pat` | The run targets an Azure DevOps repository or work item, but no Azure DevOps PAT is set | Add a PAT with Work Items (Read) and Code (Read & Write) scopes, then re-trigger |
+| `missing_gitlab_pat` | The run targets a GitLab repository, but no GitLab PAT is set | Add a PAT with `api` scope, then re-trigger |
+
+The same check runs **advisory** in the run and schedule create panels (a
+warning row before you save) and powers the remediation banner on a skipped
+execution's detail page — the banner re-checks live and flips to a success
+state as soon as you add the missing token, so you can re-trigger without
+leaving the page.
+
+<Aside type="note">
+  A Jira token is only ever a **warning**, never a skip: an image containing
+  the Jira CLI doesn't prove the run uses it, so Jira-related runs are never
+  blocked — you just see a hint if `jira_api_token` isn't set.
+</Aside>
+
+## Agent secrets
+
+Credentials for the agents themselves — all four live under
+**Settings → Environment Variables → Agent Secrets**. The **Claude OAuth
+token** and **Anthropic API key** additionally carry two toggles: **Use for
+Nucleus (Bring Your Own Key)** routes Nucleus's own requests through your key,
+and **Use for DevBox authentication** injects the key into the DevBoxes you
+launch; the **OpenAI** and **Copilot** tokens are plain injected tokens.
+Alternatively, sign in interactively inside a DevBox — those logins persist
+across DevBox recreation via shared config volumes,
+[encrypted end-to-end with a per-user key](/concepts/session-persistence).
 
 | Variable | Agent | Description |
 |----------|-------|-------------|
-| `ANTHROPIC_API_KEY` | Claude Code | Anthropic API key (or authenticate via Claude OAuth token in the dashboard) |
-| `OPENAI_API_KEY` | Codex | OpenAI API key |
-| `COPILOT_GITHUB_TOKEN` | GitHub Copilot | Copilot authentication token |
-| `GH_TOKEN` | GitHub Copilot | GitHub token for CLI operations |
+| `ANTHROPIC_API_KEY` | Claude Code | API key from console.anthropic.com (pay-as-you-go). Injected only when **Use for DevBox authentication** is enabled on the credential |
+| `CLAUDE_CODE_OAUTH_TOKEN` | Claude Code | Long-lived OAuth token from `claude setup-token` — uses your Claude Pro/Max subscription. Injected only when **Use for DevBox authentication** is enabled on the credential |
+| `OPENAI_API_KEY` | Codex | API key from platform.openai.com. Or run `codex login --device-auth` inside a DevBox to use a ChatGPT subscription |
+| `COPILOT_GITHUB_TOKEN` | GitHub Copilot | Optional fine-grained PAT with `Copilot Requests` (Account permission). Set it if your GitHub PAT is a classic token (`ghp_`) or lacks Copilot access; falls back to `GH_TOKEN` |
 
 ## Worker
 
-You don't configure the worker through environment variables. The `clustercode` CLI sets it up for you — run `clustercode worker` to select a tenant and start it, or `clustercode onboard` for guided setup.
+You don't configure the worker through environment variables. The
+`clustercode` CLI sets it up for you — run `clustercode worker` to select a
+tenant and start it, or `clustercode onboard` for guided setup.
 
 The one adjustable preference is the worker's display name:
 
