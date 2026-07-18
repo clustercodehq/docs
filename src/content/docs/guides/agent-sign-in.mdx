@@ -33,7 +33,8 @@ Three ways in, all landing on the same flow:
 
 2. **Build environment.** The wizard builds (or reuses) a DevBox on the
    worker with the selected agents installed. Credentials created inside it
-   persist across DevBox recreation via the shared config volumes.
+   persist across DevBox recreation via the shared config volumes,
+   [encrypted end-to-end with a per-user key](/concepts/session-persistence).
 
 3. **Sign each agent in.** For terminal-login agents the wizard embeds a
    live terminal seeded with the right command (for example
