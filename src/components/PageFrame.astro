@@ -97,7 +97,7 @@ function isActive(prefix: string) {
 	<BottomNav />
 </div>
 
-<div id="cc-banner" hidden data-testid="cookie-consent-banner">
+<div id="cc-banner" hidden role="dialog" aria-label="Cookie consent" data-testid="cookie-consent-banner">
   <span>
     We use optional Google Analytics cookies to understand which pages are visited — only if you
     allow it.
@@ -151,6 +151,9 @@ function isActive(prefix: string) {
 </script>
 
 <style>
+  #cc-banner[hidden] {
+    display: none;
+  }
   #cc-banner {
     position: fixed;
     inset: auto 0 0 0;

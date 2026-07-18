@@ -19,7 +19,10 @@ window.gtag('consent', 'default', {
     var m = document.cookie.match(/(?:^|; )cc_consent=([^;]*)/);
     if (!m) return;
     var rec = JSON.parse(decodeURIComponent(m[1]));
-    if (rec && rec.categories && rec.categories.analytics === true) {
+    var c = rec && rec.categories;
+    if (!c || c.necessary !== true || typeof c.functional !== 'boolean' || typeof c.analytics !== 'boolean') return;
+    if (typeof rec.timestamp !== 'number' || Date.now() - rec.timestamp > 365 * 864e5) return;
+    if (c.analytics === true) {
       window.gtag('consent', 'update', { analytics_storage: 'granted' });
     }
   } catch (e) {}
