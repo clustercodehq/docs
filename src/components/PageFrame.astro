@@ -120,6 +120,7 @@ function isActive(prefix: string) {
         var c = rec && rec.categories;
         if (!c || c.necessary !== true || typeof c.functional !== 'boolean' || typeof c.analytics !== 'boolean') return null;
         if (typeof rec.timestamp !== 'number' || Date.now() - rec.timestamp > 365 * 864e5) return null;
+        if (rec.timestamp - Date.now() > 3e5) return null; // reject future stamps (5-min skew allowance)
         return rec;
       } catch (e) {
         return null;

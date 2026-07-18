@@ -22,6 +22,7 @@ window.gtag('consent', 'default', {
     var c = rec && rec.categories;
     if (!c || c.necessary !== true || typeof c.functional !== 'boolean' || typeof c.analytics !== 'boolean') return;
     if (typeof rec.timestamp !== 'number' || Date.now() - rec.timestamp > 365 * 864e5) return;
+    if (rec.timestamp - Date.now() > 3e5) return; // reject future stamps (5-min skew allowance)
     if (c.analytics === true) {
       window.gtag('consent', 'update', { analytics_storage: 'granted' });
     }
