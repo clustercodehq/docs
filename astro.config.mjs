@@ -3,7 +3,7 @@ import starlight from '@astrojs/starlight';
 
 // GA4 measurement ID — public by nature (it ships in every page's HTML).
 // Empty string disables all analytics script injection.
-const GA_ID = 'G-XXXXXXXXXX'; // TODO(before merge): replace with the real ID from Task 9
+const GA_ID = 'G-KSEZLN4P22'; // ClusterCode web stream (analytics.google.com)
 
 const consentInitScript = `
 window.dataLayer = window.dataLayer || [];
