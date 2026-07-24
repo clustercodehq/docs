@@ -165,6 +165,7 @@ export default defineConfig({
             { label: 'Create a Prototype', slug: 'guides/create-a-prototype', badge: { text: 'Beta', variant: 'default', class: 'beta-badge' } },
             { label: 'Custom Containerfile', slug: 'guides/custom-containerfile' },
             { label: 'Build from DevBox', slug: 'guides/build-image-from-container' },
+            { label: 'Privileged Mode (Nested Containers)', slug: 'guides/privileged-nested-containers' },
             { label: 'Windows Golden Image', slug: 'guides/windows-golden-image' },
             { label: 'Visual Testing', slug: 'guides/visual-testing' },
             { label: 'Team Setup', slug: 'guides/team-setup' },

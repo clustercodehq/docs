@@ -3,6 +3,8 @@ title: Security Profiles
 description: Control DevBox network access, filesystem permissions, and resource limits.
 ---
 
+import { Aside } from '@astrojs/starlight/components';
+
 Every DevBox in ClusterCode launches with a **security profile** that controls network egress, filesystem writability, and process-level hardening. Profiles give you a simple dial between "wide open for prototyping" and "fully locked down for sensitive repos."
 
 ## The Four Profiles
@@ -79,3 +81,21 @@ The workspace directory and agent configuration directories (`.claude`, `.config
 ## Security Floor
 
 Self-hosted workers can enforce a **minimum security profile**. When a floor is set on a worker, DevBoxes on that machine cannot launch with a less restrictive profile than the floor — for example, a `standard` floor prevents Open-profile DevBoxes on that worker.
+
+## Privileged Mode (Nested Containers)
+
+Profiles range from wide-open to fully locked down, but even the **Open** profile still can't run a container engine *inside* a DevBox — nested containers ("container-in-container") need `/dev/fuse`, `CAP_SYS_ADMIN`, and sub-UID delegation that the platform's hardening withholds by default.
+
+**Privileged mode** is a separate, opt-in per-launch toggle for exactly that case. It launches the DevBox with `--privileged`, granting root-equivalent access to the worker machine's container engine so `podman`/`docker` works inside the DevBox. It is **orthogonal** to profiles — not a fifth profile — and comes with hard limits:
+
+- **[BYOM workers](/concepts/workers) only** — never [Cloud workers](/concepts/cloud-workers), which reject it unconditionally.
+- **Forces the Open profile** — hardening under `--privileged` is meaningless, so enabling the toggle auto-selects **Open** and locks the profile picker.
+- **Gated** — only the machine's owner (whoever registered that BYOM worker) or a tenant admin/owner can use it.
+
+<Aside type="caution" title="Privileged mode removes all hardening">
+  A privileged DevBox has root-equivalent access to the host worker's container
+  engine, with every sandbox protection disabled. Use it only on machines you own
+  and trust, and only when the workload genuinely needs to run containers inside the
+  DevBox. See the [Privileged Mode guide](/guides/privileged-nested-containers) for
+  when to use it and how to enable it.
+</Aside>

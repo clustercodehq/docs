@@ -1,0 +1,103 @@
+---
+title: Privileged Mode (Nested Containers)
+description: Run a container engine inside a DevBox on your own BYOM worker by launching in privileged mode.
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+DevBoxes normally launch **hardened** — Linux capabilities dropped, no `/dev/fuse`, and network isolated according to their [security profile](/concepts/security-profiles). That hardening is exactly what blocks running a container engine *inside* a DevBox: `podman` or `docker` fails there because there's no `/dev/fuse`, no `CAP_SYS_ADMIN`, and no sub-UID delegation.
+
+**Privileged mode** is an opt-in escape hatch for that one case. When enabled, the DevBox launches with `--privileged`, giving it full root-equivalent access to the worker machine's container engine — which is what makes **nested containers** ("container-in-container") work. It is available **only on [BYOM workers](/concepts/workers)** (your own machines), never on [Cloud workers](/concepts/cloud-workers).
+
+<Aside type="caution" title="This removes all sandbox hardening">
+  A privileged DevBox has **root-equivalent access to the host worker's container
+  engine**. All sandbox isolation is gone. Only use it on a **machine you own and
+  trust**, and only for a workload that genuinely needs to run containers inside the
+  DevBox. It is deliberately **not** available on shared Cloud infrastructure.
+</Aside>
+
+## When to use it
+
+Reach for privileged mode only when the work inside the DevBox needs its own container engine — for example:
+
+- **Testing container builds** — `podman build` / `docker build` from inside the DevBox
+- **Running a nested test rig** — a container-based integration suite that spins up its own containers
+- **Container-in-DevBox development** — anything that shells out to `podman run` / `docker run`
+
+If your workload doesn't run containers itself, you don't need this — stay on a hardened [security profile](/concepts/security-profiles).
+
+## Who can use it
+
+Privileged launches are gated. The toggle only appears — and the launch is only accepted — for:
+
+- The **owner of the machine** — whoever registered that BYOM worker, or
+- A **tenant admin or owner**
+
+Everyone else (members on a machine they don't own) won't see the toggle, and a privileged launch request from them is rejected. Cloud-worker launches reject privileged mode unconditionally, for anyone.
+
+## Constraints
+
+- **BYOM workers only.** The toggle is hidden until you select a BYOM worker as the launch target, and Cloud-worker launches reject it.
+- **Forces the Open profile.** Privileged mode is incompatible with sandbox hardening, so turning it on auto-selects the **Open** [security profile](/concepts/security-profiles#the-four-profiles) and disables the profile picker while the toggle is on. Turn the toggle off to change the profile again.
+- **Eligible users only.** See [Who can use it](#who-can-use-it) above.
+
+## Enable it at launch
+
+The toggle lives in **both** launch surfaces. In each, it only appears **after** you've selected a BYOM worker as the target, and only if you're eligible.
+
+### From Quick Launch
+
+<Steps>
+
+1. Open the **Quick Launch** side panel.
+
+2. In the **target** picker, select a **BYOM worker** (your own machine). The privileged option only appears for BYOM targets.
+
+3. Scroll the panel to find **Privileged mode (nested containers)** and switch it on.
+
+4. Confirm the profile is now **Open** (it's selected automatically and locked while privileged is on).
+
+5. Launch.
+
+</Steps>
+
+{/* TODO screenshot: Privileged mode toggle in the Quick Launch side panel, with the security profile locked to Open */}
+
+### From the Launch page
+
+<Steps>
+
+1. Open the full **Launch** page and select a **BYOM worker** as the target.
+
+2. Expand **Advanced Options**.
+
+3. Switch on **Privileged mode (nested containers)**.
+
+4. Confirm the security profile is now **Open** and locked.
+
+5. Launch.
+
+</Steps>
+
+{/* TODO screenshot: Privileged mode toggle under Advanced Options on the Launch page */}
+
+## After launch
+
+A DevBox launched in privileged mode shows a **Privileged** badge on its detail page, so it's easy to spot which DevBoxes are running unhardened. From inside the DevBox you can now run a container engine — for example, building or running containers with `podman` or `docker`.
+
+## Reference
+
+| What | Rule |
+|---|---|
+| Worker type | **BYOM only** — never Cloud workers |
+| Who | Machine owner (registered the worker) **or** tenant admin/owner |
+| Security profile | Forced to **Open**; picker disabled while enabled |
+| Effect | Launches the DevBox with `--privileged` (podman/Docker parity) |
+| Badge | **Privileged** badge on the DevBox detail page |
+
+## Related
+
+- [Security Profiles](/concepts/security-profiles) — the hardening privileged mode turns off
+- [Workers](/concepts/workers) — self-hosted (BYOM) vs Cloud workers
+- [DevBoxes](/concepts/containers)
+- [Cloud workers](/concepts/cloud-workers) — where privileged mode is never available
