@@ -8,7 +8,7 @@
   "plans": {
     "free": {
       "maxWorkers": 2,
-      "maxContainers": 5,
+      "maxContainers": 4,
       "maxCloudWorkerContainers": 0,
       "maxLiveSessions": 2,
       "maxConcurrentRuns": 1,
