@@ -7,10 +7,10 @@
   "unlimitedSentinel": -1,
   "plans": {
     "free": {
-      "maxWorkers": 1,
-      "maxContainers": 3,
+      "maxWorkers": 2,
+      "maxContainers": 5,
       "maxCloudWorkerContainers": 0,
-      "maxLiveSessions": 1,
+      "maxLiveSessions": 2,
       "maxConcurrentRuns": 1,
       "maxSeats": 1,
       "maxCronSchedules": 1,
@@ -36,10 +36,10 @@
       "persistWorkspace": false
     },
     "starter": {
-      "maxWorkers": 2,
+      "maxWorkers": 5,
       "maxContainers": 10,
       "maxCloudWorkerContainers": 100,
-      "maxLiveSessions": 3,
+      "maxLiveSessions": 5,
       "maxConcurrentRuns": 3,
       "maxSeats": 1,
       "maxCronSchedules": 3,
@@ -65,10 +65,10 @@
       "persistWorkspace": false
     },
     "pro": {
-      "maxWorkers": 10,
+      "maxWorkers": 25,
       "maxContainers": 50,
       "maxCloudWorkerContainers": 100,
-      "maxLiveSessions": 15,
+      "maxLiveSessions": 10,
       "maxConcurrentRuns": 15,
       "maxSeats": 50,
       "maxCronSchedules": 15,
@@ -94,10 +94,10 @@
       "persistWorkspace": false
     },
     "enterprise": {
-      "maxWorkers": 40,
-      "maxContainers": 100,
+      "maxWorkers": 100,
+      "maxContainers": 200,
       "maxCloudWorkerContainers": 100,
-      "maxLiveSessions": 60,
+      "maxLiveSessions": 15,
       "maxConcurrentRuns": 60,
       "maxSeats": 200,
       "maxCronSchedules": 60,

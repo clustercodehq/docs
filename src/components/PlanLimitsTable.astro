@@ -90,6 +90,19 @@ const VISIBLE_ROWS: Row[] = rowFilter
     })
   : ROWS;
 
+/**
+ * Mirrors core's `planLadderMultiplier` (packages/shared/src/limits/plan-limits.ts).
+ * Only rows where Pro is EXACTLY 5x Starter and Enterprise EXACTLY 20x may show
+ * the badge — several dimensions are deliberately off-ladder (notably DevBoxes,
+ * 25→50→100), and claiming 5x/20x there would be provably false.
+ */
+function ladder(key: string): boolean {
+  const p = limits.plans as Record<string, Record<string, number>>;
+  const s = p.starter[key], pro = p.pro[key], ent = p.enterprise[key];
+  if ([s, pro, ent].some((v) => typeof v !== 'number' || v <= 0)) return false;
+  return pro === s * 5 && ent === s * 20;
+}
+
 function cell(row: Row, plan: (typeof ALL_PLANS)[number]): string {
   const value = (limits.plans as Record<string, Record<string, number>>)[plan][row.key];
   if (value === undefined || value === null) return '—';
@@ -111,9 +124,40 @@ function cell(row: Row, plan: (typeof ALL_PLANS)[number]): string {
       VISIBLE_ROWS.map((row) => (
         <tr>
           <td>{row.href ? <a href={row.href}>{row.label}</a> : row.label}</td>
-          {PLANS.map((p) => <td>{cell(row, p)}</td>)}
+          {PLANS.map((p) => (
+            <td>
+              {cell(row, p)}
+              {ladder(row.key) && p === 'pro' && <span class="ladder-badge">5&times;</span>}
+              {ladder(row.key) && p === 'enterprise' && <span class="ladder-badge">20&times;</span>}
+            </td>
+          ))}
         </tr>
       ))
     }
   </tbody>
 </table>
+
+<p class="ladder-legend">
+  <span class="ladder-badge">5&times;</span> / <span class="ladder-badge">20&times;</span>
+  mark limits where Pro is exactly 5&times; Starter and Enterprise 20&times;.
+</p>
+
+<style>
+  .ladder-badge {
+    display: inline-block;
+    margin-inline-start: 0.4em;
+    padding: 0.05em 0.4em;
+    border-radius: 0.35em;
+    font-size: 0.75em;
+    font-weight: 600;
+    line-height: 1.5;
+    color: var(--sl-color-accent-high, #10c0f0);
+    background: color-mix(in srgb, var(--sl-color-accent, #10c0f0) 14%, transparent);
+    white-space: nowrap;
+  }
+  .ladder-legend {
+    margin-block-start: 0.5rem;
+    font-size: 0.85em;
+    color: var(--sl-color-gray-3);
+  }
+</style>
