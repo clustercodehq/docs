@@ -3,6 +3,8 @@ title: Team Setup
 description: Set up multi-tenant workspaces for your team.
 ---
 
+import PlanLimitsTable from '../../../components/PlanLimitsTable.astro';
+
 ClusterCode supports multiple tenants, organizations, and team members. This guide covers inviting members and managing access.
 
 ## Concepts
@@ -33,11 +35,9 @@ The invitee receives an email and joins on their next sign-in.
 
 ## Limits by Plan
 
-| Plan | Seats | Tenants | Organizations |
-|------|-------|---------|---------------|
-| Starter | 1 | 1 | 1 |
-| Pro | 1 included (+$20/seat, up to 50) | 5 | 1 |
-| Enterprise | Unlimited | Unlimited | 10 |
+<PlanLimitsTable rows={['maxSeats', 'maxTenants', 'maxOrganizations']} />
+
+On Pro, 1 seat is included and additional seats are $20/seat/mo.
 
 ## Admin Portal
 

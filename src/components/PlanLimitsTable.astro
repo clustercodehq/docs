@@ -1,0 +1,116 @@
+---
+/**
+ * Renders the canonical per-plan resource limits.
+ *
+ * Data comes from `src/data/plan-limits.json`, which is GENERATED from the core
+ * repo's single source of truth (`packages/shared/src/limits/plan-limits.ts`)
+ * via `node scripts/export-plan-limits.mjs --docs`. Never hand-edit the numbers
+ * here or in the JSON — regenerate. `pnpm check:limits` fails the build if the
+ * committed JSON has drifted from core.
+ *
+ * Adding a row: append to ROWS below. `key` must match a field on the limits
+ * table; `format` optionally prettifies the value (e.g. GB, days, cadence).
+ *
+ * Props:
+ *   rows  — optional list of row keys to render, in order. Lets a topic page
+ *           (workers, DevBoxes, projects…) show just its own limits WITHOUT
+ *           re-typing the numbers, which is how those pages drifted before.
+ *   plans — optional subset of tiers (e.g. omit Free on a paid-only table).
+ *
+ * Example: <PlanLimitsTable rows={['maxWorkers', 'maxContainers']} />
+ */
+import limits from '../data/plan-limits.json';
+
+interface Props {
+  rows?: string[];
+  plans?: Array<'free' | 'starter' | 'pro' | 'enterprise'>;
+}
+const { rows: rowFilter, plans: planFilter } = Astro.props;
+
+const ALL_PLANS = ['free', 'starter', 'pro', 'enterprise'] as const;
+const PLANS = planFilter ?? ALL_PLANS;
+const UNLIMITED = limits.unlimitedSentinel;
+
+type Row = {
+  label: string;
+  key: string;
+  href?: string;
+  note?: string;
+  format?: (v: number) => string;
+};
+
+const plural = (n: number, unit: string) => `${n} ${unit}${n === 1 ? '' : 's'}`;
+const gb = (v: number) => `${v} GB`;
+const days = (v: number) => plural(v, 'day');
+const mins = (v: number) => `${v} min`;
+/** Schedule cadence floor is inverse: the value is the FASTEST allowed interval. */
+const cadence = (v: number) => {
+  if (v <= 1) return 'any (every minute)';
+  if (v < 60) return `every ${v} min`;
+  const h = v / 60;
+  return `every ${h === 1 ? 'hour' : `${h}h`}`;
+};
+
+const ROWS: Row[] = [
+  { label: 'Self-hosted workers (BYOM)', key: 'maxWorkers' },
+  { label: 'Concurrent DevBoxes', key: 'maxContainers' },
+  { label: 'Cloud worker DevBoxes', key: 'maxCloudWorkerContainers' },
+  { label: 'Custom images', key: 'maxImages' },
+  { label: 'Concurrent runs', key: 'maxConcurrentRuns' },
+  { label: 'Parallel subagents per run', key: 'maxActiveSubagents' },
+  { label: 'Active Loops', key: 'maxActiveLoops', href: '/concepts/loops' },
+  { label: 'Active prototypes', key: 'maxActivePrototypes', href: '/concepts/prototyping' },
+  { label: 'Contenders per prototype', key: 'maxEnginesPerPrototype', href: '/concepts/prototyping' },
+  { label: 'Concurrent live sessions', key: 'maxLiveSessions' },
+  { label: 'Cron schedules', key: 'maxCronSchedules' },
+  { label: 'Schedule cadence floor', key: 'minScheduleIntervalMinutes', format: cadence },
+  { label: 'Projects', key: 'maxProjects', href: '/concepts/projects' },
+  { label: 'DevBox history', key: 'retentionDays', format: days },
+  { label: 'Disk per DevBox', key: 'maxDiskGb', format: gb },
+  { label: 'Display idle timeout', key: 'displayIdleTimeoutMinutes', format: mins },
+  { label: 'Tenants', key: 'maxTenants' },
+  { label: 'Organizations', key: 'maxOrganizations' },
+  { label: 'Seats', key: 'maxSeats' },
+];
+
+// Honor the caller's row order, and fail loudly on a typo'd key rather than
+// silently rendering a shorter table.
+const VISIBLE_ROWS: Row[] = rowFilter
+  ? rowFilter.map((key) => {
+      const row = ROWS.find((r) => r.key === key);
+      if (!row) {
+        throw new Error(
+          `PlanLimitsTable: unknown row key "${key}". Known keys: ${ROWS.map((r) => r.key).join(', ')}`,
+        );
+      }
+      return row;
+    })
+  : ROWS;
+
+function cell(row: Row, plan: (typeof ALL_PLANS)[number]): string {
+  const value = (limits.plans as Record<string, Record<string, number>>)[plan][row.key];
+  if (value === undefined || value === null) return '—';
+  if (value === UNLIMITED) return 'Unlimited';
+  if (value === 0) return 'None';
+  return row.format ? row.format(value) : String(value);
+}
+---
+
+<table>
+  <thead>
+    <tr>
+      <th>Resource</th>
+      {PLANS.map((p) => <th>{p[0].toUpperCase() + p.slice(1)}</th>)}
+    </tr>
+  </thead>
+  <tbody>
+    {
+      VISIBLE_ROWS.map((row) => (
+        <tr>
+          <td>{row.href ? <a href={row.href}>{row.label}</a> : row.label}</td>
+          {PLANS.map((p) => <td>{cell(row, p)}</td>)}
+        </tr>
+      ))
+    }
+  </tbody>
+</table>

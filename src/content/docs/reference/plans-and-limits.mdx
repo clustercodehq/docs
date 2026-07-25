@@ -4,8 +4,14 @@ description: ClusterCode pricing tiers, resource limits, and feature availabilit
 ---
 
 import { Aside } from '@astrojs/starlight/components';
+import PlanLimitsTable from '../../../components/PlanLimitsTable.astro';
 
-The limits enforced on each plan are listed below. "Unlimited" means no enforced cap.
+The limits enforced on each plan are listed below. Every paid tier has finite,
+predictable caps: **Pro is 5x Starter and Enterprise is 20x Starter** on most
+resources.
+
+This table is generated from the same table the product enforces, so it can
+never drift from what you actually get.
 
 ## Plans
 
@@ -23,40 +29,22 @@ frequent) schedules, and managed compute.
 
 ## Resource Limits
 
-| Resource | Free | Starter | Pro | Enterprise |
-|----------|------|---------|-----|-----------|
-| Self-hosted workers | 1 | 2 | 10 | Unlimited |
-| Concurrent DevBoxes | 3 | 5 | 15 | Unlimited |
-| Cloud worker (cloud) DevBoxes | None | Unlimited | Unlimited | Unlimited |
-| Custom images | 3 | Unlimited | Unlimited | Unlimited |
-| Concurrent runs | 1 | 3 | 10 | 25 |
-| Parallel subagents per run | 1 | 3 | 10 | 25 |
-| [Active prototypes](/concepts/prototyping) _(Beta)_ | 1 | 2 | 5 | 10 |
-| [Contenders per prototype](/concepts/prototyping) _(Beta)_ | 2 | 3 | 4 | 6 |
-| Concurrent live sessions | 1 | 3 | 15 | Unlimited |
-| Cron schedules | 1 | 3 | 10 | Unlimited |
-| Schedule cadence floor (fastest a schedule may run) | every 6h | every hour | every 30 min | any |
-| [Projects](/concepts/projects) | 1 | 3 | 25 | Unlimited |
-| DevBox history | 1 day | 14 days | 90 days | 365 days |
-| Disk per DevBox | 64 GB | 128 GB | 256 GB | 1024 GB |
-| Display idle timeout | 3 min | 5 min | 10 min | 15 min |
-| Tenants | 1 | 1 | 5 | Unlimited |
-| Organizations | 1 | 1 | 1 | 10 |
-| Seats | 1 | 1 | 50 | Unlimited |
+<PlanLimitsTable />
 
 A few notes:
 
 - **Cloud worker DevBoxes** are managed cloud compute. Free has none — it's
-  BYOM-only; paid tiers are unlimited.
+  BYOM-only; every paid tier gets the same cap (a capacity guardrail, not a
+  tier differentiator).
 - **Custom images** is a use-cap: on a capped plan only the **newest N** managed
   images stay launchable (Free keeps the newest 3); older ones lock until you
   upgrade or remove some.
 - **Concurrent live sessions** is the total of terminal + display sessions across
   all your DevBoxes (not a per-DevBox limit).
 - **Parallel subagents per run** is how many helper agents a single run may spawn;
-  it scales by plan from `1` on Free up to `25` on Enterprise.
+  it scales by plan (see the table above).
 - **Display idle timeout** auto-closes an idle VNC display to free a live-session
-  slot — it scales by plan, from 3 min on Free up to 15 min on Enterprise.
+  slot — it scales by plan (see the table above).
 - **[Projects](/concepts/projects)** group your DevBoxes, runs, and schedules and
   carry per-project environment variables. The cap counts **active** projects only —
   archived projects are inert and don't consume a slot, so you can keep history

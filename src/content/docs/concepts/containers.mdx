@@ -3,6 +3,8 @@ title: DevBoxes
 description: Understand ClusterCode DevBox lifecycle — from launch to teardown.
 ---
 
+import PlanLimitsTable from '../../../components/PlanLimitsTable.astro';
+
 import ThemedImage from '../../../components/ThemedImage.astro';
 import containersDark from '../../../assets/screenshots/containers-list-dark-20260627.png';
 import containersLight from '../../../assets/screenshots/containers-list-light-20260627.png';
@@ -48,11 +50,7 @@ You can build custom images for specialized environments. See [Custom Containerf
 
 ## DevBox Limits by Plan
 
-| Plan | Concurrent DevBoxes | History |
-|------|----------------------|---------|
-| Starter | 5 | 14 days |
-| Pro | 15 | 90 days |
-| Enterprise | Unlimited | 365 days |
+<PlanLimitsTable rows={['maxContainers', 'retentionDays']} />
 
 ## Interacting with DevBoxes
 

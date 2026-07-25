@@ -3,6 +3,8 @@ title: Schedules
 description: A Schedule runs an AI agent on a recurring cron cadence — autonomous DevBox jobs that spin up, do the work, and tear down on their own.
 ---
 
+import PlanLimitsTable from '../../../components/PlanLimitsTable.astro';
+
 import { Aside, Steps } from '@astrojs/starlight/components';
 import ThemedImage from '../../../components/ThemedImage.astro';
 import ThemedVideo from '../../../components/ThemedVideo.astro';
@@ -128,12 +130,7 @@ you add the token. See the
 Two limits apply per plan: **how many** schedules you can have, and **how often**
 each one may run — the minimum gap between two runs, its *cadence floor*.
 
-| Plan | Schedules | Cadence floor (fastest a schedule may run) |
-|------|-----------|--------------------------------------------|
-| Free | 1 | every 6 hours |
-| Starter | 3 | every hour |
-| Pro | 10 | every 30 minutes |
-| Enterprise | Unlimited | any cadence (down to every minute) |
+<PlanLimitsTable rows={['maxCronSchedules', 'minScheduleIntervalMinutes']} />
 
 A cron that fires more often than your plan's floor is rejected when you create or
 edit a schedule — both inline in the schedule form and on the server — with a prompt

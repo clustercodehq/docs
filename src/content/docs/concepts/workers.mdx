@@ -3,6 +3,8 @@ title: Workers
 description: Understand self-hosted workers and Cloud worker managed compute.
 ---
 
+import PlanLimitsTable from '../../../components/PlanLimitsTable.astro';
+
 import ThemedImage from '../../../components/ThemedImage.astro';
 import workersDark from '../../../assets/screenshots/workers-list-dark-20260627.png';
 import workersLight from '../../../assets/screenshots/workers-list-light-20260627.png';
@@ -79,10 +81,6 @@ If the connection drops, the agent reconnects automatically.
 
 ## Worker Limits by Plan
 
-| Plan | Self-Hosted Workers | Concurrent DevBoxes |
-|------|--------------------|-----------------------|
-| Starter | 2 | 5 |
-| Pro | 10 | 15 |
-| Enterprise | Unlimited | Unlimited |
+<PlanLimitsTable rows={['maxWorkers', 'maxContainers']} />
 
 See [Plans & Limits](/reference/plans-and-limits) for the full breakdown.

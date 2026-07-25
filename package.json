@@ -9,7 +9,8 @@
     "build": "astro build",
     "preview": "astro preview",
     "check:tokens": "node scripts/check-token-drift.mjs",
-    "kill-running-apps": "node scripts/kill-running-apps.mjs"
+    "kill-running-apps": "node scripts/kill-running-apps.mjs",
+    "check:limits": "node scripts/check-limits-drift.mjs"
   },
   "dependencies": {
     "@astrojs/starlight": "^0.34",
