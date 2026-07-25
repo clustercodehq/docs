@@ -5,14 +5,40 @@ import starlight from '@astrojs/starlight';
 // Empty string disables all analytics script injection.
 const GA_ID = 'G-KSEZLN4P22'; // ClusterCode web stream (analytics.google.com)
 
+// TWIN of packages/ui/src/utils/cookie-consent.ts in clustercodehq/core
+// (`CONSENT_OPT_IN_REGIONS` + `consentModeInitScript`). The two share the
+// `cc_consent` cookie on `.clustercode.io`, so they MUST stay in sync — a
+// visitor who opts out on clustercode.io must not be measured on docs.
+//
+// Regions where analytics requires PRIOR opt-in (GDPR/ePrivacy): EU-27, EEA
+// non-EU, UK, CH, plus EU territories that carry their own alpha-2 code and
+// are therefore NOT covered by their parent member state's entry.
+const CONSENT_OPT_IN_REGIONS = [
+  'AT', 'BE', 'BG', 'HR', 'CY', 'CZ', 'DK', 'EE', 'FI', 'FR', 'DE', 'GR',
+  'HU', 'IE', 'IT', 'LV', 'LT', 'LU', 'MT', 'NL', 'PL', 'PT', 'RO', 'SK',
+  'SI', 'ES', 'SE',
+  'IS', 'LI', 'NO',
+  'GB', 'CH',
+  'AX', 'GF', 'GP', 'MQ', 'RE', 'YT', 'MF',
+  'GI',
+  'JE', 'GG', 'IM',
+];
+
 const consentInitScript = `
 window.dataLayer = window.dataLayer || [];
 window.gtag = window.gtag || function () { window.dataLayer.push(arguments); };
 window.gtag('consent', 'default', {
-  analytics_storage: 'denied',
+  analytics_storage: 'granted',
   ad_storage: 'denied',
   ad_user_data: 'denied',
   ad_personalization: 'denied'
+});
+window.gtag('consent', 'default', {
+  analytics_storage: 'denied',
+  ad_storage: 'denied',
+  ad_user_data: 'denied',
+  ad_personalization: 'denied',
+  region: ${JSON.stringify(CONSENT_OPT_IN_REGIONS)}
 });
 (function () {
   try {
@@ -21,11 +47,17 @@ window.gtag('consent', 'default', {
     var rec = JSON.parse(decodeURIComponent(m[1]));
     var c = rec && rec.categories;
     if (!c || c.necessary !== true || typeof c.functional !== 'boolean' || typeof c.analytics !== 'boolean') return;
-    if (typeof rec.timestamp !== 'number' || Date.now() - rec.timestamp > 365 * 864e5) return;
-    if (rec.timestamp - Date.now() > 3e5) return; // reject future stamps (5-min skew allowance)
-    if (c.analytics === true) {
-      window.gtag('consent', 'update', { analytics_storage: 'granted' });
+    if (typeof rec.timestamp !== 'number') return;
+    // A recorded REFUSAL never expires: with a 'granted' default, letting a
+    // stale rejection lapse would silently resume tracking someone who said
+    // no. A recorded GRANT still expires after 365d and must be re-affirmed.
+    if (c.analytics === false) {
+      window.gtag('consent', 'update', { analytics_storage: 'denied' });
+      return;
     }
+    if (Date.now() - rec.timestamp > 365 * 864e5) return;
+    if (rec.timestamp - Date.now() > 3e5) return; // reject future stamps (5-min skew allowance)
+    window.gtag('consent', 'update', { analytics_storage: 'granted' });
   } catch (e) {}
 })();
 `;
