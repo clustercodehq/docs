@@ -3,6 +3,8 @@ title: Loops
 description: Run-until-verified standing goals — a maker agent iterates, deterministic gates check every attempt, and a separate model grades the result. Glass-box verdicts, hard budgets, and a PR at the end.
 ---
 
+import PlanLimitsTable from '../../../components/PlanLimitsTable.astro';
+
 import { Aside } from '@astrojs/starlight/components';
 
 A **Loop** is a standing goal with a verifiable definition of done. Instead of
@@ -209,9 +211,12 @@ you can see what it tried.
 stable, but expect the surface to keep evolving.</Aside>
 
 Loops are available on **every plan**, with a per-tier cap on how many can be
-active at once: **Free 1 · Starter 3 · Pro 5 · Enterprise unlimited**. Viewing,
-pausing, resuming, cancelling, and **steering** an existing loop is never gated
-— control and transparency are free on every tier.
+active at once:
+
+<PlanLimitsTable rows={['maxActiveLoops']} />
+
+Viewing, pausing, resuming, cancelling, and **steering** an existing loop is
+never gated — control and transparency are free on every tier.
 
 ## Next steps
 

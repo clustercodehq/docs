@@ -3,6 +3,8 @@ title: Nucleus
 description: The in-platform AI assistant that manages your farm.
 ---
 
+import PlanLimitsTable from '../../../components/PlanLimitsTable.astro';
+
 import { Aside } from '@astrojs/starlight/components';
 
 **Nucleus** is ClusterCode's built-in AI assistant. It lives in the orchestrator dashboard and helps you manage workers, launch DevBoxes, execute commands, and monitor your cluster — all through natural conversation.
@@ -41,11 +43,9 @@ When you ask Nucleus to do something, it:
 
 Nucleus sessions use AI credits from your plan allowance:
 
-| Plan | Monthly AI Allowance |
-|------|---------------------|
-| Starter | $2/mo |
-| Pro | $6/mo |
-| Enterprise | $10/user/mo |
+<PlanLimitsTable rows={['aiMonthlyAllowanceUsd']} />
+
+On Enterprise the allowance is **per user**.
 
 You can also **bring your own key** in [Settings → Environment Variables](/concepts/settings#environment-variables) — an Anthropic API key or a Claude OAuth token — for usage beyond your plan. See [AI Credits](/guides/ai-credits) for how the allowance works.
 

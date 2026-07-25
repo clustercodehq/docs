@@ -62,12 +62,10 @@ A few notes:
 
 ## AI & Compute Allowances
 
-| | Free | Starter | Pro | Enterprise |
-|---|---|---|---|---|
-| Platform AI allowance | — | $2/mo | $6/mo | $10/user/mo |
-| Included compute | — | $2/mo | $6/mo | $10/user/mo |
-| Pay-as-you-go wallet & top-ups | No | Yes | Yes | Yes |
-| BYOK (bring your own AI key) | Required | Optional | Optional | Optional |
+<PlanLimitsTable rows={['aiMonthlyAllowanceUsd', 'computeIncludedUsd']} />
+
+On Enterprise both allowances are **per user**. Pay-as-you-go wallet top-ups are
+available on every paid tier; BYOK is required on Free and optional elsewhere.
 
 - **Platform AI allowance** and **Included compute** are separate monthly pools
   (LLM spend vs. container runtime), both denominated in USD.

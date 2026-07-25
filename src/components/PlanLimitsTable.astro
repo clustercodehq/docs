@@ -43,6 +43,7 @@ const plural = (n: number, unit: string) => `${n} ${unit}${n === 1 ? '' : 's'}`;
 const gb = (v: number) => `${v} GB`;
 const days = (v: number) => plural(v, 'day');
 const mins = (v: number) => `${v} min`;
+const usd = (v: number) => (v === 0 ? 'None' : `$${v}/mo`);
 /** Schedule cadence floor is inverse: the value is the FASTEST allowed interval. */
 const cadence = (v: number) => {
   if (v <= 1) return 'any (every minute)';
@@ -71,6 +72,8 @@ const ROWS: Row[] = [
   { label: 'Tenants', key: 'maxTenants' },
   { label: 'Organizations', key: 'maxOrganizations' },
   { label: 'Seats', key: 'maxSeats' },
+  { label: 'Platform AI allowance', key: 'aiMonthlyAllowanceUsd', format: usd },
+  { label: 'Included compute', key: 'computeIncludedUsd', format: usd },
 ];
 
 // Honor the caller's row order, and fail loudly on a typo'd key rather than

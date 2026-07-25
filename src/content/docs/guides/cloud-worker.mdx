@@ -3,6 +3,8 @@ title: Cloud worker
 description: Managed compute workers — no hardware required.
 ---
 
+import PlanLimitsTable from '../../../components/PlanLimitsTable.astro';
+
 Cloud worker is ClusterCode's managed compute service. Instead of providing your own machines, Cloud worker runs workers in the cloud on your behalf.
 
 ## Self-Hosted vs Cloud worker
@@ -37,11 +39,7 @@ Each plan includes a monthly allowance of **credits** (real dollars) toward
 compute, and **compute is metered by the second** — you pay only for the exact time
 a DevBox runs, at the [per-tier rate](/concepts/cloud-workers#pricing).
 
-| Plan | Included compute credits |
-|------|--------------------------|
-| Starter | $2 / mo |
-| Pro | $6 / mo |
-| Enterprise | $10 / mo |
+<PlanLimitsTable rows={['computeIncludedUsd']} />
 
 How long that lasts depends on the tier you run. As an *illustration only*, $2 of
 credit is roughly 33 hours on the cheapest tier (Linux Small at $0.06/hr) and

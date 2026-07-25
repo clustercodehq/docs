@@ -3,17 +3,18 @@ title: AI Credits
 description: Understand AI credit usage, BYOK, and budget management.
 ---
 
+import PlanLimitsTable from '../../../components/PlanLimitsTable.astro';
+
 ClusterCode includes AI credits for Nucleus sessions and DevBox agents. You can use the platform allowance or bring your own API keys.
 
 ## Platform Allowance
 
 Each plan includes a monthly AI credit allowance:
 
-| Plan | AI Allowance | Top-ups |
-|------|-------------|---------|
-| Starter | $2/mo | Not available |
-| Pro | $6/mo | Available |
-| Enterprise | $10/user/mo | Available |
+<PlanLimitsTable rows={['aiMonthlyAllowanceUsd']} />
+
+On Enterprise the allowance is **per user**. Top-ups are available on Pro and
+Enterprise.
 
 Credits are consumed by:
 - Nucleus conversations in the dashboard
@@ -41,8 +42,7 @@ When approaching your budget limit, Nucleus displays a warning banner suggesting
 
 Live sessions are interactive Nucleus conversations:
 
-| Plan | Sessions per DevBox | Total Sessions |
-|------|----------------------|----------------|
-| Starter | 3 | 3 |
-| Pro | 3 | 15 |
-| Enterprise | 3 | Unlimited |
+<PlanLimitsTable rows={['maxLiveSessions']} />
+
+The cap is the **total** across all your DevBoxes (terminal + display combined),
+not a per-DevBox limit.
