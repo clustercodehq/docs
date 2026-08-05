@@ -70,11 +70,15 @@ tighter while the trial is unvetted:
 
 | | During a short trial | After it converts |
 |---|---|---|
-| Cloud worker DevBoxes | **1** at a time | your plan's cap (see the table above) |
+| Cloud worker DevBoxes | **1** at a time, per user | your plan's cap (see the table above) |
 | Cloud worker specs | **Linux Small** and **Windows Small** | every spec, up to Large |
 
 Everything else — self-hosted DevBoxes, schedules, runs, AI allowance, included
 compute — is exactly the plan you're trialling.
+
+Both trial limits are **per user**, matching how cloud worker DevBoxes are counted
+on every plan. A trial that invites teammates therefore gets one cloud worker
+DevBox each, not one for the whole workspace.
 
 Because the smallest specs are also the cheapest ($0.06/hr for Linux Small),
 your included trial compute stretches much further: roughly **100 hours** rather
