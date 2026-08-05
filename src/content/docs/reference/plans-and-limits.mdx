@@ -33,9 +33,11 @@ frequent) schedules, and managed compute.
 
 A few notes:
 
-- **Cloud worker DevBoxes** are managed cloud compute. Free has none — it's
-  BYOM-only; every paid tier gets the same cap (a capacity guardrail, not a
-  tier differentiator).
+- **Cloud worker DevBoxes** are managed cloud compute, so unlike self-hosted
+  DevBoxes (which run on your own hardware) the cap reflects capacity we fund.
+  Free has none — it's BYOM-only — and the cap scales with your plan.
+  During a **free trial** it is tighter still: see
+  [Trial limits](#trial-limits) below.
 - **Custom images** is a use-cap: on a capped plan only the **newest N** managed
   images stay launchable (Free keeps the newest 3); older ones lock until you
   upgrade or remove some.
@@ -59,6 +61,35 @@ A few notes:
   create the prototype. Concurrency across those contenders is still governed by
   **Concurrent runs** above — extra contenders queue and start automatically as
   run slots free (on Free, they run one at a time).
+
+
+## Trial limits
+
+A **free trial** on a paid plan gets that plan's features, with two limits held
+tighter while the trial is unvetted:
+
+| | During a short trial | After it converts |
+|---|---|---|
+| Cloud worker DevBoxes | **1** at a time | your plan's cap (see the table above) |
+| Cloud worker specs | **Linux Small** and **Windows Small** | every spec, up to Large |
+
+Everything else — self-hosted DevBoxes, schedules, runs, AI allowance, included
+compute — is exactly the plan you're trialling.
+
+Because the smallest specs are also the cheapest ($0.06/hr for Linux Small),
+your included trial compute stretches much further: roughly **100 hours** rather
+than the ~25 you'd get on Linux Large. You can still launch a real
+[Windows DevBox](/concepts/windows-devboxes) to evaluate it.
+
+These limits **do not apply** if you:
+
+- **add a payment method** — your subscription simply starts with a free period,
+  so you get the full plan immediately, and your remaining trial credit is spent
+  first; or
+- have a trial we **extended** for you (an evaluation or a proof of concept).
+
+If you need more headroom during an evaluation, [get in touch](/support) — we can
+extend the trial rather than asking you to pay early.
 
 ## AI & Compute Allowances
 
