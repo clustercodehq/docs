@@ -3,7 +3,10 @@ title: Launch from Ticket
 description: End-to-end guide for launching a DevBox from a ticket URL.
 ---
 
-The core ClusterCode workflow: paste a ticket, get a DevBox working on it.
+The hands-on ClusterCode workflow: paste a ticket, get a DevBox prepared for it —
+repo cloned, branch created, ticket context written, agent CLI installed — and take
+the terminal yourself. To have ClusterCode do the work instead, see
+[Run an agent on demand](/guides/run-on-demand).
 
 ## Steps
 
@@ -33,12 +36,21 @@ Pick an AI agent:
 
 ### 5. Launch
 
-Click **Launch**. Within 30 seconds:
+Click **Launch**. Within 30 seconds the DevBox is ready:
 
 1. Ticket details are fetched from the provider
 2. A `CLAUDE.md` is generated with full context
 3. The repository is cloned into the DevBox
-4. The AI agent starts working
+4. The agent CLI is installed and the ticket context is in place
+
+**The agent is ready — it is not running yet.** A launch gives you a prepared
+environment, not an autonomous worker. To start work, pick one:
+
+| You want | Do this |
+|---|---|
+| To drive the agent yourself | Open the live terminal and run `claude` (or `codex`, `copilot`) |
+| The agent started for you on every launch | Add a Post-Launch Workflow to your `NUCLEUS.md` |
+| ClusterCode to plan and execute the whole ticket | [Start a Run](/guides/run-on-demand) with the ticket URL instead of launching a DevBox |
 
 ### 6. Monitor
 
@@ -49,10 +61,14 @@ From the dashboard:
 
 ### 7. Review the results
 
-When the agent completes:
-- A draft PR is opened (if configured)
-- The ticket status is updated
-- You review the results and merge
+A DevBox does not open a PR on its own — the agent working inside it does,
+when you ask it to. Once the work is done, from the live terminal:
+
+- `gh pr create --draft` opens the draft PR
+- Update the ticket from the terminal, or let a Run handle it
+
+If you want ticket → PR with no manual steps, that's a
+[Run](/guides/run-on-demand), not a launch.
 
 ## Tips
 

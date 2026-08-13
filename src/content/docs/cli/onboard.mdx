@@ -22,6 +22,19 @@ An interactive wizard that walks you through the complete setup:
    - **Orchestrator unreachable** → shows configuration guidance
 3. Re-runs all checks to verify fixes
 
+## What `onboard` doesn't cover
+
+`onboard` prepares the **machine**. It does not sign your agents in, and it does not
+store your service access tokens — both are done in the dashboard, **per worker**:
+
+- **[Agent sign-in](/guides/agent-sign-in)** — lets the agent think
+- **Service access tokens** (GitHub / Azure DevOps / GitLab) — let the agent reach
+  your code. Set under
+  [Settings → Environment Variables → Service access](/concepts/settings#environment-variables)
+
+A worker that passes `doctor` can still fail its first run without these. A missing
+source-provider token is the most common cause of a failed first run on a new setup.
+
 ## When to Use
 
 - First-time setup on a new machine

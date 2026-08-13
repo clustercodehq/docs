@@ -54,7 +54,7 @@ ClusterCode is a **self-hosted platform** for orchestrating agentic development 
 ClusterCode ties your machines into one cluster:
 
 - **[Workers](/concepts/workers)** — your machines (with Podman) that run DevBoxes, or managed **Cloud workers** when you don't want to host
-- **[DevBoxes](/concepts/containers)** — isolated dev environments where AI agents work
+- **[DevBoxes](/concepts/containers)** — isolated dev environments that agents work in
 - **[Projects](/concepts/projects)** — group the DevBoxes, runs, and schedules behind one effort into a single dashboard
 - **[Observatory](/concepts/observatory)** — your entire fleet as a navigable galaxy map
 - **The output** — a draft PR, a passing test suite, a working branch
@@ -63,9 +63,9 @@ You provide the machines. ClusterCode orchestrates the work.
 
 ## What It Does
 
-- **[Launch from tickets](/guides/launch-from-ticket)** — paste a GitHub issue or Azure DevOps work item and a DevBox spins up with an AI agent and the full context ready to go
 - **[Run agents on demand](/concepts/runs)** — write a prompt, watch the run's timeline, steer it mid-flight, and answer the questions it pauses to ask
 - **[Schedule recurring work](/concepts/schedules)** — autonomous cron jobs that wake up to draft PRs, sweep flaky tests, or audit dependencies, then tear down on their own
+- **[Launch from tickets](/guides/launch-from-ticket)** *(the hands-on path)* — paste a GitHub issue or Azure DevOps work item and a DevBox spins up with the repo, the ticket context, and the **agent CLI ready** — then you start the agent, or hand the ticket to a Run
 - **[Pick your engine](/concepts/subagents)** — Claude Code, Codex, or Copilot do the in-DevBox coding, coordinated by [Nova](/concepts/nova)
 - **[Drive it by chat](/concepts/nucleus)** — Nucleus, the in-app assistant, launches DevBoxes, starts runs, and creates schedules from a conversation
 - **[See the whole fleet](/concepts/observatory)** — the Observatory renders workers, DevBoxes, runs, and schedules as celestial bodies on one living map

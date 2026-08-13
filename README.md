@@ -87,6 +87,42 @@ pnpm preview   # preview the production build locally
    group icons in `custom.css` no longer line up with the group order. It also
    runs automatically as part of `pnpm build` and in CI on every pull request.
 
+## Copy governance: never say an agent is running when it isn't
+
+ClusterCode separates **provisioning** (Create DevBox) from **execution** (Start
+Agent Run). Docs that blur the two send a user to an idle terminal expecting a
+working agent, and they conclude the product is broken. This is the single most
+common docs defect in this repo — nine instances were corrected at once in
+August 2026 — so it is a rule, not a style preference.
+
+> **Create DevBox gives you a machine. Start Agent Run gives you a result.
+> Create Schedule gives you recurring results.**
+
+**Use these only when the named action is `Start Agent Run`, a `Schedule` trigger,
+or an explicitly configured Post-Launch Workflow:**
+
+- "starts coding" · "watch the agent work" · "runs unattended" · "returns a PR"
+- "the agent works on the ticket" · "spins up a DevBox to work on it"
+
+**For plain DevBox creation, use instead:**
+
+- "prepares a workspace" · "ready terminal" · "repo cloned" · "context written"
+- "agent CLI installed" · "ready for you to begin"
+
+**Say "agent CLI installed", never "agent running"**, unless execution telemetry
+proves it. *Installed ≠ running* is the entire confusion.
+
+Two things that are correctly worded and must **not** be "fixed" by an over-eager
+search/replace: `concepts/runs.mdx` ("the coordinator spins up a DevBox and gets to
+work") and `concepts/schedules.mdx` — a Run and a Schedule genuinely do start the
+agent.
+
+When you write a DevBox lifecycle or state table, carry an explicit
+**"Is an agent running?"** column, and keep **Stopped** (halted, disk retained,
+restartable) distinct from **Removed** (deleted, unrecoverable) — they have
+different billing and different recovery paths. See `concepts/containers.mdx` for
+the canonical example.
+
 ## Checks
 
 ```bash
