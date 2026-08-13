@@ -113,6 +113,73 @@ From the **Schedules** page, **+ Schedule** opens the form:
 A schedule can be **enabled** or **disabled** at any time without deleting it —
 disabled schedules keep their config but never fire.
 
+## How a target is chosen
+
+Every run needs a machine. There are two ways it gets one, and they behave
+differently — this is the canonical description, so other pages link here
+rather than restating it.
+
+### Pinned target
+
+Name a worker, cloud worker, or an existing DevBox, and every firing goes
+there. The dispatcher **re-validates that target at each firing, before any AI
+tokens are spent**, and a failure records a [skip](#skipped-runs) with a
+specific reason rather than falling back to another machine:
+
+| Reason | What happened |
+|---|---|
+| `worker_offline` | The pinned worker is registered but not connected |
+| `worker_not_found` | The worker was deleted |
+| `container_not_found` | The pinned DevBox no longer exists |
+| `cloud_worker_inactive` | The cloud worker is stopped or deprovisioned |
+
+A pinned schedule that finds its machine gone is therefore **skipped, never
+rehomed**. That is the right default for a run that depends on machine-local
+state, but it does mean an offline worker silently stops producing work until
+you notice the skips.
+
+### Auto-select (no pinned target)
+
+Leave the target unset and the machine is chosen at launch, per firing. For
+runs that land on the **managed fleet**, the placement rules are:
+
+<Steps>
+
+1. **Eligibility.** A host qualifies if it is online, is a fleet worker, and —
+   for a Windows tier — has hardware virtualization available. Fleet capacity
+   is shared infrastructure, so eligibility is *not* scoped to your tenant.
+
+2. **Capacity.** The host must have enough free memory and enough free vCPU
+   for the requested size (vCPU is measured against an overcommit ratio, not
+   raw cores), enough disk, and — for Windows — must be under its cap on
+   simultaneous in-flight installs.
+
+3. **Priority buffer.** On a free or trial plan, a launch is refused if placing
+   it would push overall fleet memory utilization past the slice reserved for
+   paying customers.
+
+4. **Selection: best fit, not least loaded.** Among the hosts that still fit,
+   the one with the **least free memory** wins — that is, the *fullest* host
+   that can still take the job. Packing tightly keeps a large host free for a
+   large DevBox instead of scattering work thinly across the fleet. Ties break
+   deterministically, so repeated launches spread predictably.
+
+</Steps>
+
+One exception ranks above all of it: a DevBox for a **cloud worker** that
+already has containers on a host is placed on that same host, keeping its
+shared workspace local.
+
+<Aside type="caution" title="Auto-select re-picks on every firing.">
+Consecutive runs may land on different machines, so **do not rely on
+machine-local state** between them — local caches, mounted volumes, or files a
+previous run left behind. Pin a target if a run depends on any of those.
+</Aside>
+
+If **no** host is eligible at launch, the run is refused with a capacity
+reason (fleet full, or capacity reserved for paid plans) rather than being
+queued for later.
+
 ## Skipped runs
 
 Before each firing, the dispatcher runs pre-flight checks — target reachable,

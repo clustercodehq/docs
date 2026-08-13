@@ -25,7 +25,10 @@ Supported formats:
 
 ### 3. Select a worker
 
-The system suggests the least-loaded worker. You can override this selection.
+The system pre-selects a worker for you, and **you can override it**. Leaving it
+on auto-select hands the choice to the placement rules — which pack onto the
+*fullest* host that still fits, not the least-loaded one. See
+[how a target is chosen](/concepts/schedules#how-a-target-is-chosen).
 
 ### 4. Choose a runtime
 

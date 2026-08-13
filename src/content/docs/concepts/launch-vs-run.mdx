@@ -1,0 +1,67 @@
+---
+title: Launch or Run?
+description: Create a DevBox, start an Agent Run, or create a Schedule — what each one actually does, and which to pick.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+There are three ways to start work in ClusterCode, and picking the wrong one is
+the single most common source of confusion. The difference is not what they
+create — all three end up with a DevBox — it is **who starts the agent**.
+
+> **Create DevBox gives you a machine. Start Agent Run gives you a result.
+> Create Schedule gives you recurring results.**
+
+## The three workflows
+
+| Workflow | What it creates | Does an agent start automatically? | Who drives | Where to watch | Best for |
+|---|---|---|---|---|---|
+| **Create DevBox** | An isolated prepared environment: repo, branch, tools, optional ticket context | **No** | You, from the terminal | The DevBox terminal / desktop | Hands-on exploration, debugging, pairing |
+| **Start Agent Run** | One delegated AI task, in a new or existing DevBox | **Yes** | ClusterCode, after you submit | The [Run](/concepts/runs) activity stream | One ticket, completed autonomously |
+| **Create Schedule** | Agent Runs triggered at a time or cadence | **Yes, when triggered** | ClusterCode | [Schedule](/concepts/schedules) history, plus each Run | Recurring, nightly, batch work |
+
+<Aside type="caution" title="Launching a DevBox does not start an AI agent.">
+This is the one that surprises people. A launch gives you a *prepared
+workspace* — the repo cloned, the branch checked out, the ticket context
+written, the agent CLI installed. Nothing is running until you start it, or
+until a Run or Schedule does.
+</Aside>
+
+## Which one do I want?
+
+| You want | Use |
+|---|---|
+| One task, and you want to watch and steer it | **Run** (interactive) |
+| One task, fire and forget | **Run** (autonomous) |
+| The same task, on a cadence | **Schedule** |
+| To iterate until tests or checks pass | [**Loop**](/concepts/loops) |
+| Several engines competing, then pick the winner | [**Prototype race**](/concepts/prototyping) |
+| Several engines cooperating in one job | [**Multi-agent run**](/guides/multi-agent-runs) |
+| Just a machine to work on yourself | **Launch a DevBox** |
+
+## They compose
+
+These are not three separate products. A Run *creates* a DevBox to work in, and
+a Schedule *creates* Runs. So the honest way to read the table above is: you are
+always getting a DevBox, and you are choosing how much of the work ClusterCode
+does before handing it to you.
+
+That also means you can move between them. Launch a DevBox to look around, then
+hand that same prepared workspace to a Run without re-cloning anything — the
+launch screen's **Delegate with Agent Run** action does exactly this, reusing
+the DevBox and carrying its ticket across.
+
+## What runs where
+
+All three run on **machines you register and control** — your repositories, your
+credentials, your agent output, your audit trail. That is true whether the
+machine is a laptop in your office, a VPS you rent, or a
+[cloud worker](/guides/cloud-worker) ClusterCode manages for you. You own the
+machines; you control the automation; you keep the data.
+
+## Next steps
+
+- [Run an agent on demand](/guides/run-on-demand) — the delegated path, with copy-paste recipes
+- [Launch from a ticket](/guides/launch-from-ticket) — the hands-on path, end to end
+- [Automate recurring work](/guides/recurring-work) — turning a Run into a Schedule
+- [How a target is chosen](/concepts/schedules#how-a-target-is-chosen) — which machine your work lands on
