@@ -19,7 +19,9 @@ ClusterCode is **ticket-driven**. Instead of manually configuring DevBoxes, you 
 1. **Paste a ticket URL** into the launch modal (or ask Nucleus)
 2. ClusterCode **fetches the ticket details** — title, description, labels, comments
 3. A **CLAUDE.md is generated** with the full ticket context as instructions for the AI agent
-4. A **DevBox launches** on the selected worker with the repo cloned and the agent CLI ready
+4. A **DevBox launches** on the worker you selected — or, on auto-select, one
+   chosen by the [placement rules](/concepts/schedules#how-a-target-is-chosen) —
+   with the repo cloned and the agent CLI ready
 5. **You start the agent** from the live terminal — or skip the launch entirely and
    start a [Run](/guides/run-on-demand) with the ticket URL, which drives the agent for you
 6. The agent opens a **draft PR** when the work is done
