@@ -162,6 +162,9 @@ export default defineConfig({
             { label: 'Workers', slug: 'concepts/workers' },
             { label: 'Cloud workers', slug: 'concepts/cloud-workers' },
             { label: 'DevBoxes', slug: 'concepts/containers' },
+            // Sits directly after DevBoxes: the "launch didn't start an agent"
+            // confusion is discovered ON that page, so the answer is adjacent.
+            { label: 'Launch or Run?', slug: 'concepts/launch-vs-run' },
             { label: 'Windows Containers', slug: 'concepts/windows-containers' },
             { label: 'Projects', slug: 'concepts/projects' },
             { label: 'Nucleus', slug: 'concepts/nucleus' },
