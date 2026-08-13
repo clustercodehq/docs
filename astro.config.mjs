@@ -140,11 +140,19 @@ export default defineConfig({
         {
           label: 'Getting Started',
           collapsed: true,
+          // Ordered so a reader going top-to-bottom never hits a page whose
+          // prerequisites come later. Quickstart used to sit at position 2 while
+          // depending on Install CLI + Register a Worker below it (and
+          // register-worker linked back up to Quickstart) — a loop. Quickstart is
+          // now the payoff at the end. 'Agent sign-in' moved here from Guides
+          // (was 13 items deep, linked from no Getting Started page) because a
+          // worker without signed-in agents cannot do agent work at all.
           items: [
             { label: 'Introduction', slug: 'getting-started/introduction' },
-            { label: 'Quickstart', slug: 'getting-started/quickstart' },
             { label: 'Install CLI', slug: 'getting-started/install-cli' },
             { label: 'Register a Worker', slug: 'getting-started/register-worker' },
+            { label: 'Agent sign-in', slug: 'guides/agent-sign-in' },
+            { label: 'Your first DevBox', slug: 'getting-started/quickstart' },
           ],
         },
         {
@@ -188,11 +196,16 @@ export default defineConfig({
         {
           label: 'Guides',
           collapsed: true,
+          // The two ticket-entry paths sit adjacent at the top so the reader sees
+          // the choice — delegated (Run) vs. hands-on (Launch) — rather than
+          // discovering only the manual one and assuming it's the whole product.
+          // 'Run an agent on demand' leads because it is the flow that actually
+          // delivers the headline ticket → PR promise.
           items: [
-            { label: 'Launch from Ticket', slug: 'guides/launch-from-ticket' },
-            { label: 'Explore your fleet in the Observatory', slug: 'guides/explore-observatory' },
             { label: 'Run an agent on demand', slug: 'guides/run-on-demand' },
+            { label: 'Launch from Ticket', slug: 'guides/launch-from-ticket' },
             { label: 'Automate recurring work', slug: 'guides/recurring-work' },
+            { label: 'Explore your fleet in the Observatory', slug: 'guides/explore-observatory' },
             { label: 'Create a Loop', slug: 'guides/create-a-loop', badge: { text: 'Beta', variant: 'default', class: 'beta-badge' } },
             { label: 'Create a Prototype', slug: 'guides/create-a-prototype', badge: { text: 'Beta', variant: 'default', class: 'beta-badge' } },
             { label: 'Custom Containerfile', slug: 'guides/custom-containerfile' },
@@ -201,7 +214,7 @@ export default defineConfig({
             { label: 'Windows Golden Image', slug: 'guides/windows-golden-image' },
             { label: 'Visual Testing', slug: 'guides/visual-testing' },
             { label: 'Team Setup', slug: 'guides/team-setup' },
-            { label: 'Agent sign-in', slug: 'guides/agent-sign-in' },
+            // 'Agent sign-in' now lives in Getting Started (see above).
             { label: 'Cloud worker', slug: 'guides/cloud-worker' },
             { label: 'VS Code Extension', slug: 'guides/vscode-extension' },
             { label: 'AI Credits', slug: 'guides/ai-credits' },

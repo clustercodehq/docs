@@ -36,16 +36,37 @@ Or run the guided wizard that handles everything (login, tenant selection, runti
 clustercode onboard
 ```
 
-## 4. Launch your first DevBox
+## 4. Sign your agents in on that worker
+
+`onboard` prepares the **machine** — it does not sign your agents in. Do this once
+per worker, from the dashboard: open the worker's page and click **Sign-in agents**.
+
+Agent sign-in lets the agent **think**; service access tokens let it **reach your
+code**. Without both, your first DevBox comes up fine and the first agent command
+fails on auth. See [Agent sign-in](/guides/agent-sign-in).
+
+## 5. Launch your first DevBox
 
 1. Open the dashboard at your orchestrator URL
 2. Paste a GitHub issue link into the launch modal
 3. Pick a worker and click **Launch**
 
-Within 30 seconds, a DevBox is running and the web terminal is live. Your AI agent is now working on the ticket.
+Within 30 seconds the DevBox is running and the web terminal is live, with your
+repo cloned and the ticket context in place.
+
+**Now start the agent.** Open the live terminal and run `claude`. The DevBox is
+the workspace; you (or a Run) drive the agent inside it.
+
+## 6. Or let ClusterCode drive it
+
+Don't want to drive the terminal yourself? Instead of launching a DevBox, start a
+Run: paste the same issue URL, write "implement this and open a PR," and the
+coordinator launches the DevBox *and* runs the agent for you. See
+[Run an agent on demand](/guides/run-on-demand).
 
 ## What's next?
 
-- [Launch from a ticket](/guides/launch-from-ticket) — full walkthrough of the launch flow
+- [Run an agent on demand](/guides/run-on-demand) — hand a ticket over and get a PR back
+- [Launch from a ticket](/guides/launch-from-ticket) — full walkthrough of the hands-on flow
 - [Workers concept](/concepts/workers) — understand self-hosted vs managed
 - [CLI reference](/cli/overview) — all available commands

@@ -3,22 +3,32 @@ title: DevBoxes
 description: Understand ClusterCode DevBox lifecycle — from launch to teardown.
 ---
 
+import { Aside } from '@astrojs/starlight/components';
 import PlanLimitsTable from '../../../components/PlanLimitsTable.astro';
 
 import ThemedImage from '../../../components/ThemedImage.astro';
 import containersDark from '../../../assets/screenshots/containers-list-dark-20260627.png';
 import containersLight from '../../../assets/screenshots/containers-list-light-20260627.png';
 
-A **DevBox** in ClusterCode is an isolated development environment where an AI agent works on a task. Each DevBox gets its own filesystem, network, and runtime — like giving every ticket its own machine.
+A **DevBox** in ClusterCode is an isolated development environment that an agent can
+work in — with your repo, tools, and credentials in place. Each DevBox gets its own
+filesystem, network, and runtime — like giving every ticket its own machine.
 
 ## Lifecycle
 
-| Phase | What Happens |
-|-------|-------------|
-| Launch | DevBox created from image, repo cloned, agent starts |
-| Running | AI agent works on the task, you can watch via terminal |
-| Complete | Work is done — PR drafted, branch pushed, tests passing |
-| Stopped | DevBox removed, resources freed |
+| Phase | What happens | Is an agent running? |
+|---|---|---|
+| **Launching** | DevBox created from the image; repo cloned; agent CLI and ticket context put in place | No |
+| **Ready** | Environment is up. The live terminal is available. Nothing is running yet unless a Post-Launch Workflow, a [Run](/concepts/runs), or a [Schedule](/concepts/schedules) started something | Only if something started it |
+| **Running** | The container is up. An agent may or may not be active inside it — "Running" describes the DevBox, not the work | Maybe |
+| **Stopped** | Container halted. The filesystem is retained and the DevBox can be restarted | No |
+| **Removed** | DevBox and its disk are deleted; resources freed. Not recoverable | No |
+
+<Aside type="caution" title="Launching a DevBox does not start an AI agent.">
+A launch prepares a workspace. To get delegated work, start a
+[Run](/guides/run-on-demand) or a [Schedule](/concepts/schedules) — or open the live
+terminal and start an agent CLI yourself.
+</Aside>
 
 The DevBoxes page shows every DevBox across your workers, with its ticket, branch, capability badges, live resource usage, and status:
 
@@ -31,12 +41,12 @@ The DevBoxes page shows every DevBox across your workers, with its ticket, branc
 
 ## Your DevBox outlives your browser
 
-A DevBox is not a browser tab. Close the laptop, lose Wi-Fi, switch machines — the DevBox keeps running on its worker, and the agent inside keeps working. When you come back (from any browser, anywhere), the live terminal reattaches and the agent's session is exactly where it was. Long runs survive you leaving; that's the point.
+A DevBox is not a browser tab. Close the laptop, lose Wi-Fi, switch machines — the DevBox keeps running on its worker, and anything you started inside it keeps running. When you come back (from any browser, anywhere), the live terminal reattaches and the session is exactly where it was. Long runs survive you leaving; that's the point.
 
 ## What's Inside a DevBox
 
 Every DevBox includes:
-- An AI coding agent (Claude Code, GitHub Copilot, or Codex)
+- An agent CLI, installed and ready to start (Claude Code, GitHub Copilot, or Codex) — installed is not the same as running
 - Git, GitHub CLI, tmux, neovim
 - The cloned repository with ticket context
 - A generated `CLAUDE.md` with task instructions
