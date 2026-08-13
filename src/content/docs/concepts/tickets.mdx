@@ -3,7 +3,7 @@ title: Tickets
 description: Ticket-driven provisioning — paste a URL, get a DevBox.
 ---
 
-ClusterCode is **ticket-driven**. Instead of manually configuring DevBoxes, you paste a ticket URL and the system handles everything: fetching context, picking a worker, creating the DevBox, and starting the AI agent with full task context.
+ClusterCode is **ticket-driven**. Instead of manually configuring DevBoxes, you paste a ticket URL and the system handles the setup: fetching context, suggesting a worker, creating the DevBox, and staging the ticket context so an agent can pick it up.
 
 ## Supported Providers
 
@@ -19,9 +19,10 @@ ClusterCode is **ticket-driven**. Instead of manually configuring DevBoxes, you 
 1. **Paste a ticket URL** into the launch modal (or ask Nucleus)
 2. ClusterCode **fetches the ticket details** — title, description, labels, comments
 3. A **CLAUDE.md is generated** with the full ticket context as instructions for the AI agent
-4. A **DevBox launches** on the least-loaded worker with the repo cloned and agent ready
-5. The AI agent **works on the ticket** autonomously
-6. You get a **draft PR** when the work is complete
+4. A **DevBox launches** on the selected worker with the repo cloned and the agent CLI ready
+5. **You start the agent** from the live terminal — or skip the launch entirely and
+   start a [Run](/guides/run-on-demand) with the ticket URL, which drives the agent for you
+6. The agent opens a **draft PR** when the work is done
 
 ## What Gets Passed to the Agent
 

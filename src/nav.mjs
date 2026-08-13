@@ -37,11 +37,19 @@ export const nav = [
     href: '/getting-started/quickstart/',
     collapsed: true,
     pinned: true,
+    // Ordered so a reader going top-to-bottom never hits a page whose
+    // prerequisites come later. Quickstart used to sit at position 2 while
+    // depending on Install CLI + Register a Worker below it (and register-worker
+    // linked back up to Quickstart) — a loop. Quickstart is now the payoff at the
+    // end. 'Agent sign-in' moved here from Guides (was 13 items deep, linked from
+    // no Getting Started page) because a worker without signed-in agents cannot
+    // do agent work at all.
     items: [
       { label: 'Introduction', slug: 'getting-started/introduction', desc: 'What is ClusterCode' },
-      { label: 'Quickstart', slug: 'getting-started/quickstart', desc: 'Get running in 5 minutes' },
       { label: 'Install CLI', slug: 'getting-started/install-cli', desc: 'Install the CLI tool' },
       { label: 'Register a Worker', slug: 'getting-started/register-worker', desc: 'Connect your machine' },
+      { label: 'Agent sign-in', slug: 'guides/agent-sign-in', desc: 'Sign AI engines into a worker' },
+      { label: 'Your first DevBox', slug: 'getting-started/quickstart', desc: 'Get running in 5 minutes' },
     ],
   },
   {
@@ -55,6 +63,9 @@ export const nav = [
       { label: 'Workers', slug: 'concepts/workers', desc: 'Machines that run DevBoxes' },
       { label: 'Cloud workers', slug: 'concepts/cloud-workers', desc: 'Managed compute, metered by the second' },
       { label: 'DevBoxes', slug: 'concepts/containers', desc: 'Isolated execution environments' },
+      // Sits directly after DevBoxes: the "my launch didn't start an agent"
+      // confusion is discovered on that page, so the answer is adjacent.
+      { label: 'Launch or Run?', slug: 'concepts/launch-vs-run', desc: 'Who starts the agent, and when' },
       { label: 'Windows Containers', slug: 'concepts/windows-containers', desc: 'Real Windows VM DevBoxes' },
       { label: 'Projects', slug: 'concepts/projects', desc: 'Group work behind one dashboard' },
       { label: 'Nucleus', slug: 'concepts/nucleus', desc: 'The in-platform AI assistant' },
@@ -105,10 +116,15 @@ export const nav = [
     primary: true,
     pinned: true,
     items: [
-      { label: 'Launch from Ticket', slug: 'guides/launch-from-ticket', desc: 'Start a DevBox from an issue' },
-      { label: 'Explore your fleet in the Observatory', slug: 'guides/explore-observatory', desc: 'Walkthrough of the galaxy view' },
+      // The two ticket-entry paths sit adjacent at the top so the reader sees the
+      // choice — delegated (Run) vs. hands-on (Launch) — rather than discovering
+      // only the manual one and assuming it's the whole product. 'Run an agent on
+      // demand' leads because it is the flow that actually delivers the headline
+      // ticket → PR promise.
       { label: 'Run an agent on demand', slug: 'guides/run-on-demand', desc: 'Three copy-paste Run recipes' },
+      { label: 'Launch from Ticket', slug: 'guides/launch-from-ticket', desc: 'Start a DevBox from an issue' },
       { label: 'Automate recurring work', slug: 'guides/recurring-work', desc: 'Three copy-paste Schedule recipes' },
+      { label: 'Explore your fleet in the Observatory', slug: 'guides/explore-observatory', desc: 'Walkthrough of the galaxy view' },
       { label: 'Create a Loop', slug: 'guides/create-a-loop', desc: 'Set up a run-until-verified loop', badge: beta },
       { label: 'Create a Prototype', slug: 'guides/create-a-prototype', desc: 'Race contenders and promote a winner', badge: beta },
       { label: 'Custom Containerfile', slug: 'guides/custom-containerfile', desc: 'Build your own runtime' },
@@ -118,7 +134,7 @@ export const nav = [
       { label: 'Windows Golden Image', slug: 'guides/windows-golden-image', desc: 'Boot Windows DevBoxes in seconds' },
       { label: 'Visual Testing', slug: 'guides/visual-testing', desc: 'Give an agent a real desktop' },
       { label: 'Team Setup', slug: 'guides/team-setup', desc: 'Invite and manage your team' },
-      { label: 'Agent sign-in', slug: 'guides/agent-sign-in', desc: 'Sign AI engines into a worker' },
+      // 'Agent sign-in' now lives in Getting Started (see above).
       { label: 'Cloud worker', slug: 'guides/cloud-worker', desc: 'Managed compute offering' },
       { label: 'VS Code Extension', slug: 'guides/vscode-extension', desc: 'Editor integration' },
       { label: 'AI Credits', slug: 'guides/ai-credits', desc: 'Usage and billing' },
