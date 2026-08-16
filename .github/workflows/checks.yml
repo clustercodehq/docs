@@ -39,3 +39,12 @@ jobs:
 
       - name: Brand token drift
         run: pnpm check:tokens
+
+      # `check:limits` is deliberately NOT run here. It compares against core's
+      # built packages/shared, which does not exist on this runner, so it exits 0
+      # with "SKIP: core repo not found" — a green step that verifies nothing is
+      # worse than no step. It has to be run locally, from a checkout that has
+      # the core repo alongside:
+      #   node scripts/check-limits-drift.mjs
+      # Enforcing it here would need core checked out (private repo, needs a
+      # token) or the limits published to a package docs can consume.

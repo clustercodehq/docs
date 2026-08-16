@@ -97,11 +97,13 @@ pnpm check:limits       # plan limits vs core
 pnpm generate:nav-icons # rewrite nav-icons.generated.css after changing NAV_ICONS
 ```
 
-> `pnpm check:limits` currently fails on a clean checkout — the published
-> `displayIdleTimeoutMinutes` values disagree with core. That is a known,
-> pre-existing content issue, not something you broke; it is why `check:limits`
-> is not in the blocking CI set. Regenerate with
-> `node scripts/export-plan-limits.mjs --docs` from the core repo.
+`check:nav` and `check:tokens` run in CI on every pull request.
+
+`check:limits` **only works locally**, with the core repo checked out alongside
+this one — on CI it can't find core and skips. `src/data/plan-limits.json` is
+generated from core's `STATIC_PLAN_LIMITS`; regenerate it with
+`node scripts/export-plan-limits.mjs --docs` from the core repo rather than
+editing it by hand, and run `pnpm check:limits` locally after changing limits.
 
 ## Docs JSON API
 

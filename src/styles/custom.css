@@ -464,19 +464,21 @@ a:not([class]):hover {
    ============================================================ */
 .pagination-links {
   display: flex !important;
-  /* Wrap when the pair can't share a row. Without this, a long page title
-     (e.g. "Explore your fleet in the Observatory") made the Next card wider
-     than the viewport and scrolled the whole page sideways on phones. */
+  /* Safety net only — with `flex: 1 1 0` below the pair no longer needs to
+     wrap. Kept so a future change to the basis can't reintroduce the sideways
+     page scroll a long title used to cause. */
   flex-wrap: wrap !important;
   justify-content: space-between !important;
   gap: 0.75rem !important;
+  align-items: stretch !important;
 }
 
 .pagination-links a {
   display: inline-flex !important;
-  /* Sized to content, but allowed to shrink — `0 0 auto` pinned each card at
-     its max-content width, so `min-width: 0` below could never take effect. */
-  flex: 0 1 auto !important;
+  /* Equal halves. Content-sized cards stacked once a title got long, which
+     read as broken; splitting the row 50/50 keeps them side by side and
+     aligned at every width, and the title clamps instead (see .link-title). */
+  flex: 1 1 0 !important;
   width: auto !important;
   max-width: 100% !important;
   border-color: var(--sl-color-hairline) !important;
@@ -485,6 +487,20 @@ a:not([class]):hover {
   box-shadow: none !important;
   min-width: 0 !important;
   transition: border-color 150ms ease, background-color 150ms ease;
+}
+
+/* A lone card (only /getting-started/introduction/, which has no Previous)
+   stays content-sized so it keeps its compact right-aligned treatment rather
+   than stretching across the full column. */
+.pagination-links a:only-child {
+  flex: 0 1 auto !important;
+}
+
+/* Let the clamp actually bite: without min-width:0 the flex item refuses to
+   shrink below its content's min-content width. */
+.pagination-links a > span {
+  min-width: 0;
+  overflow: hidden;
 }
 
 /* Keep Next on the right even once it has wrapped onto its own row, and keep a
@@ -503,9 +519,20 @@ a:not([class]):hover {
   background-color: var(--sl-color-accent-low);
 }
 
+/* Clamp to two lines, then ellipsis. Two rather than one because at 390px a
+   half-width card fits ~18 characters on a line — "Session persistence" would
+   lose a character — where two lines fit ~36 and almost every title survives
+   whole. Truncation is then the exception, which matters because phones have
+   no hover to recover the hidden text; a `title` is added by the script in
+   PageFrame.astro only when a title is genuinely clamped. */
 .pagination-links .link-title {
   font-size: 0.75rem !important;
   font-weight: 600;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
   /* Last-resort break so a single very long word can't reintroduce overflow. */
   overflow-wrap: anywhere;
 }
@@ -1075,19 +1102,82 @@ header.header {
   left: 0;
   right: 0;
   z-index: 9998;
-  /* Cap to the space above the bar (bar = 3.5rem, plus a small top gap) and
-     scroll inside, so a long item list stays fully reachable instead of
-     running off the top of the screen. The bar (z-9999) still paints in
+  /* Height is driven by the grab-bar logic in BottomNav.astro (resting =
+     content height capped at 70% of the space above the bar; dragging or
+     tapping the bar takes it to the full content area). The max-height stays
+     as the hard ceiling for the no-JS case. The bar (z-9999) still paints in
      front, so the menu tucks behind it. */
   max-height: calc(100dvh - 4rem);
-  overflow-y: auto;
+  flex-direction: column;
+  overflow: hidden;
   background: var(--sl-color-bg-sidebar);
   border-top: 1px solid var(--sl-color-hairline);
   animation: slide-up 150ms ease-out;
+  transition: height 200ms ease-out;
+}
+
+/* Follow the finger exactly while a drag is in flight. */
+.bottom-nav-menu.dragging {
+  transition: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bottom-nav-menu {
+    transition: none;
+  }
+}
+
+/* The list scrolls inside the sized sheet rather than the sheet growing. */
+.bn-menu-scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Grab bar — mirrors the orchestrator's MobileNavPanel handle. */
+.bn-grabber {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 0.5rem 0;
+  border: none;
+  background: transparent;
+  cursor: grab;
+  /* Stops the browser claiming the vertical drag for page scrolling before
+     pointermove ever fires. Without this the handle is barely draggable. */
+  touch-action: none;
+}
+
+.bn-grabber:active {
+  cursor: grabbing;
+}
+
+.bn-grabber-pill {
+  display: block;
+  width: 2.5rem;
+  height: 0.25rem;
+  border-radius: 999px;
+  background: var(--sl-color-gray-3);
+  opacity: 0.5;
+  transition: opacity 150ms ease;
+}
+
+.bn-grabber:hover .bn-grabber-pill,
+.bn-grabber:focus-visible .bn-grabber-pill {
+  opacity: 0.85;
+}
+
+.bn-grabber:focus-visible {
+  outline: 2px solid var(--docs-focus-ring, #005fb8);
+  outline-offset: -2px;
 }
 
 .bottom-nav-menu.open {
-  display: block;
+  display: flex;
 }
 
 /* Closing: matching slide-down + fade before the JS sets display:none. */
@@ -1184,15 +1274,25 @@ html.theme-transition *::after {
   }
 }
 
+/* Mobile menu text colours are set explicitly rather than via --sl-color-gray-*
+   so both rows clear WCAG AA (4.5:1) on the menu's surface in both themes.
+   The Starlight greys landed at 3.4–3.9:1 here, and these are the primary
+   navigation targets on a phone. Section rows stay one step stronger than the
+   pages beneath them so the hierarchy still reads. Scoped to this menu — the
+   global tokens are shared with the portal and are not ours to redefine. */
 .bottom-nav-menu-item {
   display: flex;
   align-items: center;
   gap: 0.75rem;
   padding: 0.75rem 1.25rem;
   font-size: 0.875rem;
-  color: var(--sl-color-gray-2);
+  color: #3c3c3c;
   text-decoration: none;
   transition: color 100ms ease, background-color 100ms ease;
+}
+
+:root[data-theme='dark'] .bottom-nav-menu-item {
+  color: #d4d4d4;
 }
 
 .bottom-nav-menu-item:hover {
@@ -1275,9 +1375,15 @@ html.theme-transition *::after {
   padding: 0.625rem 1.25rem 0.625rem 3.25rem;
   min-height: 2.5rem;
   font-size: 0.8125rem;
-  color: var(--sl-color-gray-3);
+  /* One step lighter than the section row above it, still ≥4.5:1 — see the
+     note on .bottom-nav-menu-item. */
+  color: #55595e;
   text-decoration: none;
   transition: color 100ms ease, background-color 100ms ease;
+}
+
+:root[data-theme='dark'] .bn-subitem {
+  color: #b4b4b4;
 }
 
 .bn-subitem:hover {

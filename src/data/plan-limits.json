@@ -33,7 +33,7 @@
       "voluntaryStopGraceHours": 0,
       "maxActiveSubagents": 1,
       "maxImages": 3,
-      "displayIdleTimeoutMinutes": 3,
+      "displayIdleTimeoutMinutes": 1,
       "persistWorkspace": false
     },
     "starter": {
@@ -63,7 +63,7 @@
       "voluntaryStopGraceHours": 0,
       "maxActiveSubagents": 3,
       "maxImages": -1,
-      "displayIdleTimeoutMinutes": 5,
+      "displayIdleTimeoutMinutes": 2,
       "persistWorkspace": false
     },
     "pro": {
@@ -93,7 +93,7 @@
       "voluntaryStopGraceHours": 360,
       "maxActiveSubagents": 15,
       "maxImages": -1,
-      "displayIdleTimeoutMinutes": 10,
+      "displayIdleTimeoutMinutes": 3,
       "persistWorkspace": false
     },
     "enterprise": {
@@ -123,7 +123,7 @@
       "voluntaryStopGraceHours": 720,
       "maxActiveSubagents": 60,
       "maxImages": -1,
-      "displayIdleTimeoutMinutes": 15,
+      "displayIdleTimeoutMinutes": 5,
       "persistWorkspace": false
     }
   }
