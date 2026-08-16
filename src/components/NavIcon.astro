@@ -1,0 +1,26 @@
+---
+// Renders one icon from the shared NAV_ICONS set. The set used to be pasted
+// three times (twice in BottomNav, once in CommandPalette); it now lives in
+// src/nav.mjs and every surface draws from it.
+import { NAV_ICONS } from '../nav.mjs';
+
+interface Props {
+  name: string;
+  strokeWidth?: number;
+}
+
+const { name, strokeWidth = 1.5 } = Astro.props;
+const inner = NAV_ICONS[name] ?? NAV_ICONS.file;
+---
+
+<svg
+  aria-hidden="true"
+  focusable="false"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width={strokeWidth}
+  stroke-linecap="round"
+  stroke-linejoin="round"
+  set:html={inner}
+/>

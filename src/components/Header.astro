@@ -1,6 +1,7 @@
 ---
 import CommandPalette from './CommandPalette.astro';
 import Logo from './Logo.astro';
+import { primaryNav, activeGroupLabel } from '../nav.mjs';
 
 // Build breadcrumb from sidebar tree, capturing first child href for parent links
 function getFirstHref(entries: any[]): string | undefined {
@@ -35,22 +36,10 @@ const breadcrumb = (!isHomePage && route?.sidebar)
 
 // Primary top-nav so the main doc sections — Automation in particular — are
 // reachable straight from the navbar on every page, including the splash home
-// page (which has no sidebar at all).
+// page (which has no sidebar at all). Groups marked `primary` in src/nav.mjs.
 const pathname = Astro.url.pathname;
-const primaryNav = [
-  { label: 'Concepts', href: '/concepts/workers/' },
-  { label: 'Automation', href: '/concepts/automation/' },
-  { label: 'Guides', href: '/guides/launch-from-ticket/' },
-  { label: 'CLI', href: '/cli/overview/' },
-];
-function activeNavLabel(path: string): string | null {
-  if (/^\/(concepts\/automation|guides\/schedules|guides\/runs|concepts\/subagents)/.test(path)) return 'Automation';
-  if (path.startsWith('/concepts/')) return 'Concepts';
-  if (path.startsWith('/guides/')) return 'Guides';
-  if (path.startsWith('/cli/')) return 'CLI';
-  return null;
-}
-const activeNav = activeNavLabel(pathname);
+const navItems = primaryNav();
+const activeNav = activeGroupLabel(pathname);
 ---
 
 <div class:list={["header", "sl-flex", { "header-home": isHomePage }]}>
@@ -60,10 +49,10 @@ const activeNav = activeNavLabel(pathname);
       <span class="header-logo-desktop"><Logo variant={isHomePage ? 'full' : 'docs'} size={20} /></span>
     </a>
     <nav class="header-nav" aria-label="Primary">
-      {primaryNav.map((item) => (
+      {navItems.map((item) => (
         <a
           href={item.href}
-          class:list={["header-nav-link", { "header-nav-active": activeNav === item.label }]}
+          class:list={["header-nav-link", { "header-nav-active": activeNav === item.key }]}
         >{item.label}</a>
       ))}
     </nav>
