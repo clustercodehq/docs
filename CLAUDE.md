@@ -57,12 +57,19 @@ pnpm generate:nav-icons # rewrite nav-icons.generated.css from NAV_ICONS
 ```
 
 `pnpm build` runs `check:nav` first, so a build fails on nav drift. CI runs
-`check:nav`, `check:tokens` and `check:limits` on every pull request
+`check:nav` and `check:tokens` on every pull request
 (`.github/workflows/checks.yml`).
+
+`check:limits` is **local-only**. It reads core's built
+`packages/shared/dist/limits/plan-limits.js`, which does not exist on the CI
+runner, so there it prints `SKIP: core repo not found` and exits 0 — do not
+"enable" it in CI without actually checking core out, or you get a green step
+that verifies nothing.
 
 `src/data/plan-limits.json` is generated from core's `STATIC_PLAN_LIMITS` —
 never hand-edit it. Regenerate from the core repo with
-`node scripts/export-plan-limits.mjs --docs`.
+`node scripts/export-plan-limits.mjs --docs`, then run `pnpm check:limits`
+locally.
 
 ## Conventions
 

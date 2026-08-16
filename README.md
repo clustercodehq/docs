@@ -97,10 +97,13 @@ pnpm check:limits       # plan limits vs core
 pnpm generate:nav-icons # rewrite nav-icons.generated.css after changing NAV_ICONS
 ```
 
-All three run in CI on every pull request. `src/data/plan-limits.json` is
-generated from core — regenerate it with
+`check:nav` and `check:tokens` run in CI on every pull request.
+
+`check:limits` **only works locally**, with the core repo checked out alongside
+this one — on CI it can't find core and skips. `src/data/plan-limits.json` is
+generated from core's `STATIC_PLAN_LIMITS`; regenerate it with
 `node scripts/export-plan-limits.mjs --docs` from the core repo rather than
-editing it by hand.
+editing it by hand, and run `pnpm check:limits` locally after changing limits.
 
 ## Docs JSON API
 
