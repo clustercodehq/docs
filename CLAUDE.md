@@ -57,13 +57,12 @@ pnpm generate:nav-icons # rewrite nav-icons.generated.css from NAV_ICONS
 ```
 
 `pnpm build` runs `check:nav` first, so a build fails on nav drift. CI runs
-`check:nav` and `check:tokens` on every pull request (`.github/workflows/checks.yml`).
+`check:nav`, `check:tokens` and `check:limits` on every pull request
+(`.github/workflows/checks.yml`).
 
-`check:limits` is **currently failing** — `displayIdleTimeoutMinutes` in
-`reference/plans-and-limits` disagrees with core. It is deliberately not in the
-blocking CI set yet; regenerate from the core repo
-(`node scripts/export-plan-limits.mjs --docs`) and then add it to
-`.github/workflows/checks.yml`.
+`src/data/plan-limits.json` is generated from core's `STATIC_PLAN_LIMITS` —
+never hand-edit it. Regenerate from the core repo with
+`node scripts/export-plan-limits.mjs --docs`.
 
 ## Conventions
 

@@ -212,6 +212,37 @@ function isActive(prefix: string) {
 </style>
 
 <script is:inline>
+  /* Prev/next titles clamp to two lines (see .link-title in custom.css). When a
+     title is actually clipped, expose the full text as a tooltip so a desktop
+     reader can recover it on hover. Only set when clipped — an always-on
+     tooltip that just repeats visible text is noise. Touch devices get no
+     hover, which is why the clamp is two lines and not one: the visible text
+     has to stand on its own. */
+  (function() {
+    function markTruncated() {
+      var titles = document.querySelectorAll('.pagination-links .link-title');
+      for (var i = 0; i < titles.length; i++) {
+        var el = titles[i];
+        var clipped = el.scrollHeight > el.clientHeight + 1;
+        if (clipped) el.setAttribute('title', el.textContent.trim());
+        else el.removeAttribute('title');
+      }
+    }
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', markTruncated);
+    } else {
+      markTruncated();
+    }
+    // Re-evaluate on resize: a card that fits at tablet width may clip on a phone.
+    var resizeTimer;
+    window.addEventListener('resize', function() {
+      window.clearTimeout(resizeTimer);
+      resizeTimer = window.setTimeout(markTruncated, 150);
+    });
+  })();
+</script>
+
+<script is:inline>
   (function() {
     var STORAGE_KEY = 'sidebar-collapsed';
     var page = document.querySelector('.page');

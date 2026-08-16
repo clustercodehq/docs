@@ -39,3 +39,8 @@ jobs:
 
       - name: Brand token drift
         run: pnpm check:tokens
+
+      # Published plan limits must match core's STATIC_PLAN_LIMITS. Regenerate
+      # with `node scripts/export-plan-limits.mjs --docs` from the core repo.
+      - name: Plan limits drift
+        run: pnpm check:limits
