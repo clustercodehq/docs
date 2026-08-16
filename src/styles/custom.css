@@ -1274,25 +1274,23 @@ html.theme-transition *::after {
   }
 }
 
-/* Mobile menu text colours are set explicitly rather than via --sl-color-gray-*
-   so both rows clear WCAG AA (4.5:1) on the menu's surface in both themes.
-   The Starlight greys landed at 3.4–3.9:1 here, and these are the primary
-   navigation targets on a phone. Section rows stay one step stronger than the
-   pages beneath them so the hierarchy still reads. Scoped to this menu — the
-   global tokens are shared with the portal and are not ours to redefine. */
+/* Menu rows read from --sl-color-gray-2, which holds exactly the portal's
+   --text-secondary (#616161 light / #808080 dark, packages/ui/src/theme.css) —
+   so the docs sheet and the product's bottom menu match by construction rather
+   than by two hand-kept hex values.
+   These were briefly hardcoded brighter to clear WCAG AA (the greys measure
+   ~3.4–4.1:1 here). That is a real shortfall, but it made the docs menu visibly
+   lighter than the same menu in the portal, so parity won. Raising it properly
+   means moving --text-secondary in core, which lifts every surface at once. */
 .bottom-nav-menu-item {
   display: flex;
   align-items: center;
   gap: 0.75rem;
   padding: 0.75rem 1.25rem;
   font-size: 0.875rem;
-  color: #3c3c3c;
+  color: var(--sl-color-gray-2);
   text-decoration: none;
   transition: color 100ms ease, background-color 100ms ease;
-}
-
-:root[data-theme='dark'] .bottom-nav-menu-item {
-  color: #d4d4d4;
 }
 
 .bottom-nav-menu-item:hover {
@@ -1375,15 +1373,11 @@ html.theme-transition *::after {
   padding: 0.625rem 1.25rem 0.625rem 3.25rem;
   min-height: 2.5rem;
   font-size: 0.8125rem;
-  /* One step lighter than the section row above it, still ≥4.5:1 — see the
-     note on .bottom-nav-menu-item. */
-  color: #55595e;
+  /* One step dimmer than the section row above it — same relationship the
+     sidebar uses between a group label and its pages. */
+  color: var(--sl-color-gray-3);
   text-decoration: none;
   transition: color 100ms ease, background-color 100ms ease;
-}
-
-:root[data-theme='dark'] .bn-subitem {
-  color: #b4b4b4;
 }
 
 .bn-subitem:hover {
