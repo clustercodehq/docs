@@ -1102,19 +1102,82 @@ header.header {
   left: 0;
   right: 0;
   z-index: 9998;
-  /* Cap to the space above the bar (bar = 3.5rem, plus a small top gap) and
-     scroll inside, so a long item list stays fully reachable instead of
-     running off the top of the screen. The bar (z-9999) still paints in
+  /* Height is driven by the grab-bar logic in BottomNav.astro (resting =
+     content height capped at 70% of the space above the bar; dragging or
+     tapping the bar takes it to the full content area). The max-height stays
+     as the hard ceiling for the no-JS case. The bar (z-9999) still paints in
      front, so the menu tucks behind it. */
   max-height: calc(100dvh - 4rem);
-  overflow-y: auto;
+  flex-direction: column;
+  overflow: hidden;
   background: var(--sl-color-bg-sidebar);
   border-top: 1px solid var(--sl-color-hairline);
   animation: slide-up 150ms ease-out;
+  transition: height 200ms ease-out;
+}
+
+/* Follow the finger exactly while a drag is in flight. */
+.bottom-nav-menu.dragging {
+  transition: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bottom-nav-menu {
+    transition: none;
+  }
+}
+
+/* The list scrolls inside the sized sheet rather than the sheet growing. */
+.bn-menu-scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Grab bar — mirrors the orchestrator's MobileNavPanel handle. */
+.bn-grabber {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 0.5rem 0;
+  border: none;
+  background: transparent;
+  cursor: grab;
+  /* Stops the browser claiming the vertical drag for page scrolling before
+     pointermove ever fires. Without this the handle is barely draggable. */
+  touch-action: none;
+}
+
+.bn-grabber:active {
+  cursor: grabbing;
+}
+
+.bn-grabber-pill {
+  display: block;
+  width: 2.5rem;
+  height: 0.25rem;
+  border-radius: 999px;
+  background: var(--sl-color-gray-3);
+  opacity: 0.5;
+  transition: opacity 150ms ease;
+}
+
+.bn-grabber:hover .bn-grabber-pill,
+.bn-grabber:focus-visible .bn-grabber-pill {
+  opacity: 0.85;
+}
+
+.bn-grabber:focus-visible {
+  outline: 2px solid var(--docs-focus-ring, #005fb8);
+  outline-offset: -2px;
 }
 
 .bottom-nav-menu.open {
-  display: block;
+  display: flex;
 }
 
 /* Closing: matching slide-down + fade before the JS sets display:none. */

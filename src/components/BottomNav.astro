@@ -25,6 +25,16 @@ const tree = menuTree(currentPath);
 <div class="bottom-nav-backdrop" data-bottom-nav-backdrop></div>
 
 <div class="bottom-nav-menu" data-bottom-nav-panel>
+  <button
+    class="bn-grabber"
+    type="button"
+    aria-label="Resize menu"
+    aria-expanded="false"
+    data-bottom-nav-grabber
+  >
+    <span class="bn-grabber-pill" aria-hidden="true"></span>
+  </button>
+  <div class="bn-menu-scroll" data-bottom-nav-scroll>
   {tree.map((group) => (
     <details class="bn-group" open={group.open}>
       <summary class:list={['bottom-nav-menu-item', 'bn-group-row', { active: group.active }]}>
@@ -61,6 +71,7 @@ const tree = menuTree(currentPath);
       </ul>
     </details>
   ))}
+  </div>
 </div>
 
 <nav class="bottom-nav" aria-label="Mobile navigation">
@@ -93,7 +104,11 @@ const tree = menuTree(currentPath);
 
     var closeTimer;
     function finishClose() {
-      if (panel) panel.classList.remove('open', 'closing');
+      if (panel) {
+        panel.classList.remove('open', 'closing', 'dragging');
+        // Drop the inline height so the next open re-measures from scratch.
+        panel.style.height = '';
+      }
       if (backdrop) backdrop.classList.remove('open', 'closing');
     }
     function closeMenu() {
@@ -120,11 +135,172 @@ const tree = menuTree(currentPath);
         if (panel) panel.classList.add('open');
         if (backdrop) backdrop.classList.add('open');
         if (menuBtn) menuBtn.classList.add('active');
+        expanded = false;
+        applyHeight();
       }
     }
 
     if (menuBtn) menuBtn.addEventListener('click', toggleMenu);
     if (backdrop) backdrop.addEventListener('click', closeMenu);
+
+    /* ── Drag-to-resize ──────────────────────────────────────────────────
+       Ports the orchestrator's MobileNavPanel grab bar
+       (core/packages/ui/src/components/sidebar/mobile-nav-panel.tsx) so the
+       two sheets feel the same: tap the bar to toggle between a resting and a
+       full height, drag it to size the sheet by hand, drag it well down to
+       dismiss. Same constants as that component, deliberately.
+
+       Ours differs in one way: the orchestrator's menu is a static list, so it
+       measures its content once. This one is an accordion (8 rows collapsed,
+       61 expanded), so the resting height re-measures when a section opens —
+       the sheet hugs its content and grows with it, up to the resting cap. */
+    var TOP_GAP = 8;            // breathing room above a fully expanded sheet
+    var COLLAPSED_FRACTION = 0.7; // resting height, as a fraction of available
+    var DRAG_SLOP_PX = 6;       // travel before a press counts as a drag
+    var DISMISS_FRACTION = 0.5; // release below this * resting → dismiss
+    var grabber = document.querySelector('[data-bottom-nav-grabber]');
+    var scroller = document.querySelector('[data-bottom-nav-scroll]');
+    var bar = document.querySelector('.bottom-nav');
+    var expanded = false;
+    var drag = null;
+    var suppressClick = false;
+
+    // Ceiling: the space above the bar, and never past the content area's top
+    // so the site header stays visible — same two-bound math as the original.
+    function availableHeight() {
+      if (!bar) return 0;
+      var barTop = bar.getBoundingClientRect().top;
+      var main = document.querySelector('.main-frame');
+      var contentTop = main ? main.getBoundingClientRect().top : 0;
+      var frame = barTop - TOP_GAP;
+      var content = barTop - Math.max(contentTop, 0);
+      return Math.max(0, Math.round(Math.min(frame, content)));
+    }
+
+    // What the sheet needs to show everything it currently has open.
+    //
+    // Sums the sections rather than reading scroller.scrollHeight: scrollHeight
+    // is floored at the element's own client height, so once the sheet had been
+    // sized tall it always reported at least that back, and a sheet could grow
+    // but never shrink again when a section closed.
+    function naturalHeight() {
+      if (!scroller || !grabber) return 0;
+      var total = 0;
+      for (var i = 0; i < scroller.children.length; i++) {
+        total += scroller.children[i].offsetHeight;
+      }
+      return Math.round(total + grabber.offsetHeight);
+    }
+
+    function restingHeight() {
+      var avail = availableHeight();
+      return Math.max(0, Math.min(naturalHeight(), Math.round(avail * COLLAPSED_FRACTION)));
+    }
+
+    function canExpand() {
+      return availableHeight() - restingHeight() > 24;
+    }
+
+    function applyHeight() {
+      if (!panel || !panel.classList.contains('open')) return;
+      var h = expanded && canExpand() ? availableHeight() : restingHeight();
+      panel.style.height = h + 'px';
+      if (grabber) grabber.setAttribute('aria-expanded', String(expanded && canExpand()));
+    }
+
+    if (grabber) {
+      grabber.addEventListener('pointerdown', function(e) {
+        if (!availableHeight()) return;
+        try { grabber.setPointerCapture(e.pointerId); } catch (err) {}
+        drag = { startY: e.clientY, startH: panel.getBoundingClientRect().height, moved: false };
+      });
+
+      grabber.addEventListener('pointermove', function(e) {
+        if (!drag) return;
+        var delta = drag.startY - e.clientY;
+        if (!drag.moved && Math.abs(delta) <= DRAG_SLOP_PX) return;
+        drag.moved = true;
+        // Follow the finger 1:1 — no easing lag while a drag is in flight.
+        panel.classList.add('dragging');
+        var h = Math.max(0, Math.min(availableHeight(), drag.startH + delta));
+        panel.style.height = h + 'px';
+      });
+
+      function endDrag(e) {
+        if (!drag) return;
+        var moved = drag.moved;
+        drag = null;
+        try { grabber.releasePointerCapture(e.pointerId); } catch (err) {}
+        panel.classList.remove('dragging');
+        if (!moved) return; // a tap — handled by click below
+        suppressClick = true;
+        var released = panel.getBoundingClientRect().height;
+        var resting = restingHeight();
+        if (released < resting * DISMISS_FRACTION) {
+          panel.style.height = '';
+          closeMenu();
+          return;
+        }
+        expanded = released > (resting + availableHeight()) / 2;
+        applyHeight();
+      }
+      grabber.addEventListener('pointerup', endDrag);
+      grabber.addEventListener('pointercancel', endDrag);
+
+      grabber.addEventListener('click', function() {
+        if (suppressClick) { suppressClick = false; return; }
+        if (!canExpand()) return;
+        expanded = !expanded;
+        applyHeight();
+      });
+    }
+
+    // The accordion changes how tall the content is, so a section opening or
+    // closing re-sizes a resting sheet. Left alone once the user has expanded
+    // it by hand — that's their choice, not ours to override.
+    //
+    // `toggle` fires the moment <details open> flips, but the section's fold
+    // animation (grid-template-rows 0fr↔1fr, ~250ms in Sidebar.astro) has not
+    // run yet, so the content is still its OLD height at that instant —
+    // measuring once here sized the sheet one step behind. Instead re-measure
+    // each frame for the length of the fold, so the sheet grows in step with
+    // the section rather than snapping afterwards.
+    // Driven by setTimeout, not requestAnimationFrame: rAF is fully paused
+    // while the tab is backgrounded, which left the loop running only its first
+    // (pre-fold, and therefore stale) measurement and sized the sheet one
+    // toggle behind. Sidebar.astro's fold animation hits the same hazard and
+    // backstops it the same way.
+    var foldTimer = 0;
+    var foldUntil = 0;
+    function trackFold(ms) {
+      window.clearTimeout(foldTimer);
+      foldUntil = Math.max(foldUntil, Date.now() + ms);
+      (function step() {
+        if (expanded || drag) return;
+        applyHeight();
+        if (Date.now() < foldUntil) foldTimer = window.setTimeout(step, 32);
+      })();
+      // Guaranteed final correction. Background tabs clamp setTimeout to ~1s,
+      // so the loop above can be starved of samples and land on a measurement
+      // taken mid-fold. This one-shot runs after the fold has certainly
+      // finished, so the resting height is right even when the loop was not.
+      window.setTimeout(function() {
+        if (!expanded && !drag) applyHeight();
+      }, ms + 120);
+    }
+    if (panel) {
+      // Two triggers, because opening and closing a section report differently.
+      // Opening flips <details open> up front, so `toggle` lands immediately.
+      // Closing keeps it open until the fold finishes, so `toggle` arrives
+      // ~250ms late — by which point the sheet would resize AFTER the section
+      // had already folded, which reads as a second, laggy animation. Watching
+      // from the summary click instead lets the sheet shrink in step with it.
+      panel.addEventListener('toggle', function() { trackFold(320); }, true);
+      panel.addEventListener('click', function(e) {
+        if (e.target.closest && e.target.closest('.bn-group-row')) trackFold(600);
+      });
+    }
+    window.addEventListener('resize', function() { if (!drag) applyHeight(); });
 
     var searchBtn = document.querySelector('[data-bottom-nav-search]');
     if (searchBtn) {
