@@ -464,20 +464,38 @@ a:not([class]):hover {
    ============================================================ */
 .pagination-links {
   display: flex !important;
+  /* Wrap when the pair can't share a row. Without this, a long page title
+     (e.g. "Explore your fleet in the Observatory") made the Next card wider
+     than the viewport and scrolled the whole page sideways on phones. */
+  flex-wrap: wrap !important;
   justify-content: space-between !important;
   gap: 0.75rem !important;
 }
 
 .pagination-links a {
   display: inline-flex !important;
-  flex: 0 0 auto !important;
+  /* Sized to content, but allowed to shrink — `0 0 auto` pinned each card at
+     its max-content width, so `min-width: 0` below could never take effect. */
+  flex: 0 1 auto !important;
   width: auto !important;
+  max-width: 100% !important;
   border-color: var(--sl-color-hairline) !important;
   border-radius: 0.375rem !important;
   padding: 0.4rem 0.75rem !important;
   box-shadow: none !important;
   min-width: 0 !important;
   transition: border-color 150ms ease, background-color 150ms ease;
+}
+
+/* Keep Next on the right even once it has wrapped onto its own row, and keep a
+   LONE Next (only /getting-started/introduction/) at the right edge too —
+   forward is always rightward, so the control doesn't jump left-then-right
+   across a reader's first two clicks. Matches Starlight's stock Pagination,
+   which end-justifies a next-only card's content. Logical property, so RTL
+   flips correctly. This rule also produces the left/right split in the wrapped
+   two-card state — don't remove it while adjusting anything else here. */
+.pagination-links a[rel='next'] {
+  margin-inline-start: auto !important;
 }
 
 .pagination-links a:hover {
@@ -488,6 +506,8 @@ a:not([class]):hover {
 .pagination-links .link-title {
   font-size: 0.75rem !important;
   font-weight: 600;
+  /* Last-resort break so a single very long word can't reintroduce overflow. */
+  overflow-wrap: anywhere;
 }
 
 .pagination-links span {
@@ -933,71 +953,11 @@ header.header {
 }
 
 /* ============================================================
-   SIDEBAR GROUP ICONS — SVG icons next to each section header
+   SIDEBAR GROUP ICONS — generated from NAV_ICONS in src/nav.mjs
+   into src/styles/nav-icons.generated.css, which astro.config.mjs
+   loads after this file. Do not hand-write mask rules here: the
+   artwork has exactly one source now. See scripts/generate-nav-icons.mjs.
    ============================================================ */
-sl-sidebar-state-persist > ul > li > details > summary .group-label .large::before {
-  content: '';
-  display: inline-block;
-  width: 20px;
-  height: 20px;
-  margin-inline-end: 0.75rem;
-  vertical-align: -4px;
-  background-color: currentColor;
-  -webkit-mask-size: contain;
-  -webkit-mask-repeat: no-repeat;
-  -webkit-mask-position: center;
-  mask-size: contain;
-  mask-repeat: no-repeat;
-  mask-position: center;
-}
-
-/* 1. Getting Started — book */
-sl-sidebar-state-persist > ul > li:nth-child(1) > details > summary .group-label .large::before {
-  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 19.5A2.5 2.5 0 0 1 6.5 17H20'/%3E%3Cpath d='M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z'/%3E%3C/svg%3E");
-  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 19.5A2.5 2.5 0 0 1 6.5 17H20'/%3E%3Cpath d='M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z'/%3E%3C/svg%3E");
-}
-
-/* 2. Concepts — puzzle */
-sl-sidebar-state-persist > ul > li:nth-child(2) > details > summary .group-label .large::before {
-  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M19.439 7.85c-.049.322.059.648.289.878l1.568 1.568c.47.47.706 1.087.706 1.704s-.235 1.233-.706 1.704l-1.611 1.611a.98.98 0 0 1-.837.276c-.47-.07-.802-.48-.968-.925a2.501 2.501 0 1 0-3.214 3.214c.446.166.855.497.925.968a.979.979 0 0 1-.276.837l-1.61 1.61a2.404 2.404 0 0 1-1.705.707 2.402 2.402 0 0 1-1.704-.706l-1.568-1.568a1.026 1.026 0 0 0-.877-.29c-.493.074-.84.504-1.02.968a2.5 2.5 0 1 1-3.237-3.237c.464-.18.894-.527.967-1.02a1.026 1.026 0 0 0-.289-.877l-1.568-1.568A2.402 2.402 0 0 1 1.998 12c0-.617.236-1.234.706-1.704L4.23 8.77c.24-.24.581-.353.917-.303.515.077.877.528 1.073 1.01a2.5 2.5 0 1 0 3.259-3.259c-.482-.196-.933-.558-1.01-1.073-.05-.336.062-.676.303-.917l1.525-1.525A2.402 2.402 0 0 1 12 1.998c.617 0 1.234.236 1.704.706l1.568 1.568c.23.23.556.338.877.29.493-.074.84-.504 1.02-.968a2.5 2.5 0 1 1 3.237 3.237c-.464.18-.894.527-.967 1.02Z'/%3E%3C/svg%3E");
-  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M19.439 7.85c-.049.322.059.648.289.878l1.568 1.568c.47.47.706 1.087.706 1.704s-.235 1.233-.706 1.704l-1.611 1.611a.98.98 0 0 1-.837.276c-.47-.07-.802-.48-.968-.925a2.501 2.501 0 1 0-3.214 3.214c.446.166.855.497.925.968a.979.979 0 0 1-.276.837l-1.61 1.61a2.404 2.404 0 0 1-1.705.707 2.402 2.402 0 0 1-1.704-.706l-1.568-1.568a1.026 1.026 0 0 0-.877-.29c-.493.074-.84.504-1.02.968a2.5 2.5 0 1 1-3.237-3.237c.464-.18.894-.527.967-1.02a1.026 1.026 0 0 0-.289-.877l-1.568-1.568A2.402 2.402 0 0 1 1.998 12c0-.617.236-1.234.706-1.704L4.23 8.77c.24-.24.581-.353.917-.303.515.077.877.528 1.073 1.01a2.5 2.5 0 1 0 3.259-3.259c-.482-.196-.933-.558-1.01-1.073-.05-.336.062-.676.303-.917l1.525-1.525A2.402 2.402 0 0 1 12 1.998c.617 0 1.234.236 1.704.706l1.568 1.568c.23.23.556.338.877.29.493-.074.84-.504 1.02-.968a2.5 2.5 0 1 1 3.237 3.237c-.464.18-.894.527-.967 1.02Z'/%3E%3C/svg%3E");
-}
-
-/* 3. Automation — zap */
-sl-sidebar-state-persist > ul > li:nth-child(3) > details > summary .group-label .large::before {
-  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolygon points='13 2 3 14 12 14 11 22 21 10 12 10 13 2'/%3E%3C/svg%3E");
-  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolygon points='13 2 3 14 12 14 11 22 21 10 12 10 13 2'/%3E%3C/svg%3E");
-}
-
-/* 4. Guides — map */
-sl-sidebar-state-persist > ul > li:nth-child(4) > details > summary .group-label .large::before {
-  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolygon points='1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6'/%3E%3Cline x1='8' y1='2' x2='8' y2='18'/%3E%3Cline x1='16' y1='6' x2='16' y2='22'/%3E%3C/svg%3E");
-  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolygon points='1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6'/%3E%3Cline x1='8' y1='2' x2='8' y2='18'/%3E%3Cline x1='16' y1='6' x2='16' y2='22'/%3E%3C/svg%3E");
-}
-
-/* 5. CLI Reference — terminal */
-sl-sidebar-state-persist > ul > li:nth-child(5) > details > summary .group-label .large::before {
-  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='4 17 10 11 4 5'/%3E%3Cline x1='12' y1='19' x2='20' y2='19'/%3E%3C/svg%3E");
-  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='4 17 10 11 4 5'/%3E%3Cline x1='12' y1='19' x2='20' y2='19'/%3E%3C/svg%3E");
-}
-
-/* 6. Self-Hosting — server */
-sl-sidebar-state-persist > ul > li:nth-child(6) > details > summary .group-label .large::before {
-  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='2' y='2' width='20' height='8' rx='2' ry='2'/%3E%3Crect x='2' y='14' width='20' height='8' rx='2' ry='2'/%3E%3Cline x1='6' y1='6' x2='6.01' y2='6'/%3E%3Cline x1='6' y1='18' x2='6.01' y2='18'/%3E%3C/svg%3E");
-  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='2' y='2' width='20' height='8' rx='2' ry='2'/%3E%3Crect x='2' y='14' width='20' height='8' rx='2' ry='2'/%3E%3Cline x1='6' y1='6' x2='6.01' y2='6'/%3E%3Cline x1='6' y1='18' x2='6.01' y2='18'/%3E%3C/svg%3E");
-}
-
-/* 7. Reference — file-text */
-sl-sidebar-state-persist > ul > li:nth-child(7) > details > summary .group-label .large::before {
-  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z'/%3E%3Cpolyline points='14 2 14 8 20 8'/%3E%3Cline x1='16' y1='13' x2='8' y2='13'/%3E%3Cline x1='16' y1='17' x2='8' y2='17'/%3E%3Cpolyline points='10 9 9 9 8 9'/%3E%3C/svg%3E");
-  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z'/%3E%3Cpolyline points='14 2 14 8 20 8'/%3E%3Cline x1='16' y1='13' x2='8' y2='13'/%3E%3Cline x1='16' y1='17' x2='8' y2='17'/%3E%3Cpolyline points='10 9 9 9 8 9'/%3E%3C/svg%3E");
-}
-
-/* 8. Links — external-link */
-sl-sidebar-state-persist > ul > li:nth-child(8) > details > summary .group-label .large::before {
-  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6'/%3E%3Cpolyline points='15 3 21 3 21 9'/%3E%3Cline x1='10' y1='14' x2='21' y2='3'/%3E%3C/svg%3E");
-  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6'/%3E%3Cpolyline points='15 3 21 3 21 9'/%3E%3Cline x1='10' y1='14' x2='21' y2='3'/%3E%3C/svg%3E");
-}
 
 /* ============================================================
    BOTTOM NAV — mobile bottom navigation bar (portal-style)
@@ -1254,6 +1214,102 @@ html.theme-transition *::after {
   width: 20px;
   height: 20px;
   flex-shrink: 0;
+}
+
+/* ── Mobile menu accordion ──────────────────────────────────────────────
+   Sections expand in place rather than sending you to a section landing page
+   first. Built on <details>/<summary> so keyboard and no-JS both work; the
+   sidebar's grid-template-rows fold animation enhances it when JS is on.
+
+   The portal's shared BottomNav (packages/ui/.../bottom-nav.tsx) keeps its
+   menu flat because it has ~8 entries — this tree has 58, so the sections
+   collapse. Everything else follows that component's vocabulary: accent-blue
+   active with no fill or border, trailing chips flush-right. */
+
+.bn-group-row {
+  cursor: pointer;
+  list-style: none;
+  user-select: none;
+}
+
+/* Suppress the native disclosure triangle — the chevron replaces it. */
+.bn-group-row::-webkit-details-marker,
+.bn-group-row::marker {
+  display: none;
+  content: '';
+}
+
+.bn-group-label {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.bn-chevron {
+  width: 14px !important;
+  height: 14px !important;
+  color: var(--sl-color-gray-3);
+  transition: transform 200ms ease;
+}
+
+.bn-group[open] > .bn-group-row .bn-chevron {
+  transform: rotate(90deg);
+}
+
+.bn-sublist {
+  list-style: none;
+  margin: 0;
+  /* No padding: the collapse animation sizes a `0fr` grid track, and `min-height:
+     0` on the child zeroes its content contribution but NOT its padding — 6px of
+     bottom padding here floored the closed track at 6px instead of 0. The rows'
+     own vertical padding already separates the list from the next section. */
+  padding: 0;
+}
+
+.bn-subitem {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  /* Indent aligns with the group label, i.e. past the 20px icon + 0.75rem gap.
+     Vertical padding is set for a ~40px row: these are the primary navigation
+     targets on mobile, and the denser 34px row was an easy one to fat-finger. */
+  padding: 0.625rem 1.25rem 0.625rem 3.25rem;
+  min-height: 2.5rem;
+  font-size: 0.8125rem;
+  color: var(--sl-color-gray-3);
+  text-decoration: none;
+  transition: color 100ms ease, background-color 100ms ease;
+}
+
+.bn-subitem:hover {
+  color: var(--sl-color-text);
+  text-decoration: none;
+}
+
+/* Active = text blue only, matching the portal's mobile rows. */
+.bn-subitem.current {
+  color: #005fb8;
+  font-weight: 600;
+}
+
+:root[data-theme='dark'] .bn-subitem.current {
+  color: #569cd6;
+}
+
+.bn-subitem-label {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+/* Chip sits flush-right like the shared component's `ml-auto` badge. */
+.bn-badge {
+  flex-shrink: 0;
+  margin-inline-start: auto;
+}
+
+.bn-subitem:focus-visible,
+.bn-group-row:focus-visible {
+  outline: 2px solid var(--docs-focus-ring, #005fb8);
+  outline-offset: -2px;
 }
 
 /* "Barely there" Beta badge — mirrors the orchestrator/portal beta label:

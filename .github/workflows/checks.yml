@@ -1,0 +1,41 @@
+name: Checks
+
+# Drift checks run on pull requests so problems are caught at review time,
+# not at deploy time. Before this workflow existed nothing ran the check:*
+# scripts at all — which is how the nav drifted far enough that the entire
+# Automation section was missing from search and the mobile menu.
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  drift:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # Every page must be registered in src/nav.mjs — the single source of
+      # truth behind the sidebar, header, mobile menu and search index.
+      - name: Nav drift
+        run: pnpm check:nav
+
+      - name: Brand token drift
+        run: pnpm check:tokens
