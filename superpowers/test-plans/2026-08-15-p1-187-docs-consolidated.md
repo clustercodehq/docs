@@ -1,5 +1,6 @@
 ---
 branch: docs/p1-187-consolidated
+rebased_onto: 7dae2fa  # main after #23/#24/#25 (nav single-source refactor)
 pr: [21, 22]
 spec: core:docs/superpowers/specs/2026-08-13-P1.187-consolidated-handoff.md
 driver: playwright
@@ -64,3 +65,28 @@ Static docs site — no worker, no DB, no auth. Boot with `pnpm dev --port 4321`
 
 - Portal/marketing copy (`/how-it-works`, homepage cards, `website-copy.md`) — lives in `clustercodehq/core`, not this repo, and is not started.
 - The `CLAUDE.md` vs `CLAUDE.local.md` docs inaccuracy — known, deliberately outside the nine corrections.
+
+## 5. Post-rebase: nav ported to `src/nav.mjs`  [SANITY]
+
+Rebasing onto main after **#23 (nav: single source of truth)** conflicted: the sidebar no
+longer lives inline in `astro.config.mjs` (now `toStarlightSidebar()`), it lives in
+`src/nav.mjs` and drives **four** surfaces. Resolution took main's `astro.config.mjs` and
+ported all three nav changes into `src/nav.mjs`.
+
+**This widened the blast radius.** Pre-rebase the sidebar edit touched only the sidebar;
+now the same entries feed the header, the mobile nested menu and the Ctrl+K palette, so
+each was re-verified rather than assumed.
+
+| # | Test | Expected | Result |
+|---|------|----------|--------|
+| 5.1 | `pnpm check:nav` | Nav in sync — all pages present, no dead links, group icons current. Would fail if `launch-vs-run` were missing from nav | ✅ pass — 59 pages |
+| 5.2 | `pnpm check` (all drift checks) | nav + brand tokens + plan limits all pass | ✅ pass |
+| 5.3 | `pnpm build` | 62 pages, Complete | ✅ pass |
+| 5.4 | Sidebar surface `[SANITY]` | Getting Started reordered w/ Agent sign-in; "Launch or Run?" after DevBoxes; Guides leads with Run on demand; Agent sign-in gone from Guides | ✅ pass |
+| 5.5 | Ctrl+K palette surface `[SANITY]` | Searching "launch" returns **Launch or Run? — Who starts the agent, and when** under Concepts | ✅ pass |
+| 5.6 | Mobile nested menu surface `[SANITY]` | At 390×844, menu → Concepts expands with "Launch or Run?" highlighted after DevBoxes; Getting Started expands in the new order | ✅ pass (screenshots 08, 09) |
+| 5.7 | Header surface | Group set unchanged (Concepts / Automation / Guides / CLI) — item-level edits only | ✅ pass |
+
+**Regression note for future agents:** nav changes in this repo must go in `src/nav.mjs`.
+Editing `astro.config.mjs` or a component directly puts a page on some surfaces but not
+others — `pnpm check:nav` is the guard and runs as part of `pnpm build` and in CI.
