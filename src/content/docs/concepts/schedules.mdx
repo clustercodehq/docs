@@ -95,7 +95,9 @@ From the **Schedules** page, **+ Schedule** opens the form:
 
 <Steps>
 
-1. **Prompt** — what the agent should do each run.
+1. **Prompt** — what the agent should do each run. Type `/` to insert a
+   [Shortcut](/concepts/shortcuts); a blank left unfilled is refused at save,
+   because a schedule would otherwise send it to the agent on every tick.
 
 2. **Cadence** — a cron expression (e.g. `0 6 * * 1-5` for weekdays at 6am), or
    a preset (Hourly, Daily, Weekly). A live preview shows the next run time.

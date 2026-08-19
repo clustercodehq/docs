@@ -68,6 +68,10 @@ export const nav = [
       { label: 'Launch or Run?', slug: 'concepts/launch-vs-run', desc: 'Who starts the agent, and when' },
       { label: 'Windows Containers', slug: 'concepts/windows-containers', desc: 'Real Windows VM DevBoxes' },
       { label: 'Projects', slug: 'concepts/projects', desc: 'Group work behind one dashboard' },
+      // Directly after Projects because a shortcut's scope is "yours / your
+      // team's / one project's" — the reader meets the scope before the thing
+      // that is scoped to it.
+      { label: 'Shortcuts', slug: 'concepts/shortcuts', desc: 'Prompts you save once and reuse' },
       { label: 'Nucleus', slug: 'concepts/nucleus', desc: 'The in-platform AI assistant' },
       { label: 'Observatory', slug: 'concepts/observatory', desc: 'Galaxy view of your fleet' },
       { label: 'Tickets', slug: 'concepts/tickets', desc: 'Work items from issue trackers' },
