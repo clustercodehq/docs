@@ -1,0 +1,202 @@
+---
+title: Shortcuts
+description: A Shortcut is a prompt you save once and reuse — type / in any instruction field, fill in its blanks, and go.
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+A **Shortcut** is a prompt you save once and reuse. Instead of retyping "review
+this branch, check for bugs, open a PR with the suggestions" every week, you save
+it as a shortcut and pull it back with two keystrokes wherever you instruct an
+agent — a [Run](/concepts/runs), a [Schedule](/concepts/schedules), a
+[Loop](/concepts/loops) or a [Prototype](/concepts/prototyping).
+
+A shortcut carries **the prompt and how it is meant to run**, and nothing else.
+It never pins a worker, an image or a timeout — those stay with the run you start
+from it, so there is exactly one place a run is configured.
+
+<Aside type="tip">
+  Your shortcuts live under **Utility → Shortcuts** in the orchestrator sidebar
+  (between Docs and Settings). You do not have to go there to use one — typing
+  `/` in any instruction field reaches the same list.
+</Aside>
+
+## Insert one with `/`
+
+Type `/` at the start of a word in an instruction field and a picker opens,
+listing every shortcut you can see in three labelled groups — **Mine**, **Shared
+by your team**, and **Built-in**.
+
+<Steps>
+
+1. **Type `/`** — the picker opens. Keep typing to filter: `/code` narrows to
+   *Code review*, and a group with nothing left takes its heading with it.
+
+2. **Arrow up and down** to move through the list. Focus stays in the box, so you
+   never lose your place in the text.
+
+3. **Enter inserts** the prompt — the `/code` you typed is consumed, and the
+   template lands in the field. Enter picks the shortcut; it does **not** start
+   the run.
+
+4. **Escape dismisses** the picker and leaves your text alone.
+
+</Steps>
+
+The shortcut also brings its **run mode** with it: picking *Code review*, which
+is meant to run unattended, pre-selects **Autonomous**. That is a default, not a
+lock — the mode control stays editable.
+
+<Aside type="note">
+  **"Start from a template"**, offered on the Run composer and the Schedule
+  panel, is the same list in card form — the same Mine / Shared / Built-in
+  shortcuts, each card showing the blanks it will ask you for. Picking a card and
+  picking the row from `/` do exactly the same thing.
+</Aside>
+
+## Blanks
+
+A prompt is more reusable with holes in it. Wrap a word in braces — `{issueId}`,
+`{branchName}`, `{releaseName}` — and it becomes a **blank** you fill in at the
+moment you use the shortcut:
+
+```text
+Work on GitHub issue #{issueId}. Implement the requested changes.
+If successful, open a draft PR.
+```
+
+Blank names are plain identifiers: a letter, then letters and digits. Anything
+else — spaces, punctuation, JSON braces like `Return {"ok": true}` — is left as
+literal text, so an instruction full of braces does not become an instruction
+full of holes.
+
+### Walking them with Tab
+
+The moment a template lands, its **first blank is already selected** — type and
+you replace it, no clicking required.
+
+| Key | What it does |
+|---|---|
+| **Tab** | Jump to the next blank |
+| **Shift + Tab** | Jump back to the previous one |
+| **Tab** at the last blank | Release the keyboard — focus moves on to the next control, rather than looping back to the first blank |
+| **Esc** | Leave the walk. Your text is untouched, and the next Tab moves focus as usual |
+
+A template with no blanks never claims Tab at all.
+
+### A blank cannot reach the agent
+
+If you try to start work while a blank is still unfilled, the submit is
+**refused** and the message names the blank:
+
+> Fill in `{branchName}` before starting — the agent would receive the blank
+> exactly as written. To keep one literal, write it as `{ name }` or `${name}`.
+
+The same guard sits on Runs, Schedules, Prototypes and Loops. On a Schedule it
+matters most: a schedule fires on a cron, so an unfilled blank would reach the
+agent on *every* tick.
+
+<Aside type="caution">
+  The check cannot tell where a brace came from — text is freely edited after a
+  template lands, so `{Component}` you typed yourself is caught too. Both escapes
+  named in the message work: put spaces inside the braces (`{ name }`), or use
+  the `${name}` form.
+</Aside>
+
+### `${VAR}` stays literal
+
+`${API_KEY}` is deliberately **not** a blank. Shell and template syntax survives
+a shortcut intact, so a prompt can tell an agent to `Run the suite with
+${API_KEY} set` without you being asked to fill in `API_KEY` first.
+
+## Where you can use one
+
+| Surface | Field |
+|---|---|
+| [Runs](/concepts/runs) | The composer's instructions box |
+| [Schedules](/concepts/schedules) | Instructions |
+| [Prototypes](/concepts/prototyping) | Prompt |
+| [Loops](/concepts/loops) | Goal, an Agent-check gate's rubric, and the goal when you steer or reopen a loop |
+
+Every one of those is a full editor with an **expand** control beside it — a
+long instruction can be written in a centred panel instead of a 200px box, and
+blanks stay highlighted while you work.
+
+## Saving your own
+
+From **Shortcuts**, **New shortcut** opens the editor:
+
+<Steps>
+
+1. **Name** — required, and unique among *your* shortcuts in the same scope. A
+   teammate having a "Fix the flaky test" of their own is fine.
+
+2. **Description** — one line, shown beside the name in the picker.
+
+3. **Prompt** — the text itself, blanks included. As you type, the editor lists
+   the blanks it found under **You will be asked to fill in**, so you can see at
+   a glance whether `${API_KEY}` was read as literal text (it was) and
+   `{branchName}` as a blank (it was).
+
+4. **Scope** — **Everywhere (tenant-wide)**, or one [project](/concepts/projects).
+   Scope is **fixed at creation**: editing a shortcut later cannot move it.
+
+5. **Run autonomously** — the mode this prompt is meant to run in, pre-selected
+   whenever the shortcut is used.
+
+6. **Share with your team** — publish it to everyone in the workspace.
+
+</Steps>
+
+Each row on the Shortcuts page carries **Run** (which opens the Run composer
+seeded with it), plus **Edit**, **Share** / **Unshare** and **Delete** on the
+rows you may change.
+
+## Who can see what
+
+Visibility is two independent questions — who owns it, and what it is scoped to.
+
+| Group | What it holds | What you can do |
+|---|---|---|
+| **Mine** | Yours, shared or not | Edit, delete; Share if your role allows it |
+| **Shared by your team** | Published by someone else in the workspace | **Copy to mine** |
+| **Built-in** | Shipped with ClusterCode | **Copy to mine** |
+
+You always see your own shortcuts. On top of that you see whatever your team has
+published. Scope then narrows the picker: with **no project selected** you are
+offered everything you can see, and **selecting a project** narrows the list to
+that project's shortcuts plus the tenant-wide ones — so a project's prompts do
+not clutter unrelated work.
+
+**Sharing is a team-wide act** and needs the owner or admin role; creating and
+using shortcuts needs no special role, because a personal shortcut is personal
+scratch space. Shortcuts are not plan-gated and there is no limit on how many you
+keep.
+
+Built-ins are code, not rows — they cannot be edited or deleted. **Copy to mine**
+makes an ordinary personal shortcut out of one, pre-filled and named
+"… (copy)", which you can then change freely.
+
+## The built-ins
+
+Every workspace starts with six:
+
+| Shortcut | Blanks | Mode |
+|---|---|---|
+| **Work on issue** — implement a GitHub issue and open a PR | `{issueId}` | Autonomous |
+| **Code review** — review a branch and suggest improvements | `{branchName}` | Autonomous |
+| **Investigate bug** — find the root cause and propose a fix | `{issueId}` | Interactive |
+| **Refactor** — improve a module, keeping tests green | `{modulePath}` | Autonomous |
+| **Sprint Sweep** — check for ready tickets and implement each one | `{repoUrl}` `{label}` | Autonomous |
+| **Bug Triage** — find bugs and attempt fixes | `{repoUrl}` `{label}` | Autonomous |
+
+*Investigate bug* is interactive on purpose: its output is understanding, and the
+useful version of it asks a question partway through. The rest end in a draft PR
+— a defined finish line, with no reason to stop and ask.
+
+## Related
+
+- [Runs](/concepts/runs) — the on-demand jobs you most often start from a shortcut
+- [Schedules](/concepts/schedules) — where an unfilled blank would fire every tick
+- [Projects](/concepts/projects) — what a project-scoped shortcut is scoped to
+- [Automate recurring work](/guides/recurring-work) — recipes the built-in sweeps came from
