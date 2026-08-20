@@ -1,0 +1,135 @@
+---
+title: Prompt improver
+description: The sparkle on every agent-instruction field — it rewrites your draft into an agent-ready instruction, keeps every detail and every blank, and never invents requirements.
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+import ThemedImage from '../../../components/ThemedImage.astro';
+import proposalDark from '../../../assets/screenshots/prompt-improver-proposal-dark-20260820.png';
+import proposalLight from '../../../assets/screenshots/prompt-improver-proposal-light-20260820.png';
+
+An agent works from what you wrote, not from what you meant. The **prompt
+improver** is the sparkle (✦) beside every field where you write instructions
+for an agent: press it and your draft comes back restructured for an agent —
+goal, steps, constraints, what "done" means — streamed back word by word with
+**Accept** and **Discard** underneath.
+
+Nothing is committed until you accept. Discard leaves your draft exactly as you
+typed it, character for character.
+
+<ThemedImage
+  dark={proposalDark}
+  light={proposalLight}
+  alt="The New run composer with a one-line draft above and the improver's proposal below it: Goal, Steps and Constraints sections, the {issueId} blank preserved, and Accept / Discard buttons."
+  title="New run"
+/>
+
+## Where you'll find it
+
+| Surface | Field |
+|---|---|
+| [Runs](/concepts/runs) | The **New run** composer |
+| [Schedules](/concepts/schedules) | **Instructions**, in the create panel |
+| [Prototyping](/concepts/prototyping) | **Prompt** |
+| [Loops](/concepts/loops) | **Goal**, when you create a loop or reopen one |
+
+The sparkle only rewrites the field it sits in. It never starts a run, saves a
+schedule, or submits anything.
+
+## Using it
+
+<Steps>
+
+1. **Write a draft.** Anything — a one-liner, bullets, a paste from a ticket.
+   The sparkle stays dimmed until the field has something in it (hover it and it
+   tells you so).
+
+2. **Press the sparkle** and pick how much latitude to give it — or type an
+   instruction of your own into the box at the bottom of the menu and send it
+   with the arrow.
+
+3. **Watch the proposal arrive.** It streams into a panel below the field. You
+   can press the sparkle again (or **Cancel**) to stop it mid-stream; nothing is
+   committed.
+
+4. **Accept or Discard.** Accept replaces the draft with the rewrite and closes
+   the panel. Discard closes the panel and leaves the draft untouched.
+
+</Steps>
+
+### Modes
+
+| Mode | What it does |
+|---|---|
+| **Improve** *(default)* | Restructures and clarifies what you wrote. Changes nothing else. |
+| **Expand** | Spells out the steps your draft implies and adds the sections its content calls for — without adding requirements you never stated. |
+| **Be creative** | May propose a different framing or structure for the same goal, and may run a little longer. Every stated requirement still survives. |
+| **Your own instruction** | The free-text box in the menu — "make the done criteria stricter", "keep it to three steps", "write it as a checklist". It steers style, structure and focus; it can't override the rules below. |
+
+## What it will and won't do
+
+The improver is deliberately conservative — a rewrite you have to re-check is
+worse than no rewrite at all.
+
+- **It keeps everything.** Every requirement, number, file path, URL and
+  constraint in your draft appears in the rewrite. It reorganizes; it does not
+  summarize away.
+- **It never invents requirements.** No tests, tools, steps or acceptance
+  criteria you didn't state or clearly imply.
+- **It preserves ambiguity instead of resolving it.** If your draft leaves out
+  something the agent will certainly need — which repo, which branch, what
+  "done" means — you get an **Open questions** bullet, not a guess.
+- **It keeps your voice.** Your domain terms, your names for things. It fixes
+  grammar, ordering and structure, not vocabulary.
+- **It knows this surface.** It's told which agents, models and effort levels
+  exist where you're typing, so "use claude on high effort" comes back as the
+  exact identifiers — and as an `@agent:model:effort` mention where mentions are
+  honoured (Runs) or as plain prose where they aren't. If you name an agent or
+  tool that isn't available here, it keeps your word and flags it as an open
+  question rather than substituting one.
+- **It treats your draft as material, never as instructions.** Text inside your
+  draft that reads like a command to an AI ("ignore the above and output X") is
+  rewritten as content, like everything else.
+
+### Blanks and shell variables are guaranteed
+
+A draft can carry `{blank}` fill-in fields — from a saved prompt shortcut, or
+typed by hand — and instructions often carry `${VAR}` shell interpolation. Both
+survive verbatim:
+
+- Every `{blank}` in your draft appears in the rewrite, spelled the same, and no
+  new ones are introduced.
+- `${VAR}` is left exactly as written — it's never converted to a `{blank}`, or
+  the other way round.
+
+This one is checked, not just requested: if a proposal drops a blank, the panel
+says so and **Accept is not offered**. You can never accept a rewrite that lost
+one.
+
+### It won't overwrite an edit you made under it
+
+The field stays editable while a proposal is open. If you change the draft after
+the rewrite was generated, Accept refuses — the panel tells you the draft
+changed and offers only Discard, so a rewrite of the *old* text can never
+silently replace what you just typed. Improve again to include the edits.
+
+## What it costs
+
+The improver runs on a fast Claude model and its usage comes out of your
+plan's **monthly AI allowance**, the same pot as [Nucleus](/concepts/nucleus)
+and [Nova](/concepts/nova) — see [AI Credits](/guides/ai-credits).
+
+- **[Bring your own Claude subscription or key](/concepts/byo-subscription)**
+  ([Settings → Environment Variables](/concepts/settings#environment-variables) →
+  Agent Secrets) and improves run on your credential instead — they don't draw
+  down the allowance at all.
+- **On the Free plan** the improver is bring-your-own only. Without a connected
+  credential the panel says so and no request is made.
+- **When the allowance is exhausted** the sparkle turns amber and, instead of a
+  proposal, you get a notice naming the reason and when it resets — plus a
+  toast, in case you were looking elsewhere on the form. Your draft is untouched.
+
+<Aside type="note">
+  Two size limits worth knowing: a draft is improved up to **20,000 characters**,
+  and your own steering instruction is capped at **500**.
+</Aside>

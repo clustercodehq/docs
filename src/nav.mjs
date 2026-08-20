@@ -73,6 +73,7 @@ export const nav = [
       // that is scoped to it.
       { label: 'Shortcuts', slug: 'concepts/shortcuts', desc: 'Prompts you save once and reuse' },
       { label: 'Nucleus', slug: 'concepts/nucleus', desc: 'The in-platform AI assistant' },
+      { label: 'Prompt improver', slug: 'concepts/prompt-improver', desc: 'Rewrite a draft into an agent-ready instruction' },
       { label: 'Observatory', slug: 'concepts/observatory', desc: 'Galaxy view of your fleet' },
       { label: 'Tickets', slug: 'concepts/tickets', desc: 'Work items from issue trackers' },
       { label: 'Runtime Catalog', slug: 'concepts/runtime-catalog', desc: "What's inside a DevBox" },
