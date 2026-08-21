@@ -1,0 +1,124 @@
+---
+title: Create a Workflow
+description: Draw your first workflow graph — a run, a decision that routes on the result, a bounded loop-back for the failure path, and a human approval before anything ships.
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+This guide walks through drawing your first [Workflow](/concepts/workflows) — a
+graph of agent work with explicit, labelled branches — and firing it.
+
+<Aside type="note" title="Beta">Workflows is in beta. It's available on every
+plan; the per-tier cap is on concurrently active workflow *runs*, not on how many
+workflows you save.</Aside>
+
+**Prerequisites:** any plan, a connected [worker](/concepts/workers) or
+[cloud worker](/concepts/cloud-workers), and a repository for the workflow to
+work on.
+
+The graph you'll end up with: do the work, check whether it passed, loop back to
+fix it if it didn't, and ask a human before shipping.
+
+<Steps>
+
+1. **Open Workflows and click "+ Workflow".**
+
+   Workflows sits in the sidebar under Build & run, beside Prototypes. The
+   create button opens a blank canvas with a node palette on the left and the
+   workflow's settings in a panel on the right.
+
+2. **Add an Agent Run node and give it a prompt.**
+
+   Open the node palette and pick **Run**. Write what this node should do — the
+   same kind of prompt you'd give a normal agent run, because that is exactly
+   what it becomes. Pick the engine and model from the catalogue, then **Add
+   node**.
+
+   The first node you add is the **entry node**, marked `▶`. That is where every
+   run of this workflow starts.
+
+3. **Add a Decision and connect the run into it.**
+
+   Add a **Decision** node. Leave its evaluator on **Status** — it will route on
+   the run node's own result.
+
+   Hover the run node and drag from any of its four connection points onto the
+   decision. Now open the decision again: its **routable results** have filled
+   in with the vocabulary a run node can actually produce — `completed`,
+   `failed`, `skipped`, `stopped`. Before it was connected it had nothing to
+   offer, because a status decision reads its predecessor.
+
+4. **Label the branches.**
+
+   Add two more Run nodes: one for the success path (call it `ship`) and one for
+   the failure path (call it `fix`). Drag a connection from the decision to
+   each.
+
+   Each connection opens a **Connection** panel asking for its branch label, and
+   offers the vocabulary as one-click chips. Pick `completed` for the edge into
+   `ship` and `failed` for the edge into `fix`.
+
+   Notice that the decision let you draw *two* outgoing connections. Try the
+   same from the run node and you'll find its points dimmed — work nodes take
+   exactly one exit, and routing nodes are how a graph forks.
+
+5. **Loop the fix back, with a cap.**
+
+   Drag a connection from `fix` back to the decision. Because it points
+   backwards, it's drawn dashed and carries **`⟲ max N`** — a bounded loop-back.
+
+   Set the cap to something small, like 3. Now the workflow will re-check after
+   each fix attempt, and give up after three rather than cycling forever.
+
+6. **Ask a human before shipping.**
+
+   Add a **Human Approval** node between the decision and `ship`. Write the
+   question you want to be asked — "Ready to open the PR?" — and give it two
+   branches, `ship` and `hold`, wired to the `ship` node and to nothing
+   respectively.
+
+   Optionally set an **answer window** and a **timeout branch**: if nobody
+   answers in time, the run takes that branch instead of waiting forever. Leave
+   the timeout branch empty and an unanswered approval fails the run.
+
+7. **Fill in the settings and save.**
+
+   Open **Workflow details**: name the workflow, pick the **target** (the worker
+   or cloud worker it runs on) and the **DevBox image**, and optionally point it
+   at a repository and a project. Set the overall timeout — it covers the whole
+   run, across every node.
+
+   Click **Save workflow**. If the graph breaks a rule — a Command decision that
+   could run before any workspace exists, a node nothing can reach — the save is
+   refused and tells you which rule and which node.
+
+8. **Run it, and watch.**
+
+   Press **▶ Run now**. The definition page grows a live banner; follow it into
+   the run trace and watch the graph colour node by node as the run walks it.
+
+   When it reaches your approval node the run status becomes **Awaiting input**
+   and stops. Answer it, and the run takes the branch matching your answer.
+
+9. **Drill into any node.**
+
+   Every work node in the trace links to the entity it produced — the agent
+   run's full transcript, the loop's iterations, the prototype's contenders. A
+   workflow doesn't hide what it did; it's the same pages you'd get if you had
+   started each piece by hand.
+
+</Steps>
+
+## What you get
+
+Run it again and answer the approval differently, and you get a genuinely
+different execution from the same definition — a different set of nodes, a
+different trace, its own cost. That is the difference between a workflow and a
+script: the graph encodes every path the work is allowed to take, and each run
+picks one based on what actually happened and what you decided.
+
+## Next steps
+
+- [Workflows](/concepts/workflows) — node kinds, routing vocabularies, and how runs work
+- [Schedules](/concepts/schedules) — fire a workflow on a timer
+- [Loops](/concepts/loops) — the iterate-until-verified node, used on its own
