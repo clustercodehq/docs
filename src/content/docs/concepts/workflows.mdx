@@ -1,0 +1,159 @@
+---
+title: Workflows
+description: Draw a graph of agent runs, loops, prototypes, decisions and human approvals — then fire it as one unit. One shared workspace, bounded loop-backs, glass-box routing, and a run trace you can watch.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+A **Workflow** is a graph you draw. You place nodes — agent runs, loops,
+prototypes, decisions, human approvals — connect them, and save the result as a
+reusable definition. Firing it starts a **workflow run**, which walks the graph
+one node at a time.
+
+Where a [Run](/concepts/runs) is one agent doing one thing, and a
+[Loop](/concepts/loops) is one agent iterating until a verifier agrees, a
+workflow is the thing that puts several of those in a row and decides what
+happens next based on how each one turned out.
+
+<Aside type="note" title="Beta">
+Workflows is in beta. The core flow is solid, but the experience is still
+evolving — expect changes as we refine it.
+</Aside>
+
+## One run, one workspace
+
+Every node in a single workflow run shares **one DevBox** and **one git branch**,
+named `wf/<slug>/run-<n>`.
+
+That is the whole point. The second node sees the files the first node wrote.
+A decision can test the repository the run has been building. A loop can pick up
+where an earlier run node left off. Without a shared workspace a graph of agents
+is just a list of unrelated tasks.
+
+The DevBox is created by the first node that needs one and handed down the graph
+from there. You can also **pin** a workflow to an existing DevBox, in which case
+every run works in that same persistent environment instead of a fresh one.
+
+## The five node kinds
+
+Three kinds **do work**. Each one produces its own entity, with its own page you
+can open and read exactly as if you had started it by hand.
+
+| Node | What it does | Produces |
+|---|---|---|
+| **Agent Run** | One autonomous agent run against a prompt | a [Run](/concepts/runs) |
+| **Loop** | Iterates until an independent verifier approves | a [Loop](/concepts/loops) |
+| **Prototype** | Races several engine+model variants on one brief | a [Prototype](/concepts/prototyping) |
+
+Two kinds **route**. They do no work themselves; they decide where the run goes
+next.
+
+| Node | What it does |
+|---|---|
+| **Decision** | Picks a branch from the previous node's result |
+| **Human Approval** | Stops and waits for a person, then takes their answer's branch |
+
+### One exit, unless it routes
+
+An Agent Run, a Loop and a Prototype each take **exactly one** outgoing
+connection. Only Decision and Approval nodes fan out, onto as many labelled
+branches as you draw.
+
+This is enforced while you draw: once a work node has its one exit, its
+connection points dim and refuse a second. To split a path, put a Decision or an
+Approval in between. That constraint is what keeps a graph readable — every fork
+is an explicit, labelled, inspectable choice rather than an implicit one.
+
+### How a Decision decides
+
+A Decision node picks its branch using one of three **evaluators**:
+
+- **Status** — routes on the previous node's own result. No extra work, no
+  agent, no cost.
+- **Command** — runs a command inside the run's shared DevBox. Exit code `0`
+  takes the `pass` branch; anything else takes `fail`. This is how you route on
+  "do the tests actually pass", not on what an agent claims.
+- **Agent** — asks an agent to judge, and offers your branch labels as the only
+  answers it may give.
+
+<Aside type="caution" title="Command and Agent decisions need a workspace">
+A Command or Agent decision runs *inside* the run's DevBox, and only an Agent Run
+or a Loop node hands one over — a Prototype's variants each keep their own. If
+you draw a Command or Agent decision that could be reached before any run or loop
+has gone first, the workflow refuses to save and tells you so. Put a run or loop
+before it, or pin the workflow to an existing DevBox.
+</Aside>
+
+## Routing vocabularies
+
+A **Status** decision offers the branch labels that its predecessor can actually
+produce — and those differ by node kind, because the three kinds have genuinely
+different outcomes. The canvas offers you the right set as one-click chips; you
+never have to remember them.
+
+| Predecessor | Branch labels it can produce |
+|---|---|
+| **Agent Run** | `completed` · `failed` · `skipped` · `stopped` |
+| **Loop** | `verified` · `needs_owner` · `budget_exhausted` · `no_progress` · `circuit_broken` · `error` · `user_cancelled` |
+| **Prototype** | `completed` · `failed` · `cancelled` · `archived` |
+
+A loop's labels are its **stop reasons**, because a loop has no other verdict to
+report — "why did you stop" *is* its outcome. That is what makes
+`verified → ship`, `no_progress → ask a human` expressible as a graph.
+
+Every routing node also accepts a **`default`** branch, which catches anything
+the other labels did not match. If a result matches no branch and there is no
+`default`, the run fails rather than quietly stopping — a graph that silently
+does nothing is worse than one that tells you it has a hole.
+
+## Bounded loop-backs
+
+A connection may point **backwards**, which is how "review failed → fix →
+review again" is expressible without a separate construct. A backwards
+connection is drawn dashed and carries a cap: **`⟲ max N`**.
+
+The cap is what makes it finite. When a back-edge has been traversed N times the
+run stops with `back_edge_exhausted` rather than cycling forever. If you want
+something better than a failure at the end of the rope, wire an explicit
+give-up branch off the decision — for example a Human Approval that asks you
+whether to keep going.
+
+A node re-entered by a back-edge shows a **×N** badge in the run trace, so you
+can see at a glance which parts of the graph the run went around more than once.
+
+## What a run looks like
+
+Firing a workflow **snapshots** its definition. Editing the workflow afterwards
+never changes a run that is already in flight, and never rewrites the history of
+one that has finished — a run is a record of what was actually executed.
+
+The run page shows the graph with each node coloured by status alongside an
+**execution order** timeline: one row per node attempt, with its kind, duration
+and cost, and a link straight into the entity that node produced. Costs roll up
+from those entities to the run total, so a workflow's price is the real sum of
+the work it did.
+
+The definition page keeps the full **run history** for that workflow, and while
+one is in flight it carries a live banner through to it.
+
+## Scheduling a workflow
+
+A [Schedule](/concepts/schedules) can fire a workflow the same way it fires a
+run — on a cron expression, or on an interval. The schedule references the
+workflow by id, so it always fires the current saved definition.
+
+## Availability
+
+Workflows is available on **every plan**, including Free.
+
+The plan limit is on **concurrently active workflow runs**, not on how many
+workflows you have drawn. Saving definitions is unlimited on every plan; what a
+higher plan buys you is more of them running at the same time.
+
+## Next steps
+
+- [Create a Workflow](/guides/create-a-workflow) — draw and fire your first one
+- [Loops](/concepts/loops) — the iterate-until-verified node, on its own
+- [Prototyping](/concepts/prototyping) — the race-N-engines node, on its own
+- [Runs](/concepts/runs) — what a single agent run is
+- [Schedules](/concepts/schedules) — firing a workflow on a timer
