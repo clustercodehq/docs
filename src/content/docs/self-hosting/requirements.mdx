@@ -3,6 +3,8 @@ title: Requirements
 description: Hardware and software requirements for running ClusterCode workers.
 ---
 
+import { Aside } from '@astrojs/starlight/components';
+
 ## Software
 
 The **CLI** requires Node.js. The **worker agent** is a standalone binary with no runtime dependencies.
@@ -32,6 +34,21 @@ The worker agent auto-detects Podman and Docker via PATH — install either one 
 | **CPU** | 2 cores | 4+ cores |
 
 DevBox images are ~2-4 GB each. Running multiple DevBoxes simultaneously requires proportionally more resources.
+
+The RAM figures above are for running the worker and a handful of DevBoxes at
+their default size. On macOS and Windows, the container runtime runs inside a
+VM whose memory ceiling — not the host's total RAM — is what actually limits
+how many DevBoxes this worker can host, and that ceiling is configurable. See
+[Sizing container runtime memory](/self-hosting/runtime-memory) for the
+dedicated-vs-shared presets, the platform ceilings, and the DevBox fit table.
+
+<Aside type="tip">
+  On Windows specifically, changing the container runtime's memory allocation
+  goes through `.wslconfig` and restarts every WSL distribution on the
+  machine — see the Windows note in
+  [Sizing container runtime memory](/self-hosting/runtime-memory) before you
+  run `clustercode onboard` for the first time.
+</Aside>
 
 ## Network
 

@@ -40,8 +40,32 @@ clustercode config list
 | Key | Description |
 |-----|-------------|
 | `WORKER_NAME` | Display name for this worker (max 64 characters) |
+| `RUNTIME_MEMORY_MB` | Memory, in MB, to give the container runtime |
 
 Only the keys listed above are accepted. Attempting to set an unknown key returns an error.
+
+### `RUNTIME_MEMORY_MB`
+
+```bash
+clustercode config set RUNTIME_MEMORY_MB 24576
+```
+
+Must be a whole number, at least 2048, and no more than a per-machine safe
+ceiling (host RAM minus an OS reserve — the CLI reports the exact limit if
+you go over it). Values are in MiB (1024-based) — `8192` is 8 GiB. The `MB`
+in the key name is historical; the CLI displays GiB throughout.
+
+2048 is a hard floor, not a usable recommendation — it cannot host even one
+default 4 GiB DevBox once the host reserve is subtracted. Hosting one needs
+roughly 6 GiB.
+
+Setting this key by itself doesn't move any memory around — it takes effect
+the next time a container-runtime machine is created, or the next time you
+run [`clustercode onboard`](/cli/onboard), which is also where the interactive
+sizing prompts and the platform-specific apply steps (including the Windows
+`.wslconfig` / `wsl --shutdown` behavior) live. See
+[Sizing container runtime memory](/self-hosting/runtime-memory) for the full
+guide.
 
 ## Configuration File
 
@@ -49,6 +73,7 @@ Location: `~/.clustercode/config.json`
 
 ```json
 {
-  "WORKER_NAME": "my-dev-machine"
+  "WORKER_NAME": "my-dev-machine",
+  "RUNTIME_MEMORY_MB": "24576"
 }
 ```

@@ -64,7 +64,7 @@ Run `clustercode doctor` at any time to verify the worker's health:
 clustercode doctor
 ```
 
-It checks: authentication, worker registration, worker binary, orchestrator connectivity, WSL2 (Windows only), container runtime (Podman/Docker), disk space, and available memory.
+It checks: authentication, worker registration, worker binary, orchestrator connectivity, WSL2 (Windows only), container runtime (Podman/Docker), the container runtime's memory allocation, disk space, and available memory.
 
 ## Multi-machine setup
 
@@ -78,4 +78,5 @@ Repeat these steps on each machine you want to connect. Workers connect outbound
   fails on auth. Once per worker, not once per DevBox.
 - [Quickstart](/getting-started/quickstart) — launch your first DevBox
 - [Self-hosting: Requirements](/self-hosting/requirements) — hardware and network requirements
+- [Sizing container runtime memory](/self-hosting/runtime-memory) — how many DevBoxes this worker can host
 - [Self-hosting: Worker Agent](/self-hosting/worker-agent) — how the worker connects and stays online
