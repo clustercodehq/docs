@@ -73,7 +73,7 @@ export const nav = [
       // that is scoped to it.
       { label: 'Shortcuts', slug: 'concepts/shortcuts', desc: 'Prompts you save once and reuse' },
       { label: 'Nucleus', slug: 'concepts/nucleus', desc: 'The in-platform AI assistant' },
-      { label: 'Prompt improver', slug: 'concepts/prompt-improver', desc: 'Rewrite a draft into an agent-ready instruction' },
+      { label: 'Prompt improver', slug: 'concepts/prompt-improver', desc: 'Rewrite a draft into an agent-ready instruction, or tidy an agent config file' },
       { label: 'Observatory', slug: 'concepts/observatory', desc: 'Galaxy view of your fleet' },
       { label: 'Tickets', slug: 'concepts/tickets', desc: 'Work items from issue trackers' },
       { label: 'Runtime Catalog', slug: 'concepts/runtime-catalog', desc: "What's inside a DevBox" },
@@ -137,6 +137,12 @@ export const nav = [
       { label: 'Custom Containerfile', slug: 'guides/custom-containerfile', desc: 'Build your own runtime' },
       { label: 'Build from DevBox', slug: 'guides/build-image-from-container', desc: 'Snapshot a DevBox into an image' },
       { label: 'Nucleus Configuration', slug: 'guides/nucleus-config', desc: 'Customize Nucleus with NUCLEUS.md' },
+      // Directly after its sibling: the two configuration files are the pair a
+      // reader has to tell apart (chat assistant vs. the coordinator that
+      // executes the work), and adjacency is what makes the contrast visible in
+      // the sidebar, the palette and the mobile menu at once. The desc pair is
+      // deliberately parallel for the same reason.
+      { label: 'Nova Configuration', slug: 'guides/nova-config', desc: 'Customize Nova with NOVA.md' },
       { label: 'Privileged Mode (Nested Containers)', slug: 'guides/privileged-nested-containers', desc: 'Run a container engine inside a DevBox' },
       { label: 'Windows Golden Image', slug: 'guides/windows-golden-image', desc: 'Boot Windows DevBoxes in seconds' },
       { label: 'Visual Testing', slug: 'guides/visual-testing', desc: 'Give an agent a real desktop' },

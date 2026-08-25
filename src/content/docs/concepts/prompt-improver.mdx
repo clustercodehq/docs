@@ -32,9 +32,29 @@ typed it, character for character.
 | [Schedules](/concepts/schedules) | **Instructions**, in the create panel |
 | [Prototyping](/concepts/prototyping) | **Prompt** |
 | [Loops](/concepts/loops) | **Goal**, when you create a loop or reopen one |
+| [NOVA.md](/guides/nova-config) | The **NOVA.md** editor, in Settings |
+| [NUCLEUS.md](/guides/nucleus-config) | The **NUCLEUS.md** editor, in Settings |
 
 The sparkle only rewrites the field it sits in. It never starts a run, saves a
 schedule, or submits anything.
+
+### Instruction improver vs system-prompt improver
+
+The same sparkle does two different jobs, and **it picks which one by the field
+you are in** — there is nothing to choose:
+
+| | Instruction improver | System-prompt improver |
+|---|---|---|
+| **Where** | Runs, Schedules, Prototyping, Loops, steering, Nucleus chat | The NOVA.md and NUCLEUS.md editors |
+| **Your draft is** | a job to be done once | a standing configuration that applies every time |
+| **You get back** | a goal, ordered steps, constraints, what "done" means | the same preferences, reorganized under your own headings |
+| **It never** | invents requirements you didn't state | turns a preference into a work order, or invents a preference |
+
+A configuration file rewritten by the instruction improver would come back as a
+task list — "Be more concise" as a plan with acceptance criteria — which is
+exactly the corruption the split exists to prevent. Everything below applies to
+both: your text is material to rewrite, nothing is invented, blanks survive, and
+nothing is committed until you accept.
 
 ## Using it
 

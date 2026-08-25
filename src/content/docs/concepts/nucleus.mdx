@@ -49,6 +49,22 @@ On Enterprise the allowance is **per user**.
 
 You can also **bring your own key** in [Settings → Environment Variables](/concepts/settings#environment-variables) — an Anthropic API key or a Claude OAuth token — for usage beyond your plan. See [AI Credits](/guides/ai-credits) for how the allowance works.
 
+## Nucleus vs Nova
+
+ClusterCode has two agents, both Anthropic-powered, with different jobs:
+
+- **Nucleus** — the **interactive assistant** on this page. You chat with it to
+  manage your cluster (launch DevBoxes, run commands, check status), and it
+  answers you in the same breath.
+- **[Nova](/concepts/nova)** — the **background automation agent**. You don't
+  chat with it; you give it a job — a [Run](/concepts/runs), a
+  [Schedule](/concepts/schedules), a [Loop](/concepts/loops) — and it executes
+  that job end-to-end on its own, unattended if need be.
+
+Each has its own customization file, and neither reads the other's:
+[NUCLEUS.md](/guides/nucleus-config) for this assistant,
+[NOVA.md](/guides/nova-config) for the coordinator.
+
 ## Tips
 
 - Ask Nucleus to launch a DevBox from a GitHub issue or Azure DevOps ticket

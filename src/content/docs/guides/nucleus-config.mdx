@@ -3,7 +3,18 @@ title: Nucleus Configuration
 description: Customize Nucleus behavior with a NUCLEUS.md file.
 ---
 
-**NUCLEUS.md** is a per-tenant configuration file that customizes how Nucleus behaves. It lets you define workflows, skip confirmation prompts, and set up post-launch automation — all in plain Markdown.
+import { Aside } from '@astrojs/starlight/components';
+
+**NUCLEUS.md** is a configuration file that customizes how [Nucleus](/concepts/nucleus) behaves. It lets you define workflows, skip confirmation prompts, and set up post-launch automation — all in plain Markdown.
+
+It is stored **in your browser** (local storage), so it belongs to the browser you wrote it in — it is not shared with your team and does not follow you to another machine.
+
+<Aside type="tip" title="Which file do I want?">
+  **NUCLEUS.md configures the assistant you talk to** in the dashboard. For the
+  agent that *executes* your Runs, Schedules and Loops in the background — including
+  unattended firings — you want [NOVA.md](/guides/nova-config) instead. They are two
+  different agents with two different files; neither one reads the other's.
+</Aside>
 
 ## Where to Edit
 
@@ -75,3 +86,8 @@ auto-launch
 - The Preferences section is free-form — Nucleus interprets it as behavioral guidance
 - You can reset to defaults at any time from the Settings page
 - Changes take effect on the next Nucleus message — no restart needed
+
+## Next
+
+- [Nucleus](/concepts/nucleus) — what the chat assistant does.
+- [NOVA.md](/guides/nova-config) — the same idea for the coordinator that runs your work.
