@@ -48,12 +48,17 @@ historical; the CLI displays GiB throughout.
 
 If nothing has been configured yet, the wizard asks how the machine is used:
 
-- **Dedicated worker** — mostly hosts DevBoxes. Gets everything except a fixed
-  host reserve (6 GiB on Windows/macOS; nothing on Linux, which has no VM in
-  the way).
+- **Dedicated worker** — mostly hosts DevBoxes. Gets everything except a
+  *preset* reserve of 6 GiB on Windows/macOS (nothing on Linux, which has no VM
+  in the way).
 - **Shared** — you also work on this machine day to day. Capped at half the
-  host, with a larger reserve (12 GiB on Windows/macOS) so the desktop stays
-  usable.
+  host, with a larger preset reserve of 12 GiB on Windows/macOS so the desktop
+  stays usable.
+
+These preset reserves are deliberately conservative and are **not** the hard
+limit. A custom amount may go higher, up to the
+[safe ceiling](/self-hosting/runtime-memory#the-ceiling-and-the-floor), which
+leaves less behind — 4 GiB on Windows, 6 GiB on macOS.
 
 It then prints a fit table for the chosen amount before asking you to confirm.
 Each count first subtracts a host reserve — `max(2 GiB, 5% of the runtime

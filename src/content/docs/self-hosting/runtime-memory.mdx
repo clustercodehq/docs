@@ -64,14 +64,24 @@ ceiling only matters when DevBoxes are actually using that memory.
 
 ## Hard ceilings
 
-Whatever use you pick, `RUNTIME_MEMORY_MB` can never exceed a per-machine safe
-ceiling — host RAM minus a fixed OS reserve:
+### The ceiling and the floor
 
-| Platform | Reserve |
-|---|---|
-| Windows | 4 GiB |
-| macOS | 6 GiB |
-| Linux | none (no VM) |
+There are **two different reserves** on this page, and they are not the same
+number. Keeping them apart matters on Windows, where they differ:
+
+| | Windows | macOS | Linux |
+|---|---|---|---|
+| **Preset reserve** — what *Dedicated* leaves behind | 6 GiB | 6 GiB | none |
+| **Preset reserve** — what *Shared* leaves behind | 12 GiB | 12 GiB | none |
+| **Hard OS reserve** — the most any value may take | 4 GiB | 6 GiB | none (no VM) |
+
+The preset reserves are conservative defaults chosen so the machine stays
+comfortable. The hard OS reserve is the absolute limit: `RUNTIME_MEMORY_MB` can
+never exceed host RAM minus that figure, whatever you type.
+
+So on a 32 GiB Windows host the *Dedicated* preset offers 26 GiB (leaving
+exactly 6), while a custom value may go as high as 28 GiB (leaving exactly 4).
+On macOS the two happen to coincide at 6 GiB.
 
 [`clustercode config set RUNTIME_MEMORY_MB`](/cli/config#runtime_memory_mb)
 and the `onboard` prompts both enforce this — a value above the ceiling is

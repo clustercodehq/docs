@@ -40,7 +40,7 @@ clustercode config list
 | Key | Description |
 |-----|-------------|
 | `WORKER_NAME` | Display name for this worker (max 64 characters) |
-| `RUNTIME_MEMORY_MB` | Memory, in MB, to give the container runtime |
+| `RUNTIME_MEMORY_MB` | Memory, in MiB (1024-based), to give the container runtime. `8192` is 8 GiB. The `MB` in the key name is historical. |
 
 Only the keys listed above are accepted. Attempting to set an unknown key returns an error.
 
