@@ -170,6 +170,7 @@ export const nav = [
     items: [
       { label: 'Worker Agent', slug: 'self-hosting/worker-agent', desc: 'Run your own worker' },
       { label: 'Requirements', slug: 'self-hosting/requirements', desc: 'Hardware and software needs' },
+      { label: 'Sizing Runtime Memory', slug: 'self-hosting/runtime-memory', desc: 'How much memory to give the container runtime' },
       { label: 'Troubleshooting', slug: 'self-hosting/troubleshooting', desc: 'Common issues and fixes' },
     ],
   },

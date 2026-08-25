@@ -114,10 +114,14 @@ You don't configure the worker through environment variables. The
 `clustercode` CLI sets it up for you — run `clustercode worker` to select a
 tenant and start it, or `clustercode onboard` for guided setup.
 
-The one adjustable preference is the worker's display name:
+Two preferences are adjustable — not through environment variables, but with
+`clustercode config`: the worker's display name, and how much memory the
+container runtime is allowed to use.
 
 ```bash
 clustercode config set WORKER_NAME my-worker
+clustercode config set RUNTIME_MEMORY_MB 24576
 ```
 
-See [CLI: config](/cli/config) for details.
+See [CLI: config](/cli/config) and
+[Sizing container runtime memory](/self-hosting/runtime-memory) for details.

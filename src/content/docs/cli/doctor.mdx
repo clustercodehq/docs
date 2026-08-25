@@ -19,6 +19,7 @@ Runs a comprehensive health check on this machine's ClusterCode setup. Checks:
 - **Orchestrator connectivity** — can reach the health endpoint
 - **WSL2** — (Windows only) WSL2 installed with a Linux distro
 - **container runtime** — Podman or Docker installed and running
+- **Runtime memory** — memory the container runtime can actually see, against host RAM and how many DevBoxes that fits (see below)
 - **Disk space** — at least 5 GB free
 - **Memory** — at least 1 GB free
 
@@ -37,11 +38,59 @@ Each check shows a pass/fail/warn status:
   ✓ Registered (your-tenant)
   ✓ Reachable (console.clustercode.io)
   ✓ podman v5.3.1
+  ✓ Runtime memory: 25.0 GiB of 31.6 GiB host — fits ~5 default (4 GiB) DevBoxes
   ✓ 42.0GB free
   ⚠ Low memory: 0.8GB free of 16.0GB
 ```
 
 Icons: **✓** pass, **✗** fail, **⚠** warning. Disk and memory use warnings (⚠) instead of failures — they won't block you but indicate potential issues.
+
+### Runtime memory
+
+On macOS and Windows, Podman and Docker run inside a VM that only sees a
+fraction of the host's RAM, and that VM's memory is what limits how many
+DevBoxes this worker can run — not the host's total. This check reports the
+engine-visible number against host RAM and an estimated DevBox capacity.
+Values are in GiB in the output, computed from the underlying MiB (1024-based)
+units — see [`RUNTIME_MEMORY_MB`](/cli/config#runtime_memory_mb).
+
+A passing reading with headroom to spare looks like this:
+
+```
+Runtime memory: 25.0 GiB of 31.6 GiB host — fits ~5 default (4 GiB) DevBoxes
+```
+
+DevBox counts are estimates at the default size — actual capacity depends on
+the sizes you launch. When the engine is below what's recommended for a
+*shared* machine and nothing has been deliberately configured, the check
+warns instead and suggests a value:
+
+```
+Runtime memory: 8.0 GiB of 31.6 GiB host — fits ~1 default (4 GiB) DevBox — more host memory is available; raise with `clustercode onboard --memory 25600`
+```
+
+Once the engine is at or above that shared-machine recommendation — but still
+below what a *dedicated* worker could use — the check passes, but the line
+still grows a nudge rather than staying silent:
+
+```
+Runtime memory: 16.0 GiB of 31.6 GiB host — fits ~3 default (4 GiB) DevBoxes (dedicated worker? up to 25.0 GiB — see `clustercode onboard`)
+```
+
+This check never fails — an undersized runtime just caps how much work the
+worker takes on, it doesn't break it. It warns when the engine is too small
+to fit even one default-sized DevBox, or when it's below what's recommended
+for a shared machine and nothing was deliberately configured. On Linux, Podman
+runs containers directly with no VM in between, so this reports host memory
+directly. If the runtime is stopped, it reports "unknown" rather than
+guessing.
+
+On Windows with Docker, this check only reports the number — `doctor` (and
+`onboard`) never resize Docker's memory for you. The setting lives in
+`[wsl2] memory=` in `.wslconfig` (Docker Desktop's WSL2 backend) or in Docker
+Desktop's own settings (its Hyper-V backend). See
+[Sizing container runtime memory](/self-hosting/runtime-memory) for how to
+change it.
 
 ## Interactive Fix
 

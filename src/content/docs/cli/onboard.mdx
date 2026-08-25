@@ -3,6 +3,8 @@ title: clustercode onboard
 description: Guided setup wizard that handles everything automatically.
 ---
 
+import { Aside } from '@astrojs/starlight/components';
+
 ## Usage
 
 ```bash
@@ -20,7 +22,106 @@ An interactive wizard that walks you through the complete setup:
    - **WSL2 missing** (Windows) → installs WSL2 and Ubuntu distro
    - **container runtime missing** → installs and starts Podman
    - **Orchestrator unreachable** → shows configuration guidance
-3. Re-runs all checks to verify fixes
+3. Offers to size the container runtime's memory — see below
+4. Re-runs all checks to verify fixes
+
+## Options
+
+| Flag | Description |
+|------|-------------|
+| `--memory <mb>` | Set the container runtime's memory allocation, in MiB (see below) |
+
+`--memory` skips the sizing questions either way. In a script or CI (no TTY)
+it also applies the change without prompting, and is the only way to apply a
+change non-interactively — a stored [`RUNTIME_MEMORY_MB`](/cli/config) value
+alone is deliberately not treated as consent. In an interactive terminal it
+still asks you to confirm before applying, because on Windows the change
+restarts every WSL distribution.
+
+## Sizing the container runtime's memory
+
+This step runs even when every other check already passes — an
+under-provisioned runtime doesn't fail health checks, it just quietly caps how
+much work this worker can be given. Values are in MiB (1024-based) —
+`8192` means 8 GiB. The `MB` in `RUNTIME_MEMORY_MB` and `--memory` is
+historical; the CLI displays GiB throughout.
+
+If nothing has been configured yet, the wizard asks how the machine is used:
+
+- **Dedicated worker** — mostly hosts DevBoxes. Gets everything except a
+  *preset* reserve of 6 GiB on Windows/macOS (nothing on Linux, which has no VM
+  in the way).
+- **Shared** — you also work on this machine day to day. Capped at half the
+  host, with a larger preset reserve of 12 GiB on Windows/macOS so the desktop
+  stays usable.
+
+These preset reserves are deliberately conservative and are **not** the hard
+limit. A custom amount may go higher, up to the
+[safe ceiling](/self-hosting/runtime-memory#the-ceiling-and-the-floor), which
+leaves less behind — 4 GiB on Windows, 6 GiB on macOS.
+
+It then prints a fit table for the chosen amount before asking you to confirm.
+Each count first subtracts a host reserve — `max(2 GiB, 5% of the runtime
+memory)` — from the total, then divides what's left by that row's size:
+
+```
+  2 GiB (small)         fits ~10
+  4 GiB (default)       fits ~5
+  8 GiB (large)         fits ~2
+  16 GiB (extra large)  fits ~1
+Counts are per size — mixed sizes share the same pool.
+Windows DevBoxes need ~2 GiB more than their size, so fewer fit than shown.
+```
+
+These counts are estimates at each size — actual capacity depends on what you
+launch, and a DevBox running a graphical session should budget one size up.
+The Windows note matters: a Windows DevBox needs roughly 2 GiB more than its
+stated size to run, so don't read "fits ~5" as five Windows DevBoxes without
+adjusting for that.
+
+Pass `--memory` to skip the sizing questions and set an exact value (also
+honored when a fresh container-runtime machine is created). Interactively you
+are still asked to confirm before it applies, since applying it restarts every
+WSL distribution on Windows; without a TTY (CI, scripts) it applies
+immediately — this is the only way to apply a change non-interactively:
+
+```bash
+clustercode onboard --memory 24576
+```
+
+The allocation is a **ceiling, not a reservation**: it caps what the runtime
+*can* take, but memory is only actually used while DevBoxes are running. On
+Windows, WSL2 gives most of it back to the host once they stop; on macOS the
+VM may not release it back until the machine restarts.
+
+<Aside type="caution" title="Windows: this restarts every WSL distribution">
+  On Windows, Podman runs inside a WSL2 VM, and Podman's own memory settings
+  don't work there — `podman machine set --memory` errors, and passing
+  `--memory` to `podman machine init` is silently ignored. The real control is
+  the `[wsl2] memory=` setting in `%UserProfile%\.wslconfig`, a file WSL reads
+  for *every* distro on the machine, not just ClusterCode's. `onboard` edits
+  it for you (preserving comments and other keys, and keeping a `.bak` copy
+  the first time), then runs `wsl --shutdown` to apply it — which restarts
+  **all** of your WSL distributions, not only the one Podman uses. Save work
+  in other WSL sessions before confirming the change.
+</Aside>
+
+<Aside type="note" title="Windows + Docker: onboard doesn't apply this for you">
+  With Docker as the engine, `onboard` never edits `.wslconfig` or touches
+  Docker Desktop settings — it only tells you where the setting lives. On
+  Docker Desktop's WSL2 backend, that's `[wsl2] memory=` in
+  `%UserProfile%\.wslconfig`, the same file described above; on its Hyper-V
+  backend, it's Docker Desktop's own Resources settings. Either way, set it
+  yourself.
+</Aside>
+
+The 2048 MiB floor accepted by `RUNTIME_MEMORY_MB` and `--memory` is a hard
+minimum, not a usable recommendation — hosting even one default 4 GiB DevBox
+needs roughly 6 GiB once the host reserve is subtracted.
+
+See [Sizing container runtime memory](/self-hosting/runtime-memory) for the
+full guide, including the platform ceilings and how this interacts with
+[`RUNTIME_MEMORY_MB`](/cli/config).
 
 ## What `onboard` doesn't cover
 

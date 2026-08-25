@@ -78,6 +78,35 @@ The worker reconnects automatically. If it doesn't recover:
 1. Check network connectivity
 2. Restart the worker: `clustercode worker`
 
+### Runtime memory too small / "fits ~0 default DevBoxes"
+
+**Cause:** The container runtime's VM (macOS/Windows) is only given a small
+default memory ceiling, or `RUNTIME_MEMORY_MB` is set below what a default
+DevBox needs.
+
+**Fix:**
+```bash
+clustercode onboard --memory 8192
+```
+Or run `clustercode onboard` interactively and pick dedicated-vs-shared
+sizing — you'll still be asked to confirm before it applies. See
+[Sizing container runtime memory](/self-hosting/runtime-memory). On Windows
+with Podman this rewrites `.wslconfig` and restarts every WSL distribution on
+the machine — the guide covers that before you run it. On Windows with
+Docker, `onboard` doesn't apply the change at all; it only tells you whether
+to edit `.wslconfig` (WSL2 backend) or Docker Desktop's settings (Hyper-V
+backend).
+
+### `.wslconfig` change didn't take effect
+
+**Cause:** `.wslconfig` is encoded as something other than UTF-8 (a common
+result of Notepad's legacy "ANSI" save, or PowerShell's `Set-Content`), so the
+CLI refuses to rewrite it rather than risk corrupting your other settings.
+
+**Fix:** Open `%UserProfile%\.wslconfig`, re-save it as UTF-8, and re-run
+`clustercode onboard --memory <mb>`. Or set `[wsl2] memory=<mb>MB` by hand and
+run `wsl --shutdown` yourself.
+
 ### WSL issues (Windows)
 
 **Cause:** WSL2 not installed or not running.

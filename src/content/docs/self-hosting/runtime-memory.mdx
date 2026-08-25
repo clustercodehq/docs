@@ -1,0 +1,193 @@
+---
+title: Sizing Container Runtime Memory
+description: How much memory to give the container runtime, how it's enforced per platform, and what the DevBox fit table means.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+How much memory your container runtime can use determines how many DevBoxes —
+and what size — this worker can host at once. This page covers how that
+memory is sized, how to change it, and the platform differences you need to
+know before you do.
+
+## Why this matters
+
+The scheduler gives DevBoxes to workers based on capacity it can actually use.
+On macOS and Windows, Podman (and Docker) run inside a VM, and that VM's
+memory ceiling — not the host's total RAM — is what limits this worker. A
+worker whose runtime can only see a couple of GiB will silently fit fewer
+DevBoxes than the host's RAM suggests it should.
+
+Check your current numbers with:
+
+```bash
+clustercode doctor
+```
+
+which reports the [runtime-memory check](/cli/doctor#runtime-memory) — engine
+memory against host RAM and an estimated DevBox capacity.
+
+Values you configure — [`RUNTIME_MEMORY_MB`](/cli/config#runtime_memory_mb)
+and `onboard`'s `--memory <mb>` — are in MiB (1024-based): `8192` means 8 GiB.
+The `MB` in the names is historical; everywhere the CLI *displays* memory, it
+shows GiB.
+
+## Dedicated worker vs. shared machine
+
+[`clustercode onboard`](/cli/onboard) asks how this machine is used and offers
+a preset for each:
+
+| Use | The runtime gets | Host keeps (Windows/macOS) |
+|---|---|---|
+| **Dedicated worker** — mostly hosts DevBoxes | Everything except the host's reserve | ~6 GiB |
+| **Shared** — you also work on this machine day to day | At most half the machine | ~12 GiB |
+
+Linux has no VM in the way — the container runtime *is* the host, so there's
+nothing to reserve or size separately.
+
+The larger reserve on a shared machine exists so the desktop stays usable
+while DevBoxes are running; a dedicated worker doesn't need that headroom, so
+it can give away nearly everything.
+
+## It's a ceiling, not a reservation
+
+The number you configure caps what the container runtime **can** take — it
+isn't set aside up front. Memory is only actually used while DevBoxes are
+running:
+
+- **Windows** — WSL2 gives most of it back to the host once DevBoxes stop.
+- **macOS** — the VM may not release memory back to the host until the
+  machine restarts.
+
+This means it's usually safe to size generously on a dedicated worker: the
+ceiling only matters when DevBoxes are actually using that memory.
+
+## Hard ceilings
+
+### The ceiling and the floor
+
+There are **two different reserves** on this page, and they are not the same
+number. Keeping them apart matters on Windows, where they differ:
+
+| | Windows | macOS | Linux |
+|---|---|---|---|
+| **Preset reserve** — what *Dedicated* leaves behind | 6 GiB | 6 GiB | none |
+| **Preset reserve** — what *Shared* leaves behind | 12 GiB | 12 GiB | none |
+| **Hard OS reserve** — the most any value may take | 4 GiB | 6 GiB | none (no VM) |
+
+The preset reserves are conservative defaults chosen so the machine stays
+comfortable. The hard OS reserve is the absolute limit: `RUNTIME_MEMORY_MB` can
+never exceed host RAM minus that figure, whatever you type.
+
+So on a 32 GiB Windows host the *Dedicated* preset offers 26 GiB (leaving
+exactly 6), while a custom value may go as high as 28 GiB (leaving exactly 4).
+On macOS the two happen to coincide at 6 GiB.
+
+[`clustercode config set RUNTIME_MEMORY_MB`](/cli/config#runtime_memory_mb)
+and the `onboard` prompts both enforce this — a value above the ceiling is
+rejected with the exact limit for your machine, not silently clamped.
+
+At the other end, 2048 MiB is a hard floor, not a usable recommendation — a
+value that low cannot host even one default-sized (4 GiB) DevBox once the
+host reserve is subtracted. Hosting one needs roughly 6 GiB.
+
+## The DevBox fit table
+
+Because DevBoxes come in different sizes, a single "fits ~N DevBoxes" number
+would hide how the count changes at other sizes. `onboard` prints a full
+table before asking you to confirm a change:
+
+```
+  2 GiB (small)         fits ~10
+  4 GiB (default)       fits ~5
+  8 GiB (large)         fits ~2
+  16 GiB (extra large)  fits ~1
+Counts are per size — mixed sizes share the same pool.
+Windows DevBoxes need ~2 GiB more than their size, so fewer fit than shown.
+```
+
+A few things worth understanding about this table:
+
+- **Each count subtracts a host reserve first** —
+  `max(2 GiB, 5% of the runtime memory)` — then divides what's left by that
+  row's size. The table isn't simply "total ÷ size."
+- **These are estimates**, not guarantees — the underlying accounting mirrors
+  what the scheduler uses, but actual capacity depends on what's actually
+  running.
+- **Counts are per size**, not additive — a pool that "fits ~10 small" or
+  "fits ~5 default" doesn't mean you get both at once; mixed sizes share the
+  same pool.
+- **Counts are nominal for Windows DevBoxes** — a Windows DevBox needs
+  roughly 2 GiB more than its stated size to run, and the table does not
+  subtract that. Treat "fits ~5" as an upper bound, not a promise of five
+  Windows DevBoxes.
+- **Budget one size up for a DevBox running a graphical session** — the exact
+  overhead of a graphical session isn't precisely measured, so treat "one size
+  up" as the working rule rather than a specific GiB figure.
+
+## Changing it
+
+Two ways to set it:
+
+- **Interactively**, via [`clustercode onboard`](/cli/onboard) — asks
+  dedicated-vs-shared (unless `--memory` is passed, which skips straight to
+  the fit table), then still asks you to confirm before applying, since
+  applying it restarts every WSL distribution on Windows.
+- **Directly**, via [`clustercode config set RUNTIME_MEMORY_MB <mb>`](/cli/config#runtime_memory_mb)
+  — validated, but only takes effect the next time a container-runtime
+  machine is created or `onboard` runs; setting the key alone doesn't move
+  memory around, and is deliberately not treated as consent to apply it
+  unattended.
+
+`clustercode onboard --memory <mb>` is the only way to apply a change
+**non-interactively** (CI, scripts): without a terminal to confirm in, it
+applies immediately rather than prompting. With a terminal attached, the same
+flag still confirms before applying — it only skips the sizing questions.
+
+For Docker, `onboard` never applies the change at all, on any platform — see
+below.
+
+<Aside type="caution" title="Windows: applying this restarts every WSL distribution">
+  On Windows, Podman's own memory controls don't work inside its WSL2 VM —
+  `podman machine set --memory` errors, and `podman machine init --memory` is
+  silently ignored. The actual control is the `[wsl2] memory=` setting in
+  `%UserProfile%\.wslconfig`, which WSL applies to **every** distro on the
+  machine, not just the one Podman uses.
+
+  `clustercode onboard` edits this file for you — preserving comments and
+  other keys, and keeping a one-time `.bak` copy — then runs `wsl --shutdown`
+  to make it take effect. That command **restarts all of your WSL
+  distributions**, so save any work in other WSL sessions before confirming
+  the change. WSL's own out-of-the-box default, before you configure anything,
+  is roughly half of host RAM.
+</Aside>
+
+On macOS, `podman machine set --memory` works directly, but the machine must
+be stopped first — `onboard` handles the stop/set/start sequence for you.
+
+<Aside type="note" title="Docker: onboard tells you where to set it, but doesn't set it">
+  With Docker as the engine, `onboard` doesn't apply a memory change on any
+  platform — it only reports the current size and points you to where the
+  setting lives:
+
+  - **Windows, Docker Desktop's WSL2 backend** — `[wsl2] memory=` in
+    `%UserProfile%\.wslconfig`, the same file described above. Docker
+    Desktop's own memory slider is disabled in this mode, so changing it
+    there does nothing.
+  - **Windows, Docker Desktop's Hyper-V backend** — Docker Desktop's own
+    Resources settings.
+  - **macOS** — Docker Desktop's own Resources settings.
+
+  Set the value yourself, then restart Docker (or run `wsl --shutdown` for
+  the WSL2 backend) for it to take effect.
+</Aside>
+
+## See also
+
+- [`clustercode doctor`](/cli/doctor#runtime-memory) — the health check that
+  reports current runtime memory
+- [`clustercode onboard`](/cli/onboard#sizing-the-container-runtimes-memory) —
+  the interactive wizard and `--memory` flag
+- [`clustercode config`](/cli/config#runtime_memory_mb) — the
+  `RUNTIME_MEMORY_MB` key
+- [Requirements](/self-hosting/requirements) — baseline hardware and software
