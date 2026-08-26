@@ -1,35 +1,42 @@
 ---
 title: Nova Configuration
-description: Customize Nova behavior with a NOVA.md file.
+description: NOVA.md — your standing preferences for the coordinator that executes your Runs, Schedules, Loops and Prototypes, including unattended ones.
 ---
 
 import { Aside } from '@astrojs/starlight/components';
 
 **NOVA.md** is your personal configuration file for [Nova](/concepts/nova) — the
 coordinator that executes your [Runs](/concepts/runs),
-[Schedules](/concepts/schedules), [Loops](/concepts/loops) and
-[Prototypes](/concepts/prototyping). It's plain Markdown: your naming
-conventions, your defaults, the language you want summaries in, the things Nova
-should always (or never) do.
+[Schedules](/concepts/schedules), [Loops](/concepts/loops),
+[Prototypes](/concepts/prototyping) and [Workflows](/concepts/workflows). It's
+plain Markdown: your naming conventions, your defaults, the language you want
+summaries in, the things Nova should always (or never) do.
 
 <Aside type="tip" title="Which file do I want?">
-  **NOVA.md configures the agent that executes your work.** For the assistant
-  you *talk to* in the dashboard — the one that launches DevBoxes and answers
-  questions in chat — you want
-  [NUCLEUS.md](/guides/nucleus-config) instead. They are two different agents
-  with two different files; neither one reads the other's.
+  **NOVA.md configures the agent that executes your work** — the one that
+  launches the DevBox and delegates the coding, whether or not you are watching.
+  For the assistant you *talk to* in the dashboard, which answers you in chat and
+  does nothing until you ask, you want [NUCLEUS.md](/guides/nucleus-config)
+  instead. Two different agents, two different files; neither one reads the
+  other's.
 </Aside>
 
 ## Where to Edit
 
 1. Open the orchestrator at your deployment URL
 2. Go to **Settings** → **App AI Assistants**
-3. Find the **NOVA.md** section
+3. Find the **NOVA.md** block, below the NUCLEUS.md one
 4. Click **Edit NOVA.md**
 
-Maximum length is **10,000 characters**. The character counter turns red past
-the limit and saving is refused, so nothing is silently truncated — trim the
-text and save again.
+The editor shows a live character count against a limit of **10,000
+characters**, plus an estimate of the tokens your file adds to every execution.
+Past the limit the counter turns red and **Save** comes back with an error
+instead of writing — your text is left exactly as you typed it, never silently
+truncated. Trim it and save again.
+
+**Reset** clears the file completely: Nova goes back to its default behavior on
+your next execution. Emptying the editor and saving does the same thing —
+nothing is stored, and the next execution carries no customization at all.
 
 ## Where It Applies
 
@@ -37,11 +44,14 @@ NOVA.md is applied to **every execution Nova performs for you**:
 
 - Runs you start by hand, interactive or autonomous
 - **Schedules firing unattended** — including at 3 a.m. with no browser open
-- Loop iterations and Prototype contenders
+- Loop iterations, Prototype contenders, and the Run and Prototype nodes of a
+  Workflow
 
 It is stored **on the server, against your account** — not in your browser — so
-a schedule keeps using it long after you close the tab, and it follows you to
-another machine or another session.
+a Schedule keeps using it long after you close the tab, and it follows you to
+another machine or another session. This is the one substantive difference from
+[NUCLEUS.md](/guides/nucleus-config), which lives in the browser you wrote it
+in: Nucleus only ever runs while you're looking at it, and Nova mostly doesn't.
 
 **Your file, your executions.** A Schedule uses the NOVA.md of the person who
 *created* it, exactly as it already uses that person's credentials and secrets.
@@ -84,15 +94,18 @@ once when the execution is dispatched. The next one picks up your edit.
 ```
 
 Brace patterns like `{repo}-{issue-number}` are your literal naming templates.
-Write them the way you want Nova to apply them; nothing fills them in for you.
+Write them the way you want Nova to apply them; nothing fills them in for you,
+and they are not the fill-in blanks of a [Shortcut](/concepts/shortcuts).
 
 ## Improving your draft
 
 The editor carries the sparkle (✦) — the
-[prompt improver](/concepts/prompt-improver). On this field it automatically
-uses the **system-prompt** rewrite rather than the task rewrite: it tidies and
-organizes your preferences under your own headings, keeps your voice and your
-naming templates, and never turns "be more concise" into a numbered work order.
+[prompt improver](/concepts/prompt-improver). Because this field holds a
+standing configuration rather than a one-off job, the sparkle here runs the
+**system-prompt** rewrite: it regroups your preferences under your own
+headings, keeps your voice and your naming templates, and never turns "be
+concise" into a numbered work order. The *instruction* rewrite — goal, steps,
+what "done" means — is what the same sparkle does in a Run or Schedule field.
 Accept replaces the draft; Discard leaves it exactly as you typed it.
 
 ## Tips
@@ -100,14 +113,17 @@ Accept replaces the draft; Discard leaves it exactly as you typed it.
 - Write standing preferences, not one-off jobs — a job belongs in the Run's
   instruction field, where it applies to that run only.
 - Every character counts against the prompt of **every** execution, so keep it
-  tight. The editor shows a live token estimate.
-- Your preferences never override Nova's tool contracts or safety rules — gates
-  and confirmations still apply.
-- Clearing the editor and saving removes the file entirely; the next execution
-  carries no customization at all.
+  tight. The editor's token estimate tells you what you're adding.
+- Your preferences are added to Nova's prompt; they never replace it. Tool
+  contracts, approval gates and safety confirmations still apply, and nothing
+  you write here can switch them off.
 
 ## Next
 
 - [Nova](/concepts/nova) — what the coordinator does on every execution.
-- [NUCLEUS.md](/guides/nucleus-config) — the same idea for the chat assistant.
-- [Prompt improver](/concepts/prompt-improver) — the ✦ on this editor.
+- [NUCLEUS.md](/guides/nucleus-config) — the standing file for the assistant you
+  chat with, stored per browser instead of per account.
+- [Prompt improver](/concepts/prompt-improver) — the ✦ on this editor, and why
+  it rewrites this field differently from a Run instruction.
+- [Settings](/concepts/settings#app-ai-assistants) — the rest of the App AI
+  Assistants section.

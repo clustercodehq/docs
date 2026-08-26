@@ -28,10 +28,16 @@ ClusterCode has two agents, both Anthropic-powered, with different jobs:
 
 - **[Nucleus](/concepts/nucleus)** — the **interactive assistant** in the
   dashboard. You chat with it to manage your cluster (launch DevBoxes, run
-  commands, check status).
+  commands, check status), and it answers you in the same breath.
 - **Nova** — the **background automation agent**. You don't chat with it
   directly; you give it a job (a Run or a Schedule) and it executes that job
-  end-to-end, on its own.
+  end-to-end, on its own, unattended if need be.
+
+Each has its own customization file, and neither reads the other's:
+[NOVA.md](/guides/nova-config) for this coordinator — stored against your
+account so an unattended Schedule can still reach it — and
+[NUCLEUS.md](/guides/nucleus-config) for the chat assistant, stored in your
+browser.
 
 ## Two modes
 

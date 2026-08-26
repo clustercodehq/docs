@@ -1,6 +1,6 @@
 ---
 title: Nucleus Configuration
-description: Customize Nucleus behavior with a NUCLEUS.md file.
+description: NUCLEUS.md — your standing instructions for the assistant you chat with in the dashboard.
 ---
 
 import { Aside } from '@astrojs/starlight/components';
@@ -10,10 +10,13 @@ import { Aside } from '@astrojs/starlight/components';
 It is stored **in your browser** (local storage), so it belongs to the browser you wrote it in — it is not shared with your team and does not follow you to another machine.
 
 <Aside type="tip" title="Which file do I want?">
-  **NUCLEUS.md configures the assistant you talk to** in the dashboard. For the
-  agent that *executes* your Runs, Schedules and Loops in the background — including
-  unattended firings — you want [NOVA.md](/guides/nova-config) instead. They are two
-  different agents with two different files; neither one reads the other's.
+  **NUCLEUS.md configures the assistant you talk to** in the dashboard — the one
+  that answers in chat and acts only when you ask. For the agent that *executes*
+  your Runs, Schedules and Loops in the background, including unattended
+  firings with no browser open, you want [NOVA.md](/guides/nova-config) instead
+  (and that one is stored on the server, against your account, because it has to
+  reach a 3 a.m. Schedule). Two different agents, two different files; neither
+  one reads the other's.
 </Aside>
 
 ## Where to Edit
@@ -21,11 +24,15 @@ It is stored **in your browser** (local storage), so it belongs to the browser y
 NUCLEUS.md is managed in the orchestrator dashboard:
 
 1. Open the orchestrator at your deployment URL
-2. Go to **Settings**
-3. Find the **NUCLEUS.md** section
+2. Go to **Settings** → **App AI Assistants**
+3. Find the **NUCLEUS.md** block, above the NOVA.md one
 4. Click **Edit NUCLEUS.md**
 
-Nucleus applies your NUCLEUS.md to every message you send. Maximum length is 10,000 characters.
+Nucleus applies your NUCLEUS.md to every message you send. The editor shows a
+live character count against a limit of **10,000 characters**, plus an estimate
+of the tokens your file adds to every Nucleus message. Past the limit the
+counter turns red and **Save** tells you how much to trim instead of writing —
+your text is left exactly as you typed it, never silently truncated.
 
 ## How It Works
 
@@ -79,6 +86,18 @@ auto-launch
 - When I say "go", treat it as a launch request
 ```
 
+## Improving your draft
+
+The editor carries the sparkle (✦) — the
+[prompt improver](/concepts/prompt-improver). Because this field holds a
+standing configuration rather than a one-off job, the sparkle here runs the
+**system-prompt** rewrite: it regroups your directives and preferences under
+your own headings, keeps your voice and your naming templates, and never turns
+"be more concise" into a numbered work order. The *instruction* rewrite — goal,
+steps, what "done" means — is what the same sparkle does in the Nucleus chat
+composer, or in a Run or Schedule field. Accept replaces the draft; Discard
+leaves it exactly as you typed it.
+
 ## Tips
 
 - Keep instructions clear and actionable — Nucleus follows them literally
@@ -90,4 +109,10 @@ auto-launch
 ## Next
 
 - [Nucleus](/concepts/nucleus) — what the chat assistant does.
-- [NOVA.md](/guides/nova-config) — the same idea for the coordinator that runs your work.
+- [NOVA.md](/guides/nova-config) — the standing file for the coordinator that
+  *executes* your Runs, Schedules and Loops, stored per account instead of per
+  browser.
+- [Prompt improver](/concepts/prompt-improver) — the ✦ on this editor, and why
+  it rewrites this field differently from a chat message.
+- [Settings](/concepts/settings#app-ai-assistants) — the rest of the App AI
+  Assistants section.
