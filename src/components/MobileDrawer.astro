@@ -107,7 +107,11 @@ const tree = menuTree(Astro.url.pathname);
      Reduced motion: the global safety net in custom.css collapses every
      transition to ~0ms, so the card and layer snap. The only thing JS must do is
      not sit on a 300ms timer waiting for an animation that never runs. */
-  (function () {
+  /* Deferred to DOM-ready: this component renders BEFORE `.page` in
+     PageFrame, so at parse time the card does not exist yet and the
+     guard below would bail silently on every load — the drawer looked
+     wired (markup + styles present) but no toggle ever did anything. */
+  function ccDrawerInit() {
     var DURATION = 300;
     var MOBILE = '(max-width: 50rem)';
 
@@ -238,5 +242,10 @@ const tree = menuTree(Astro.url.pathname);
         unpark();
       }
     });
-  })();
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', ccDrawerInit, { once: true });
+  } else {
+    ccDrawerInit();
+  }
 </script>
