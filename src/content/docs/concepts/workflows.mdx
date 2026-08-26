@@ -4,6 +4,7 @@ description: Draw a graph of agent runs, loops, prototypes, decisions and human 
 ---
 
 import { Aside } from '@astrojs/starlight/components';
+import BetaAside from '../../../components/BetaAside.astro';
 
 A **Workflow** is a graph you draw. You place nodes — agent runs, loops,
 prototypes, decisions, human approvals — connect them, and save the result as a
@@ -15,10 +16,10 @@ Where a [Run](/concepts/runs) is one agent doing one thing, and a
 workflow is the thing that puts several of those in a row and decides what
 happens next based on how each one turned out.
 
-<Aside type="note" title="Beta">
+<BetaAside feature="workflows">
 Workflows is in beta. The core flow is solid, but the experience is still
 evolving — expect changes as we refine it.
-</Aside>
+</BetaAside>
 
 ## One run, one workspace
 

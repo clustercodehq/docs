@@ -5,6 +5,7 @@ description: ClusterCode pricing tiers, resource limits, and feature availabilit
 
 import { Aside } from '@astrojs/starlight/components';
 import PlanLimitsTable from '../../../components/PlanLimitsTable.astro';
+import BetaTag from '../../../components/BetaTag.astro';
 
 The limits enforced on each plan are listed below. Every paid tier has finite,
 predictable caps: **Pro is 5x Starter and Enterprise is 20x Starter** on most
@@ -51,12 +52,12 @@ A few notes:
   carry per-project environment variables. The cap counts **active** projects only —
   archived projects are inert and don't consume a slot, so you can keep history
   without spending against the limit.
-- **[Active prototypes](/concepts/prototyping)** _(Beta)_ is a **per-user** cap on
+- **[Active prototypes](/concepts/prototyping)** <BetaTag feature="prototypes" /> is a **per-user** cap on
   how many prototype races can be **in flight** (contenders still working or
   queued) at once. A finished prototype frees its slot immediately — its preview
   DevBoxes staying alive doesn't count against this cap (container compute is
   governed by the container limits above).
-- **[Contenders per prototype](/concepts/prototyping)** _(Beta)_ is how many
+- **[Contenders per prototype](/concepts/prototyping)** <BetaTag feature="prototypes" /> is how many
   engine+model pairs a single prototype may race at once. It's checked when you
   create the prototype. Concurrency across those contenders is still governed by
   **Concurrent runs** above — extra contenders queue and start automatically as

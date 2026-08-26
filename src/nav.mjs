@@ -27,7 +27,7 @@
  * Item fields: label, slug, desc (palette subtitle), badge (sidebar only).
  */
 
-const beta = { text: 'Beta', variant: 'default', class: 'beta-badge' };
+import { betaBadge } from './beta.mjs';
 
 export const nav = [
   {
@@ -105,11 +105,11 @@ export const nav = [
       { label: 'Nova', slug: 'concepts/nova', desc: 'The coordinator behind every run' },
       { label: 'Schedules', slug: 'concepts/schedules', desc: 'Recurring autonomous cron jobs' },
       { label: 'Runs', slug: 'concepts/runs', desc: 'On-demand agent jobs you can steer' },
-      { label: 'Loops', slug: 'concepts/loops', desc: 'Run-until-verified standing goals', badge: beta },
-      { label: 'How a Loop run works', slug: 'concepts/loop-run-lifecycle', desc: 'Anatomy of a loop iteration', badge: beta },
-      { label: 'Prototyping', slug: 'concepts/prototyping', desc: 'Race agents on the same brief', badge: beta },
-      { label: 'Workflows', slug: 'concepts/workflows', desc: 'Draw a graph of runs, loops and approvals', badge: beta },
-      { label: 'How a Prototype race works', slug: 'concepts/prototype-race-lifecycle', desc: 'Anatomy of a prototype race', badge: beta },
+      { label: 'Loops', slug: 'concepts/loops', desc: 'Run-until-verified standing goals', badge: betaBadge('loops') },
+      { label: 'How a Loop run works', slug: 'concepts/loop-run-lifecycle', desc: 'Anatomy of a loop iteration', badge: betaBadge('loops') },
+      { label: 'Prototyping', slug: 'concepts/prototyping', desc: 'Race agents on the same brief', badge: betaBadge('prototypes') },
+      { label: 'Workflows', slug: 'concepts/workflows', desc: 'Draw a graph of runs, loops and approvals', badge: betaBadge('workflows') },
+      { label: 'How a Prototype race works', slug: 'concepts/prototype-race-lifecycle', desc: 'Anatomy of a prototype race', badge: betaBadge('prototypes') },
       { label: 'Multi-Agent Runs', slug: 'guides/multi-agent-runs', desc: 'A team of agents in one run' },
       { label: 'Engines', slug: 'concepts/subagents', desc: 'Claude Code, Codex and Copilot' },
     ],
@@ -131,9 +131,9 @@ export const nav = [
       { label: 'Launch from Ticket', slug: 'guides/launch-from-ticket', desc: 'Start a DevBox from an issue' },
       { label: 'Automate recurring work', slug: 'guides/recurring-work', desc: 'Three copy-paste Schedule recipes' },
       { label: 'Explore your fleet in the Observatory', slug: 'guides/explore-observatory', desc: 'Walkthrough of the galaxy view' },
-      { label: 'Create a Loop', slug: 'guides/create-a-loop', desc: 'Set up a run-until-verified loop', badge: beta },
-      { label: 'Create a Prototype', slug: 'guides/create-a-prototype', desc: 'Race contenders and promote a winner', badge: beta },
-      { label: 'Create a Workflow', slug: 'guides/create-a-workflow', desc: 'Draw a graph and fire it as one unit', badge: beta },
+      { label: 'Create a Loop', slug: 'guides/create-a-loop', desc: 'Set up a run-until-verified loop', badge: betaBadge('loops') },
+      { label: 'Create a Prototype', slug: 'guides/create-a-prototype', desc: 'Race contenders and promote a winner', badge: betaBadge('prototypes') },
+      { label: 'Create a Workflow', slug: 'guides/create-a-workflow', desc: 'Draw a graph and fire it as one unit', badge: betaBadge('workflows') },
       { label: 'Custom Containerfile', slug: 'guides/custom-containerfile', desc: 'Build your own runtime' },
       { label: 'Build from DevBox', slug: 'guides/build-image-from-container', desc: 'Snapshot a DevBox into an image' },
       { label: 'Nucleus Configuration', slug: 'guides/nucleus-config', desc: 'Customize Nucleus with NUCLEUS.md' },

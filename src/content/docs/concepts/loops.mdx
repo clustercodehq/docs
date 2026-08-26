@@ -6,6 +6,7 @@ description: Run-until-verified standing goals — a maker agent iterates, deter
 import PlanLimitsTable from '../../../components/PlanLimitsTable.astro';
 
 import { Aside } from '@astrojs/starlight/components';
+import BetaAside from '../../../components/BetaAside.astro';
 
 A **Loop** is a standing goal with a verifiable definition of done. Instead of
 prompting an agent and shepherding it turn by turn, you describe the outcome
@@ -207,8 +208,8 @@ you can see what it tried.
 
 ## Availability
 
-<Aside type="note" title="Beta">Loops is in beta — the mechanics below are
-stable, but expect the surface to keep evolving.</Aside>
+<BetaAside feature="loops">Loops is in beta — the mechanics below are
+stable, but expect the surface to keep evolving.</BetaAside>
 
 Loops are available on **every plan**, with a per-tier cap on how many can be
 active at once:
