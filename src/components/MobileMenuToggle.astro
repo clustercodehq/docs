@@ -1,14 +1,32 @@
 ---
-// Override: keep the custom element for sidebar overlay logic,
-// but hide the floating button (replaced by bottom nav "Menu" button)
+/**
+ * Override of Starlight's mobile menu toggle.
+ *
+ * Starlight's version flips `aria-expanded` on itself, which its own CSS reads
+ * (`[aria-expanded='true'] ~ .sidebar-pane`) to slide `#starlight__sidebar` in
+ * as a full-screen overlay. This site does not use that menu: the mobile menu is
+ * the behind-the-body drawer in MobileDrawer.astro, triggered from the bottom
+ * bar. Rather than leave Starlight's menu wired up underneath ours — two menus,
+ * one of them reachable by keyboard only and showing a different tree — this
+ * custom element is re-pointed at the drawer and never sets `aria-expanded` on
+ * itself, so the Starlight pane can no longer be revealed.
+ *
+ * The button stays in the markup (hidden — see the style block, and the
+ * `starlight-menu-button { display: none }` rule in custom.css) because
+ * Starlight's PageFrame slot contract expects the element, and because keeping
+ * one custom element means one place to notice if a Starlight upgrade changes
+ * how the pane is shown.
+ */
 ---
 
 <starlight-menu-button class="print:hidden">
 	<button
+		type="button"
 		aria-expanded="false"
 		aria-label={Astro.locals.t('menuButton.accessibleLabel')}
-		aria-controls="starlight__sidebar"
+		aria-controls="cc-mobile-drawer"
 		class="sl-flex md:sl-hidden mobile-menu-btn"
+		data-cc-drawer-toggle
 	>
 		<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="open-menu">
 			<line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line>
@@ -25,25 +43,19 @@
 
 		constructor() {
 			super();
-			this.btn.addEventListener('click', () => this.toggleExpanded());
+			// The click itself is handled by MobileDrawer.astro's delegated
+			// listener (it owns every `[data-cc-drawer-toggle]`), so there is
+			// nothing to bind here — only Escape, which Starlight scoped to the
+			// surrounding <nav> and which the drawer also handles document-wide.
 			const parentNav = this.closest('nav');
 			if (parentNav) {
 				parentNav.addEventListener('keyup', (e) => this.closeOnEscape(e));
 			}
 		}
 
-		setExpanded(expanded: boolean) {
-			this.setAttribute('aria-expanded', String(expanded));
-			document.body.toggleAttribute('data-mobile-menu-expanded', expanded);
-		}
-
-		toggleExpanded() {
-			this.setExpanded(this.getAttribute('aria-expanded') !== 'true');
-		}
-
 		closeOnEscape(e: KeyboardEvent) {
 			if (e.code === 'Escape') {
-				this.setExpanded(false);
+				(window as any).__ccMobileDrawer?.close();
 				this.btn.focus();
 			}
 		}
@@ -55,17 +67,5 @@
 <style>
 	button {
 		display: none;
-	}
-</style>
-
-<style is:global>
-	[data-mobile-menu-expanded] {
-		overflow: hidden;
-	}
-
-	@media (min-width: 50rem) {
-		[data-mobile-menu-expanded] {
-			overflow: auto;
-		}
 	}
 </style>

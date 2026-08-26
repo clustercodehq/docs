@@ -1047,7 +1047,7 @@ header.header {
 }
 
 /* ============================================================
-   MOBILE MENU PANEL — slide-up from bottom nav (portal-style)
+   MOBILE MENU — the "behind the body" drawer
    ============================================================ */
 @media (max-width: 50rem) {
   starlight-menu-button {
@@ -1073,136 +1073,176 @@ header.header {
   }
 }
 
-/* Transparent tap-catcher — closes the menu on an outside tap without dimming
-   the page. Matches the console/portal bottom nav, which dropped the dim
-   backdrop so the menu reads as a panel above the bar, not a modal. */
-.bottom-nav-backdrop {
-  display: none;
+/* ── The drawer layer (MobileDrawer.astro) ───────────────────────────────
+   Exact port of the orchestrator's MobileDrawerLayer
+   (core/apps/orchestrator/src/client/layout/mobile-drawer.tsx): a full-screen
+   layer that never moves and only fades, rendered BEFORE `.page` so the app
+   card slides aside to reveal it.
+
+   Deliberately NO z-index — on either the layer or the card. Stacking is pure
+   DOM order: while the card is parked its transform makes it a positioned,
+   stacking-context box that paints after this one. Adding a z-index here was
+   the regression the React version documents; do not "fix" anything with one.
+
+   Stays in the DOM while closed (opacity 0) so the reveal is instant, and is
+   `visibility: hidden` + `inert` so its 58 links stay out of the tab order.
+   The visibility delay defers the hide until the fade has finished. */
+.cc-drawer-layer {
   position: fixed;
   inset: 0;
-  z-index: 9997;
-  background: transparent;
-}
-
-/* Backdrop fades in with the menu (item 6) instead of display-snapping. */
-.bottom-nav-backdrop.open {
-  display: block;
-  animation: bn-backdrop-in 150ms ease-out;
-}
-
-/* Closing: quick fade-out held on the last frame until the JS removes .open. */
-.bottom-nav-backdrop.open.closing {
-  animation: bn-backdrop-out 120ms ease-in forwards;
-}
-
-.bottom-nav-menu {
-  display: none;
-  position: fixed;
-  bottom: 3.5rem;
-  left: 0;
-  right: 0;
-  z-index: 9998;
-  /* Height is driven by the grab-bar logic in BottomNav.astro (resting =
-     content height capped at 70% of the space above the bar; dragging or
-     tapping the bar takes it to the full content area). The max-height stays
-     as the hard ceiling for the no-JS case. The bar (z-9999) still paints in
-     front, so the menu tucks behind it. */
-  max-height: calc(100dvh - 4rem);
+  display: flex;
   flex-direction: column;
-  overflow: hidden;
-  background: var(--sl-color-bg-sidebar);
-  border-top: 1px solid var(--sl-color-hairline);
-  animation: slide-up 150ms ease-out;
-  transition: height 200ms ease-out;
+  /* The card sliver occupies the right 18% of the viewport; without the
+     padding the drawer's right-edge controls render underneath it. */
+  padding-right: calc(18% + 8px);
+  background: var(--sl-color-bg-nav);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 300ms ease, visibility 0s linear 300ms;
 }
 
-/* Follow the finger exactly while a drag is in flight. */
-.bottom-nav-menu.dragging {
-  transition: none;
+.cc-drawer-layer[data-open] {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transition: opacity 300ms ease, visibility 0s linear 0s;
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .bottom-nav-menu {
-    transition: none;
+/* The drawer is a mobile surface only — above the breakpoint the sidebar and
+   header nav are permanently visible and nothing can open it. */
+@media (min-width: 50rem) {
+  .cc-drawer-layer {
+    display: none;
   }
 }
 
-/* The list scrolls inside the sized sheet rather than the sheet growing. */
-.bn-menu-scroll {
+/* The blanket reduced-motion net further down zeroes transition DURATIONS but
+   not delays, which would leave the layer visible for 300ms after a close. */
+@media (prefers-reduced-motion: reduce) {
+  .cc-drawer-layer,
+  .cc-drawer-layer[data-open] {
+    transition-delay: 0s !important;
+  }
+}
+
+.cc-drawer-head {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  /* Top padding clears the notch on a phone; the right padding is the optical
+     correction the orchestrator's header uses — a small glyph in a 44px hit
+     target reads as sitting past the row line when it is flush with it. */
+  padding: max(env(safe-area-inset-top), 0.75rem) 0.375rem 0.75rem 1.25rem;
+}
+
+.cc-drawer-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  padding: 0;
+  border: none;
+  border-radius: 0.375rem;
+  background: transparent;
+  color: var(--sl-color-gray-2);
+  cursor: pointer;
+  transition: color 100ms ease, background-color 100ms ease;
+}
+
+.cc-drawer-close:hover {
+  color: var(--sl-color-text);
+  background: var(--sl-color-hairline-light);
+}
+
+.cc-drawer-close:focus-visible {
+  outline: 2px solid var(--docs-focus-ring, #005fb8);
+  outline-offset: -2px;
+}
+
+.cc-drawer-close svg {
+  width: 13px;
+  height: 13px;
+}
+
+/* The list scrolls inside the layer. The bottom padding clears the bottom bar,
+   which travels with the card and so overlaps the drawer's lower edge. */
+.cc-drawer-nav {
   flex: 1 1 auto;
   min-height: 0;
   overflow-y: auto;
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
+  padding-bottom: 5rem;
 }
 
-/* Grab bar — mirrors the orchestrator's MobileNavPanel handle. */
-.bn-grabber {
-  flex: 0 0 auto;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  padding: 0.5rem 0;
-  border: none;
-  background: transparent;
-  cursor: grab;
-  /* Stops the browser claiming the vertical drag for page scrolling before
-     pointermove ever fires. Without this the handle is barely draggable. */
-  touch-action: none;
+/* ── The app card (`.page`, parked aside) ────────────────────────────────
+   `transition: transform` ONLY — transform is compositor-animatable, and
+   putting border-radius in the transition list forces a repaint of the whole
+   viewport-sized layer on every frame. The radius/outline/shadow snap in at
+   each end, masked by the motion.
+
+   `transform-origin: 0% 45%` with `translateX(82%)` puts the card's LEFT edge
+   at 82% of the viewport and shrinks it toward that edge, so exactly the
+   remaining 18% stays visible as a tappable sliver at any width — the same
+   geometry as the orchestrator's card.
+
+   While closed `.page` gets no position and no z-index, so it creates no
+   stacking context; only the transform does, and only while parked.
+
+   `position: fixed` while parked is the one deliberate divergence from the
+   React original: a docs page scrolls the DOCUMENT and can be many viewports
+   tall, so scaling it in place would pivot around 45% of the document and
+   produce a column rather than a card. Pinning it to the viewport (and handing
+   it the window's scroll offset via scrollTop — see MobileDrawer.astro) gives
+   the transform a viewport-sized box, which is what the orchestrator's shell
+   already is. `display: block` goes with it: `.right-col` is `flex: 1`, so in a
+   height-constrained flex column it would shrink to the viewport and the card
+   could never be scrolled to the position the reader was actually at. */
+@media (max-width: 50rem) {
+  .page {
+    transform-origin: 0% 45%;
+    transition: transform 300ms ease-out;
+  }
+
+  .page[data-cc-parked] {
+    display: block;
+    position: fixed;
+    inset: 0;
+    height: 100vh;
+    height: 100dvh;
+    /* `.page`'s resting `min-height: 100vh` would out-rank `height: 100dvh`
+       whenever the browser chrome is showing, pushing the card's rounded
+       bottom edge below the viewport. */
+    min-height: 0;
+    overflow: hidden;
+    background: var(--sl-color-bg);
+    border-radius: 1.5rem;
+    outline: 1px solid var(--sl-color-hairline);
+    box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.45);
+  }
+
+  .page[data-cc-aside] {
+    transform: translateX(82%) scale(0.9);
+  }
+
+  /* Full-surface tap-catcher over the parked card. z-index is scoped to the
+     card's own stacking context and outranks everything inside it (the bottom
+     bar is z-9999); the light scrim signals "parked, not interactive". */
+  .page[data-cc-parked] .cc-card-catcher {
+    display: block;
+    position: absolute;
+    inset: 0;
+    z-index: 10000;
+    background: rgb(0 0 0 / 0.1);
+    cursor: pointer;
+  }
 }
 
-.bn-grabber:active {
-  cursor: grabbing;
-}
-
-.bn-grabber-pill {
-  display: block;
-  width: 2.5rem;
-  height: 0.25rem;
-  border-radius: 999px;
-  background: var(--sl-color-gray-3);
-  opacity: 0.5;
-  transition: opacity 150ms ease;
-}
-
-.bn-grabber:hover .bn-grabber-pill,
-.bn-grabber:focus-visible .bn-grabber-pill {
-  opacity: 0.85;
-}
-
-.bn-grabber:focus-visible {
-  outline: 2px solid var(--docs-focus-ring, #005fb8);
-  outline-offset: -2px;
-}
-
-.bottom-nav-menu.open {
-  display: flex;
-}
-
-/* Closing: matching slide-down + fade before the JS sets display:none. */
-.bottom-nav-menu.open.closing {
-  animation: bn-menu-out 120ms ease-in forwards;
-}
-
-@keyframes slide-up {
-  from { transform: translateY(8px); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
-}
-
-@keyframes bn-menu-out {
-  from { transform: translateY(0); opacity: 1; }
-  to { transform: translateY(8px); opacity: 0; }
-}
-
-@keyframes bn-backdrop-in {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-@keyframes bn-backdrop-out {
-  from { opacity: 1; }
-  to { opacity: 0; }
+.cc-card-catcher {
+  display: none;
 }
 
 /* ============================================================

@@ -1,0 +1,242 @@
+---
+/**
+ * The "behind the body" mobile drawer — the docs twin of the orchestrator's
+ * `apps/orchestrator/src/client/layout/mobile-drawer.tsx` (clustercodehq/core).
+ *
+ * Instead of a sheet sliding up OVER the page, the menu is a full-screen layer
+ * UNDERNEATH it: opening pushes the whole site aside as a scaled, rounded card
+ * hugging the right edge, and the menu is revealed as if it had been behind the
+ * page all along. Tapping the parked card slides it back. Same geometry, same
+ * durations, same easing as the orchestrator — the goal is one behaviour across
+ * every ClusterCode surface.
+ *
+ * This layer must render BEFORE `.page` in the DOM (see PageFrame.astro):
+ * neither element carries a z-index, so which one paints on top is decided by
+ * document order alone, exactly as in the React original. Do not "fix" a
+ * stacking problem here by adding a z-index.
+ *
+ * The menu content is `menuTree()` from src/nav.mjs — the same tree that builds
+ * the sidebar, the desktop header nav and the Ctrl+K palette. Nothing about the
+ * navigation is restated here.
+ */
+import { menuTree } from '../nav.mjs';
+import NavIcon from './NavIcon.astro';
+import Logo from './Logo.astro';
+
+const tree = menuTree(Astro.url.pathname);
+---
+
+<div id="cc-mobile-drawer" class="cc-drawer-layer" aria-hidden="true" inert>
+  <div class="cc-drawer-head">
+    <Logo variant="docs" size={22} />
+    {/* Mirrors the orchestrator drawer's header ✕, so the parked-card tap stays
+        the second door out and not the only one. */}
+    <button type="button" class="cc-drawer-close" aria-label="Close menu" data-cc-drawer-close>
+      <svg
+        viewBox="0 0 24 24"
+        aria-hidden="true"
+        focusable="false"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2.5"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line>
+      </svg>
+    </button>
+  </div>
+
+  <nav class="cc-drawer-nav" aria-label="Site navigation">
+    {tree.map((group) => (
+      <details class="bn-group" open={group.open}>
+        <summary class:list={['bottom-nav-menu-item', 'bn-group-row', { active: group.active }]}>
+          <NavIcon name={group.icon} />
+          <span class="bn-group-label">{group.label}</span>
+          <svg
+            class="bn-chevron"
+            aria-hidden="true"
+            focusable="false"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <polyline points="9 18 15 12 9 6"></polyline>
+          </svg>
+        </summary>
+        <ul class="bn-sublist">
+          {group.items.map((item) => (
+            <li>
+              <a
+                href={item.href}
+                class:list={['bn-subitem', { current: item.current }]}
+                aria-current={item.current ? 'page' : undefined}
+                {...(item.external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+              >
+                <span class="bn-subitem-label">{item.label}</span>
+                {item.badge && <span class="sl-badge beta-badge bn-badge">{item.badge}</span>}
+              </a>
+            </li>
+          ))}
+        </ul>
+      </details>
+    ))}
+  </nav>
+</div>
+
+<script is:inline>
+  /* Drawer state machine. Two elements move together:
+       • this layer  — fades in (300ms) but never moves;
+       • `.page`     — the app card, translated + scaled aside (300ms ease-out).
+
+     The one place this HAS to diverge from the React original: the orchestrator
+     shell is viewport-sized and scrolls internally, so it can be scaled where it
+     stands. A docs page scrolls the DOCUMENT and is many viewports tall, so
+     scaling it in place would pivot around 45% of the *document* and produce a
+     column, not a card. While parked we therefore pin `.page` to the viewport
+     (`position: fixed; height: 100dvh; overflow: hidden`) and hand it the window's
+     scroll offset via `scrollTop`, which renders identically to the in-flow page
+     but gives the transform a viewport-sized box. Closing reverses it once the
+     return transition has settled, restoring the window scroll — so `parked`
+     (positioning) and `aside` (the transform) are two separate flags, and
+     `parked` outlives the close by the length of the animation.
+
+     Reduced motion: the global safety net in custom.css collapses every
+     transition to ~0ms, so the card and layer snap. The only thing JS must do is
+     not sit on a 300ms timer waiting for an animation that never runs. */
+  (function () {
+    var DURATION = 300;
+    var MOBILE = '(max-width: 50rem)';
+
+    var layer = document.getElementById('cc-mobile-drawer');
+    var page = document.querySelector('.page');
+    if (!layer || !page) return;
+
+    var isOpen = false;
+    var savedScrollY = 0;
+    var unparkTimer = 0;
+    var returnFocusTo = null;
+
+    function prefersReducedMotion() {
+      return typeof matchMedia !== 'undefined' && matchMedia('(prefers-reduced-motion: reduce)').matches;
+    }
+
+    function isMobile() {
+      return typeof matchMedia === 'undefined' || matchMedia(MOBILE).matches;
+    }
+
+    function setTriggerState(expanded) {
+      var triggers = document.querySelectorAll('[data-cc-drawer-toggle]');
+      for (var i = 0; i < triggers.length; i++) {
+        triggers[i].setAttribute('aria-expanded', String(expanded));
+        triggers[i].classList.toggle('active', expanded);
+      }
+    }
+
+    function onKeydown(e) {
+      if (e.key === 'Escape' || e.code === 'Escape') {
+        e.preventDefault();
+        close();
+      }
+    }
+
+    function open(from) {
+      if (isOpen || !isMobile()) return;
+      window.clearTimeout(unparkTimer);
+      isOpen = true;
+      returnFocusTo = from || document.activeElement;
+
+      savedScrollY = window.scrollY || document.documentElement.scrollTop || 0;
+      // Park first, THEN transform: pinning the card and giving it the window's
+      // scroll offset is visually a no-op, so the transform still animates from
+      // an identical-looking frame. The reflow commits that frame.
+      page.setAttribute('data-cc-parked', '');
+      page.scrollTop = savedScrollY;
+      void page.offsetHeight;
+      page.setAttribute('data-cc-aside', '');
+
+      layer.setAttribute('data-open', '');
+      layer.setAttribute('aria-hidden', 'false');
+      layer.removeAttribute('inert');
+      setTriggerState(true);
+      document.addEventListener('keydown', onKeydown);
+
+      // The layer is `visibility: hidden` while closed; focus() on a hidden
+      // element is a no-op, so force the style change to land first.
+      void layer.offsetHeight;
+      var closeBtn = layer.querySelector('[data-cc-drawer-close]');
+      if (closeBtn) closeBtn.focus();
+    }
+
+    function unpark() {
+      page.removeAttribute('data-cc-parked');
+      page.scrollTop = 0;
+      // Un-pinning gives the document its height back; the window scroll was
+      // clamped to 0 while the card was fixed, so put it back where it was.
+      try {
+        window.scrollTo({ top: savedScrollY, left: 0, behavior: 'instant' });
+      } catch (e) {
+        window.scrollTo(0, savedScrollY);
+      }
+    }
+
+    function close() {
+      if (!isOpen) return;
+      isOpen = false;
+      page.removeAttribute('data-cc-aside');
+      layer.removeAttribute('data-open');
+      layer.setAttribute('aria-hidden', 'true');
+      layer.setAttribute('inert', '');
+      setTriggerState(false);
+      document.removeEventListener('keydown', onKeydown);
+
+      var target = returnFocusTo;
+      returnFocusTo = null;
+      if (target && typeof target.focus === 'function' && document.contains(target)) target.focus();
+
+      window.clearTimeout(unparkTimer);
+      unparkTimer = window.setTimeout(unpark, prefersReducedMotion() ? 0 : DURATION + 20);
+    }
+
+    function toggle(from) {
+      if (isOpen) close();
+      else open(from);
+    }
+
+    // Public seam — the bottom bar's Menu button and Starlight's own (hidden)
+    // menu toggle both drive THIS drawer, so the site can never end up with two
+    // mobile menus.
+    window.__ccMobileDrawer = { open: open, close: close, toggle: toggle, isOpen: function () { return isOpen; } };
+
+    document.addEventListener('click', function (e) {
+      var trigger = e.target.closest && e.target.closest('[data-cc-drawer-toggle]');
+      if (trigger) {
+        e.preventDefault();
+        toggle(trigger);
+        return;
+      }
+      // Tap-catcher over the parked card, and the drawer's own ✕.
+      if (e.target.closest && (e.target.closest('.cc-card-catcher') || e.target.closest('[data-cc-drawer-close]'))) {
+        e.preventDefault();
+        close();
+        return;
+      }
+      // An in-page anchor inside the drawer navigates without a document swap,
+      // so the drawer would stay up over the destination.
+      if (isOpen && e.target.closest && e.target.closest('#cc-mobile-drawer a')) close();
+    });
+
+    // Leaving the mobile breakpoint with the drawer open would strand the card
+    // aside on a desktop layout that has no way to dismiss it.
+    window.addEventListener('resize', function () {
+      if (isOpen && !isMobile()) {
+        close();
+        window.clearTimeout(unparkTimer);
+        unpark();
+      }
+    });
+  })();
+</script>

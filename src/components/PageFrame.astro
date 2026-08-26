@@ -1,6 +1,7 @@
 ---
 import MobileMenuToggle from 'virtual:starlight/components/MobileMenuToggle';
 import BottomNav from './BottomNav.astro';
+import MobileDrawer from './MobileDrawer.astro';
 
 const { hasSidebar, entry } = Astro.locals.starlightRoute;
 const isHomePage = !entry?.slug || entry.slug === '';
@@ -21,6 +22,11 @@ function isActive(prefix: string) {
   return prefix !== '' && currentPath.startsWith(prefix);
 }
 ---
+
+{/* The behind-the-body mobile drawer's layer. It MUST stay before `.page`:
+    neither carries a z-index, so DOM order alone decides that the app card
+    paints on top of the menu it slides aside to reveal. */}
+<MobileDrawer />
 
 <div class="page sl-flex">
 	{
@@ -95,9 +101,14 @@ function isActive(prefix: string) {
 		<div class="main-frame"><slot /></div>
 	</div>
 	<BottomNav />
-</div>
-
-<div id="cc-banner" hidden role="dialog" aria-label="Cookie consent" data-testid="cookie-consent-banner">
+	{/* Tap-catcher, not a click handler on the card itself: an overlay owns the
+	    whole parked surface first, so a tap cannot be half-delivered to a scaled
+	    control underneath before the card slides back. Hidden unless parked. */}
+	<div class="cc-card-catcher" aria-hidden="true"></div>
+	{/* Inside `.page` on purpose: the banner is position:fixed, so its DOM home
+	    costs nothing in layout but decides whether it travels with the card. Left
+	    outside, it floated over the drawer while the page was parked aside. */}
+	<div id="cc-banner" hidden role="dialog" aria-label="Cookie consent" data-testid="cookie-consent-banner">
   <span>
     We use an optional functional preference and Google Analytics cookies to understand which pages
     are visited — depending on your region, on by default (switch it off here) or only after you
@@ -108,6 +119,7 @@ function isActive(prefix: string) {
     <button id="cc-reject" data-testid="cookie-reject-btn">Only necessary</button>
     <button id="cc-accept" data-testid="cookie-accept-btn">Accept all</button>
   </span>
+	</div>
 </div>
 
 <script is:inline>

@@ -87,10 +87,10 @@ const { sidebar } = Astro.locals.starlightRoute;
     }
 
     function init() {
-      // The mobile menu sheet's accordion sections are the same <details> shape,
+      // The mobile drawer's accordion sections are the same <details> shape,
       // so they get the same fold rather than a second copy of this logic.
       var groups = document.querySelectorAll(
-        '.sidebar details, #starlight__sidebar details, .bottom-nav-menu details'
+        '.sidebar details, #starlight__sidebar details, #cc-mobile-drawer details'
       );
       groups.forEach(enhance);
     }
