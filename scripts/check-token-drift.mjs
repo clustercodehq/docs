@@ -28,15 +28,15 @@ const CANONICAL = [
   {
     selector: ":root[data-theme='dark']",
     tokens: {
-      '--sl-color-bg': '#1e1e1e', // core bg (dark)
-      '--sl-color-bg-nav': '#252526', // core surface (dark)
-      '--sl-color-bg-sidebar': '#252526', // core surface (dark)
-      '--sl-color-hairline': '#3c3c3c', // core border (dark)
+      '--sl-color-bg': '#000000', // core bg (dark)
+      '--sl-color-bg-nav': '#0a0a0b', // core surface (dark)
+      '--sl-color-bg-sidebar': '#0a0a0b', // core surface (dark)
+      '--sl-color-hairline': '#232326', // core border (dark)
       '--sl-color-accent': '#10c0f0', // brand green/cyan (dark)
       '--sl-color-text-accent': '#10c0f0', // brand green/cyan (dark)
       '--docs-green': '#10c0f0', // brand green/cyan (dark)
-      '--docs-surface': '#252526', // core surface (dark)
-      '--docs-border2': '#3c3c3c', // core border (dark)
+      '--docs-surface': '#0a0a0b', // core surface (dark)
+      '--docs-border2': '#232326', // core border (dark)
       '--docs-focus-ring': '#569cd6', // core --accent-blue (dark)
     },
   },

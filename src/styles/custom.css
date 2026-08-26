@@ -26,27 +26,27 @@
 
 /* Dark theme — matches portal/orchestrator dark mode */
 :root[data-theme='dark'] {
-  --sl-color-bg: #1e1e1e;
-  --sl-color-bg-nav: #252526;
-  --sl-color-bg-sidebar: #252526;
-  --sl-color-hairline-light: #2d2d2d;
-  --sl-color-hairline: #3c3c3c;
+  --sl-color-bg: #000000;
+  --sl-color-bg-nav: #0a0a0b;
+  --sl-color-bg-sidebar: #0a0a0b;
+  --sl-color-hairline-light: #141416;
+  --sl-color-hairline: #232326;
   --sl-color-white: #d4d4d4;
   --sl-color-gray-1: #cccccc;
   --sl-color-gray-2: #808080;
   --sl-color-gray-3: #616161;
-  --sl-color-gray-4: #3c3c3c;
-  --sl-color-gray-5: #252526;
-  --sl-color-gray-6: #1e1e1e;
-  --sl-color-black: #181818;
+  --sl-color-gray-4: #232326;
+  --sl-color-gray-5: #0a0a0b;
+  --sl-color-gray-6: #000000;
+  --sl-color-black: #000000;
   --sl-color-accent-low: rgba(16, 192, 240, 0.1);
   --sl-color-accent: #10c0f0;
   --sl-color-accent-high: #a0e8ff;
   --sl-color-text: #cccccc;
   --sl-color-text-accent: #10c0f0;
   --docs-green: #10c0f0;
-  --docs-border2: #3c3c3c;
-  --docs-surface: #252526;
+  --docs-border2: #232326;
+  --docs-surface: #0a0a0b;
   --docs-muted: #808080;
   /* Keyboard focus ring — accent blue, matches core Button :focus-visible
      (packages/ui/src/theme.css --accent-blue dark #569cd6). */
@@ -91,16 +91,16 @@
 
 /* Code blocks — match portal code snippet styling */
 :root[data-theme='dark'] .expressive-code {
-  --ec-codeBg: #252526;
-  --ec-codeBorder: #4a4a4a;
+  --ec-codeBg: #0a0a0b;
+  --ec-codeBorder: #2c2c31;
   --ec-brdRad: 8px;
   --ec-brdWd: 1.25px;
-  --ec-brdCol: #4a4a4a;
+  --ec-brdCol: #2c2c31;
   --ec-codePadBlock: 0.75rem;
   --ec-codePadInline: 1.125rem;
-  --ec-frm-edTabBarBg: #1e1e1e;
-  --ec-frm-trmTtbBg: #1e1e1e;
-  --ec-frm-trmTtbBrdBtmCol: #3c3c3c;
+  --ec-frm-edTabBarBg: #000000;
+  --ec-frm-trmTtbBg: #000000;
+  --ec-frm-trmTtbBrdBtmCol: #232326;
 }
 
 :root[data-theme='light'] .expressive-code {
@@ -319,8 +319,8 @@ starlight-search button {
 
 :root[data-theme='dark'] site-search button,
 :root[data-theme='dark'] starlight-search button {
-  background-color: #2d2d2d !important;
-  border: 1.25px solid #4a4a4a !important;
+  background-color: #141416 !important;
+  border: 1.25px solid #2c2c31 !important;
   color: #808080 !important;
 }
 
@@ -347,8 +347,8 @@ starlight-search button kbd {
 
 :root[data-theme='dark'] site-search button kbd,
 :root[data-theme='dark'] starlight-search button kbd {
-  background-color: #3c3c3c !important;
-  border: 1px solid #4a4a4a !important;
+  background-color: #1c1c1f !important;
+  border: 1px solid #2c2c31 !important;
   color: #616161 !important;
 }
 
@@ -611,8 +611,8 @@ header.header {
 }
 
 :root[data-has-hero][data-theme='dark'] {
-  --sl-color-bg: #1e1e1e;
-  --sl-color-bg-nav: #252526;
+  --sl-color-bg: #000000;
+  --sl-color-bg-nav: #0a0a0b;
 }
 
 :root[data-has-hero] .header {
