@@ -74,6 +74,26 @@ image shows up in the runtime picker.
   ```
 </Aside>
 
+## Extra instructions in the browser
+
+You don't have to hand-write a whole Containerfile to make a small change. On
+the **[Build Image](/images/build)** page, an **Advanced** section (Linux
+images, Pro plan and above) has an **Extra Instructions** field: a Monaco
+editor with Dockerfile syntax highlighting. What you type there is appended to
+the generated Containerfile as its own `# === Extra instructions ===` block,
+placed **after** ClusterCode's own finalize/cleanup step — the build then
+resets back to the non-root `developer` user, so anything your instructions
+left as `root` doesn't leak into the running DevBox.
+
+{/* SCREENSHOT: image-containerfile-editor — the Advanced section on the Build Image page open, showing the Extra Instructions Monaco editor with a few appended RUN lines */}
+
+Because your instructions run after the base image and its capabilities are
+already assembled, `FROM`, `ENTRYPOINT` and `CMD` directives aren't allowed
+here — the build rejects the field if it finds one. Use it for the kind of
+one-off tweak that doesn't justify a whole custom Containerfile: an extra
+`RUN apt-get install`, an environment variable, a config file written with
+`RUN echo`.
+
 ## Using your image
 
 A custom image lives on the **worker that built it**, so the launch has to land

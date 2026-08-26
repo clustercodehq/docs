@@ -21,6 +21,21 @@ Workflows is in beta. The core flow is solid, but the experience is still
 evolving — expect changes as we refine it.
 </BetaAside>
 
+## The canvas
+
+You build a workflow on a blank canvas. Drag on the nodes you need — Agent
+Run, Loop and Prototype to do work; Decision and Human Approval to route —
+and connect them with edges. A work node takes exactly one outgoing
+connection; only a Decision or Approval fans out, one edge per labelled
+branch it can produce (see [The five node kinds](#the-five-node-kinds) and
+[How a Decision decides](#how-a-decision-decides) below). A connection can
+also point backwards — drawn dashed and capped `⟲ max N` — so a
+"review failed → fix → review again" cycle is expressible without running
+forever (see [Bounded loop-backs](#bounded-loop-backs)). Save the graph as a
+reusable definition; firing it starts a run.
+
+{/* SCREENSHOT: workflow-canvas — the workflow editor canvas with a handful of connected nodes, a labelled decision branch, and a dashed capped back-edge */}
+
 ## One run, one workspace
 
 Every node in a single workflow run shares **one DevBox** and **one git branch**,
@@ -137,11 +152,55 @@ the work it did.
 The definition page keeps the full **run history** for that workflow, and while
 one is in flight it carries a live banner through to it.
 
+## Watching a run
+
+A firing walks the graph **one node at a time**, all of it in the run's one
+shared DevBox on its one branch — the same workspace every node before it has
+been writing to. Open the run and you watch that walk happen: each node lights
+up as it starts, and finishes into whichever status its kind can produce
+before the run moves to whatever the graph says comes next.
+
+If the graph carries a **Human Approval** node, the run stops there and waits
+— its status parks until someone answers, however long that takes — then
+resumes down whichever branch the answer selects.
+
+{/* SCREENSHOT: workflow-run-trace — an in-flight workflow run with the graph coloured by node status and the execution-order timeline alongside it */}
+
 ## Scheduling a workflow
 
 A [Schedule](/concepts/schedules) can fire a workflow the same way it fires a
 run — on a cron expression, or on an interval. The schedule references the
 workflow by id, so it always fires the current saved definition.
+
+## Workflow Library
+
+Drawing a graph from an empty canvas is the slow way to start. The
+**Workflow Library** is a docked panel on the Workflows page — titled
+"Workflow Library", collapsed by default — with 11 curated graphs for common
+shapes: an issue taken all the way to a merge-ready PR, a tournament between
+two competing approaches, a progressive rollout with auto-rollback. Picking
+one is different from the Loop Library: **Use** navigates you
+away, to `/workflows/new?template=<id>`, and opens the graph editor there
+already populated — every node, every labelled edge, every capped back-edge,
+laid out and ready to read. As with the Loop Library, the host axis is left
+blank — worker, DevBox, image, repository travel with your account, not the
+template — so you always fill those in before you can save and fire it.
+
+{/* SCREENSHOT: workflow-library — the docked Workflow Library panel on the Workflows page, showing template cards with tags, a Details toggle and a Use button */}
+
+| Template | What it does |
+|---|---|
+| **Hello, workflow** | A read-only tour of your repository, then a branch on how it went — the smallest graph that is still a workflow. |
+| **Fix until green** | Do the work, re-check, loop back on failure up to three times, then ask a human before shipping. |
+| **Issue → agent review → your approval** | One agent implements a fix, a fresh agent reviews the diff against the issue, and you approve the resulting PR. |
+| **Tight loop** | Build and test in one node, gate on the real test command, loop back until it exits 0. |
+| **Triage router** | Reads an issue once, classifies what it really is, then hands it to the right downstream handler. |
+| **Adversarial verification** | One agent builds it, a fresh agent tries to refute it, and the verdict decides whether to redo the work. |
+| **Tournament of approaches** | Two candidate implementations on two branches, judged head-to-head by an agent decision, winner shipped. |
+| **Progressive rollout with auto-rollback** | Builds, gates on tests, deploys behind a flag, raises traffic in steps, and rolls back automatically when health drops. |
+| **Closed observability loop** | Ships the change, watches production for anomalies over a real observation window, and feeds what the telemetry says back into the fix. |
+| **The SDLC, drawn as a graph** | The whole lifecycle as ten explicit nodes, using every node kind, with both its review and monitoring cycles drawn and capped. |
+| **Issue in, merge-ready PR out** | Sixteen nodes, two capped loops, exactly one human gate — the graph translation of ClusterCode's own autonomous delivery skill. |
 
 ## Availability
 
