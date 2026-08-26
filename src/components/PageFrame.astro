@@ -187,6 +187,11 @@ function isActive(prefix: string) {
   #cc-banner {
     position: fixed;
     inset: auto 0 0 0;
+    /* Clear the mobile bottom bar. The bar is `position: fixed; bottom: 0`
+       at z-9999 and is 3.5rem tall, so a banner also pinned to bottom:0 has
+       its action buttons ("Only necessary" / "Accept all") painted over and
+       untappable. Above the bar's breakpoint this resolves to 0. */
+    bottom: var(--cc-bottom-nav-clearance, 0px);
     z-index: 200;
     display: flex;
     flex-wrap: wrap;

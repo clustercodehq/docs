@@ -159,6 +159,11 @@ const tree = menuTree(Astro.url.pathname);
       // an identical-looking frame. The reflow commits that frame.
       page.setAttribute('data-cc-parked', '');
       page.scrollTop = savedScrollY;
+      /* The parked card is its own scroll container, so its fixed/absolute
+         children (bottom bar, cookie banner, tap-catcher) scroll away with the
+         content instead of staying pinned to its visible bottom. Publish the
+         offset so CSS can translate them back down by exactly that much. */
+      page.style.setProperty('--cc-parked-scroll', savedScrollY + 'px');
       void page.offsetHeight;
       page.setAttribute('data-cc-aside', '');
 
@@ -178,6 +183,7 @@ const tree = menuTree(Astro.url.pathname);
     function unpark() {
       page.removeAttribute('data-cc-parked');
       page.scrollTop = 0;
+      page.style.removeProperty('--cc-parked-scroll');
       // Un-pinning gives the document its height back; the window scroll was
       // clamped to 0 while the card was fixed, so put it back where it was.
       try {

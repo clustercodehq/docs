@@ -1176,6 +1176,38 @@ header.header {
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
   padding-bottom: 5rem;
+  /* Transparent TRACK. The global `*` rule sets the track to --sl-color-bg,
+     an opaque fill, which paints a solid band down the drawer's edge because
+     the drawer's ground is --sl-color-bg-nav, not --sl-color-bg. Chrome
+     ignores ::-webkit-scrollbar-* once scrollbar-color is set, so the
+     standard property is the effective lever. */
+  scrollbar-color: var(--docs-border2) transparent;
+}
+.cc-drawer-nav::-webkit-scrollbar-track,
+.cc-drawer-nav::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/* The bar's own height, published so surfaces that must sit ABOVE it (the
+   cookie banner) can reserve exactly that much and stay in sync if it
+   changes. Only set where the bar is actually displayed. */
+@media (max-width: 50rem) {
+  :root:not([data-has-hero]) {
+    --cc-bottom-nav-clearance: calc(3.5rem + env(safe-area-inset-bottom, 0px));
+  }
+}
+
+/* While the card is parked it becomes the scroll container AND (through its
+   transform) the containing block for its fixed children — so `bottom: 0`
+   resolves against the padding box and then scrolls away with the content:
+   at scrollTop 1083 the bar rendered at y = -150, off the top of the card.
+   Translating them back down by the captured offset re-pins them to the
+   card's visible bottom. The tap-catcher is absolute and needs the same
+   correction, or the parked card is only tappable near its top. */
+.page[data-cc-parked] > .bottom-nav,
+.page[data-cc-parked] > #cc-banner,
+.page[data-cc-parked] > .cc-card-catcher {
+  transform: translateY(var(--cc-parked-scroll, 0px));
 }
 
 /* ── The app card (`.page`, parked aside) ────────────────────────────────
