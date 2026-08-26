@@ -16,10 +16,13 @@ in the two-layer model — distinct from the engine that writes the code.
   Like [Nucleus](/concepts/nucleus), Nova's coordination is powered
   internally by **Anthropic (Claude)** models, drawing on your plan's AI
   allowance. To add usage beyond your plan — or run on your own account —
-  **bring your own key** in
-  [Settings → Environment Variables](/concepts/settings#environment-variables): an
-  **Anthropic API key** or a **Claude OAuth token**. (The in-DevBox engines
-  may use their own credentials — see [Engines](/concepts/subagents).)
+  **bring your own key**: an **Anthropic API key** or a **Claude OAuth token**
+  stored under
+  [Environment Variables → Agent Secrets](/concepts/settings#environment-variables),
+  then switched on under
+  [Settings → App AI Assistants](/concepts/settings#app-ai-assistants) — one
+  switch, covering Nova and [Nucleus](/concepts/nucleus) together. (The in-DevBox
+  engines may use their own credentials — see [Engines](/concepts/subagents).)
 </Aside>
 
 ## Nucleus vs Nova

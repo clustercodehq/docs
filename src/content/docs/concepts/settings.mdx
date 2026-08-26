@@ -27,11 +27,12 @@ groups:
   alternative to signing each agent in per worker: the **Claude OAuth token**
   (`CLAUDE_CODE_OAUTH_TOKEN`), **Anthropic API key** (`ANTHROPIC_API_KEY`),
   **GitHub Copilot token** (`COPILOT_GITHUB_TOKEN`), and **OpenAI API key**
-  (`OPENAI_API_KEY`). The Claude and Anthropic keys additionally carry two
-  toggles — **Use for Nucleus (Bring Your Own Key)** routes Nucleus's own
-  requests through your key, and **Use for DevBox authentication** injects the
-  key into the DevBoxes you launch; the Copilot and OpenAI tokens are plain
-  injected tokens. See
+  (`OPENAI_API_KEY`). The Claude and Anthropic keys additionally carry a
+  **Use for DevBox authentication** toggle, which injects the key into the
+  DevBoxes you launch; the Copilot and OpenAI tokens are plain injected tokens.
+  Running Nova, Nucleus and the [prompt improver](/concepts/prompt-improver) on
+  your Claude credential is a separate switch that lives in
+  [App AI Assistants](#app-ai-assistants), not on the credential row. See
   [agent secrets](/reference/environment-variables/#agent-secrets).
 - **Global variables** — free-form variables injected into **every** DevBox
   you launch. Mark a variable **secret** to encrypt it at rest and redact its

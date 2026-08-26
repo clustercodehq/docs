@@ -167,10 +167,14 @@ The improver runs on a fast Claude model and its usage comes out of your
 plan's **monthly AI allowance**, the same pot as [Nucleus](/concepts/nucleus)
 and [Nova](/concepts/nova) — see [AI Credits](/guides/ai-credits).
 
-- **[Bring your own Claude subscription or key](/concepts/byo-subscription)**
-  ([Settings → Environment Variables](/concepts/settings#environment-variables) →
-  Agent Secrets) and improves run on your credential instead — they don't draw
-  down the allowance at all.
+- **[Bring your own Claude subscription or key](/concepts/byo-subscription)** and
+  improves run on your credential instead — they don't draw down the allowance at
+  all. Store the credential under
+  [Environment Variables → Agent Secrets](/concepts/settings#environment-variables),
+  then switch it on under
+  [Settings → App AI Assistants](/concepts/settings#app-ai-assistants) — one
+  switch, covering the improver, [Nova](/concepts/nova) and
+  [Nucleus](/concepts/nucleus) together.
 - **On the Free plan** the improver is bring-your-own only. Without a connected
   credential the panel says so and no request is made.
 - **When the allowance is exhausted** the sparkle turns amber and, instead of a
