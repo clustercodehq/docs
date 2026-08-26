@@ -1262,13 +1262,16 @@ header.header {
 
   /* Full-surface tap-catcher over the parked card. z-index is scoped to the
      card's own stacking context and outranks everything inside it (the bottom
-     bar is z-9999); the light scrim signals "parked, not interactive". */
+     bar is z-9999).
+
+     Deliberately UNTINTED, matching packages/ui's AppDrawerCard: the catcher
+     exists to make the parked page inert, not to dim it. A transparent box
+     still receives pointer events, so the blocking behaviour is unchanged. */
   .page[data-cc-parked] .cc-card-catcher {
     display: block;
     position: absolute;
     inset: 0;
     z-index: 10000;
-    background: rgb(0 0 0 / 0.1);
     cursor: pointer;
   }
 }
