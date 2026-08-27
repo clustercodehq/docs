@@ -94,6 +94,17 @@ Naming an input in your instructions still helps when there are several — "fix
 the issue in `repoUrl`" reads better than "fix the issue in the repo". It just
 is not a substitution.
 
+If you do write `{issueNumber}`, the form stops you and says so:
+
+> `{issueNumber}` is an input, not a blank — delete the braces.
+
+That message exists because braces already mean something else here. A
+[Shortcut](/concepts/shortcuts) template uses `{issueId}` for a hole **you** fill
+in before the agent ever sees the text, which is the opposite of an input: an
+input's value arrives later, from you at firing time or from the schedule's own
+fetch. Braces around anything else keep the ordinary "fill this in first"
+behaviour.
+
 <Aside type="caution" title="Why it works this way">
 Input values routinely come from somewhere you do not control — an issue title,
 a PR body, a row someone else wrote. If a value were pasted into your
