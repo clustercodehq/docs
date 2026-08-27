@@ -4,6 +4,9 @@ description: The in-platform AI assistant that manages your farm.
 ---
 
 import PlanLimitsTable from '../../../components/PlanLimitsTable.astro';
+import ThemedImage from '../../../components/ThemedImage.astro';
+import nucleusDark from '../../../assets/screenshots/nucleus-assistant-dark-20260826.png';
+import nucleusLight from '../../../assets/screenshots/nucleus-assistant-light-20260826.png';
 
 import { Aside } from '@astrojs/starlight/components';
 
@@ -42,7 +45,12 @@ When you ask Nucleus to do something, it:
 Ask it anything from its chat panel, open from anywhere in the orchestrator
 dashboard, and follow along as it works through the steps live.
 
-{/* SCREENSHOT: nucleus-assistant — Nucleus's chat panel mid-conversation, showing a request, its steps, and a result */}
+<ThemedImage
+  dark={nucleusDark}
+  light={nucleusLight}
+  title="Nucleus"
+  alt="The orchestrator dashboard with the Nucleus chat panel docked on the right, mid-conversation: a request for a fleet summary, the get-infrastructure-state tool call it ran, and the paragraph it wrote back describing the online workers and their DevBoxes."
+/>
 
 ## Budget
 
