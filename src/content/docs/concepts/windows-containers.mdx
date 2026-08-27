@@ -4,6 +4,9 @@ description: Real Windows VM DevBoxes — .NET, the desktop, the lot. Not a Linu
 ---
 
 import { Aside } from '@astrojs/starlight/components';
+import ThemedImage from '../../../components/ThemedImage.astro';
+import winDesktopDark from '../../../assets/screenshots/windows-devbox-desktop-dark-20260827.png';
+import winDesktopLight from '../../../assets/screenshots/windows-devbox-desktop-light-20260827.png';
 
 Most cloud agent platforms are Linux-only. ClusterCode boots **real Windows VM
 DevBoxes** — an actual Windows VM under the hood — so if your stack is .NET, your
@@ -20,6 +23,16 @@ running on a [Cloud worker](/concepts/cloud-workers) or one of your own
 Everything that works on a Linux DevBox works here: the same
 [Agent Runs](/concepts/runs), the same [Schedules](/concepts/schedules), the same
 live terminal, and the same [visual desktop](/guides/visual-testing) — on Windows.
+
+This is that desktop, in the browser — the real Windows shell, taskbar and all,
+served from a DevBox running on a worker:
+
+<ThemedImage
+  dark={winDesktopDark}
+  light={winDesktopLight}
+  title="Windows DevBox"
+  alt="A Windows Server 2025 desktop rendered in the browser from a running DevBox, showing the wallpaper, desktop icons, the taskbar with search and Explorer, and the ClusterCode status bar naming the DevBox, its worker, and its image."
+/>
 
 ## When you want one
 
