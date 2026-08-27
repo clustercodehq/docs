@@ -16,13 +16,21 @@ Every night, turn "ready" tickets into draft PRs while you sleep — the recurri
 counterpart of the
 [Runs backlog sweep](/guides/run-on-demand#sweep-the-backlog-until-a-pr).
 
-**The prompt** — paste this into the schedule's prompt field:
+This one is a **[fan-out](/concepts/inputs-and-fan-out)**: instead of one agent
+holding the whole backlog, each ticket gets its own agent and its own DevBox.
+That is the difference between one enormous branch in the morning and one PR per
+issue.
+
+**The prompt** — what to do with **one** ticket. Paste this into the schedule's
+prompt field:
 
 ```text
-For each open issue labeled `ready-for-dev` that doesn't already have an open
-pull request, implement it in its own DevBox, run the test suite, and open a
-draft PR. Skip anything you can't finish cleanly.
+Implement the issue you have been given, run the test suite, and open a draft
+PR. If you can't finish it cleanly, say why and stop — don't open a partial PR.
 ```
+
+Notice it says *the issue*, singular, and never mentions the list. The list is
+the schedule's job, not the agent's.
 
 **Set it up**
 
@@ -30,19 +38,35 @@ draft PR. Skip anything you can't finish cleanly.
 
 1. Open the **Schedules** page → **+ Schedule**, and paste the prompt above.
 
-2. **Set the cadence** to `0 2 * * *` (daily at 2am) — the preview confirms the
+2. Under **Inputs**, add one input named `issueNumber` and mark it **Required**.
+
+3. In **Where to get the values**, describe the list:
+
+   ```text
+   open issues in acme/web labelled ready-for-dev that have no open pull request
+   ```
+
+4. **Set the cadence** to `0 2 * * *` (daily at 2am) — the preview confirms the
    next run time.
 
-3. **Pick the engine** (e.g. **Codex**), a **target worker**, and an **image**, then **Save**.
+5. **Pick the engine** (e.g. **Codex**), a **target worker**, and an **image**, then **Save**.
 
 </Steps>
 
 **How it works** — it appears in the list **enabled**, next run counting down.
-Each night, autonomously and without asking you anything, it works every ready
-ticket end-to-end: a DevBox per ticket, test suite, draft PR, then torn down.
+Each night a short read-only run reads the label and answers with one row per
+ticket; every row then starts its own agent run, with its own DevBox, its own
+test suite and its own draft PR. Six ready tickets means six runs.
+
 Test it immediately with **Run now**, and open its
-[run history](/concepts/schedules#the-schedules-pages) to watch any execution's
-timeline. **Disable** it any time without losing the configuration.
+[run history](/concepts/schedules#the-schedules-pages) to watch the fetch run
+followed by the runs it started. **Disable** it any time without losing the
+configuration.
+
+<Aside type="tip">
+  A ticket still being worked by last night's run is not picked up again — it is
+  recorded as *Already being worked* and left alone until that run finishes.
+</Aside>
 
 ## Weekly dependency audit
 
@@ -120,5 +144,6 @@ for you in the morning.
 ## Next
 
 - [Schedules](/concepts/schedules) — how Schedules work (pages, run history, limits).
+- [Inputs & fan-out](/concepts/inputs-and-fan-out) — one run per item, in detail.
 - [Run an agent on demand](/guides/run-on-demand) — the same ideas, fired once.
 - [Engines](/concepts/subagents) — pick the right engine per job.

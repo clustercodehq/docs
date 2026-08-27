@@ -110,6 +110,11 @@ From the **Schedules** page, **+ Schedule** opens the form:
 
 5. **Image** — the DevBox image to launch.
 
+6. **Inputs** *(optional)* — the named values one firing needs, plus a sentence
+   describing where to find them. Declaring them turns the schedule into a
+   [fan-out](#one-firing-per-item): each item found starts its own run. Leave
+   this empty and the schedule fires once per tick, as it always has.
+
 </Steps>
 
 A schedule can be **enabled** or **disabled** at any time without deleting it —
@@ -182,6 +187,27 @@ If **no** host is eligible at launch, the run is refused with a capacity
 reason (fleet full, or capacity reserved for paid plans) rather than being
 queued for later.
 
+## One firing per item
+
+By default a schedule fires **one** run per tick. Declare
+[inputs](/concepts/inputs-and-fan-out) and it fires **one run per item it
+finds** instead.
+
+You give it two things: the named values one unit of work needs
+(`issueNumber`), and a sentence saying where the list lives (*open issues in
+acme/web labelled ready-for-dev*). Each tick, a short read-only run reads that
+source and answers with one row per item, and every row starts its own agent
+run with its own values.
+
+Ten open issues means ten runs, each opening its own PR — not one run trying to
+hold ten issues at once. An item already being worked by an earlier tick is not
+started twice, and a source with nothing in it starts nothing at all.
+
+The full mechanism — how values reach the agent, why there is no
+`{placeholder}` syntax, and what happens when a tick finds more work than your
+plan allows at once — is on [Inputs &
+fan-out](/concepts/inputs-and-fan-out).
+
 ## Skipped runs
 
 Before each firing, the dispatcher runs pre-flight checks — target reachable,
@@ -222,5 +248,6 @@ edited schedules must meet the lower tier's floor.
 ## Next
 
 - [Automate recurring work](/guides/recurring-work) — copy-paste schedule recipes.
+- [Inputs & fan-out](/concepts/inputs-and-fan-out) — one firing per item in a list.
 - [Runs](/concepts/runs) — the on-demand, interactive counterpart.
 - [Engines](/concepts/subagents) — what each engine can do.

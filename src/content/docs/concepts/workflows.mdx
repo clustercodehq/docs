@@ -136,6 +136,22 @@ the work it did.
 The definition page keeps the full **run history** for that workflow, and while
 one is in flight it carries a live banner through to it.
 
+## Inputs
+
+A workflow can **declare inputs** — named values that every run of it is given.
+Declare `issueNumber` on the workflow, and firing it from the detail page asks
+you for a value first; the run then receives it as a labelled block above each
+node's own prompt.
+
+The declaration lives on the **workflow**, not on whatever fires it, because a
+workflow is a reusable definition that many schedules can point at. A schedule
+that fires this workflow shows the input names read-only, with a link back here
+to change them — one declaration, edited in one place.
+
+A schedule can also fill those inputs from a **list** instead of from you,
+starting one workflow run per item it finds. See [Inputs &
+fan-out](/concepts/inputs-and-fan-out).
+
 ## Scheduling a workflow
 
 A [Schedule](/concepts/schedules) can fire a workflow the same way it fires a
@@ -153,6 +169,7 @@ higher plan buys you is more of them running at the same time.
 ## Next steps
 
 - [Create a Workflow](/guides/create-a-workflow) — draw and fire your first one
+- [Inputs & fan-out](/concepts/inputs-and-fan-out) — parameterise a workflow, and fire one run per item
 - [Loops](/concepts/loops) — the iterate-until-verified node, on its own
 - [Prototyping](/concepts/prototyping) — the race-N-engines node, on its own
 - [Runs](/concepts/runs) — what a single agent run is

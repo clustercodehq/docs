@@ -77,6 +77,16 @@ before any AI tokens are spent**, with one of these reasons:
 | `missing_azure_devops_pat` | The run targets an Azure DevOps repository or work item, but no Azure DevOps PAT is set | Add a PAT with Work Items (Read) and Code (Read & Write) scopes, then re-trigger |
 | `missing_gitlab_pat` | The run targets a GitLab repository, but no GitLab PAT is set | Add a PAT with `api` scope, then re-trigger |
 
+A schedule that [fans out over a list](/concepts/inputs-and-fan-out) can decline
+a row for three further reasons. These are per firing and **aggregated** — a
+tick that suppresses fifteen items records one row, not fifteen:
+
+| Skip reason | Meaning | Fix |
+|---|---|---|
+| `already_active` | A run started by an earlier firing is still working this item, so it was not started again | Nothing — this is the normal outcome for a schedule that re-reads a live list |
+| `fanout_cap_reached` | The firing found more work than your plan allows to run at once; the rest was left for a later firing | Nothing is lost. Raise the limit by upgrading, or let it drain |
+| `arming_failed` | The read-only step that fetches the list did not answer in the agreed format, so nothing was started | Open the fetch run to see what it returned, then reword the schedule's "where to get the values" sentence |
+
 The same check runs **advisory** in the run and schedule create panels (a
 warning row before you save) and powers the remediation banner on a skipped
 execution's detail page — the banner re-checks live and flips to a success

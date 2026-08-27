@@ -104,6 +104,7 @@ export const nav = [
       { label: 'Overview', slug: 'concepts/automation', desc: 'Agents that work on their own' },
       { label: 'Nova', slug: 'concepts/nova', desc: 'The coordinator behind every run' },
       { label: 'Schedules', slug: 'concepts/schedules', desc: 'Recurring autonomous cron jobs' },
+      { label: 'Inputs & fan-out', slug: 'concepts/inputs-and-fan-out', desc: 'One firing per item in a list' },
       { label: 'Runs', slug: 'concepts/runs', desc: 'On-demand agent jobs you can steer' },
       { label: 'Loops', slug: 'concepts/loops', desc: 'Run-until-verified standing goals', badge: beta },
       { label: 'How a Loop run works', slug: 'concepts/loop-run-lifecycle', desc: 'Anatomy of a loop iteration', badge: beta },
