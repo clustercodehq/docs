@@ -7,16 +7,24 @@ import { Aside } from '@astrojs/starlight/components';
 
 **NUCLEUS.md** is a configuration file that customizes how [Nucleus](/concepts/nucleus) behaves. It lets you define workflows, skip confirmation prompts, and set up post-launch automation — all in plain Markdown.
 
-It is stored **in your browser** (local storage), so it belongs to the browser you wrote it in — it is not shared with your team and does not follow you to another machine.
+It is stored **on the server, against your account**, so it follows you to another browser, another machine and another session. It is personal, not shared with your team: teammates each have their own, and nobody else can read yours.
 
 <Aside type="tip" title="Which file do I want?">
   **NUCLEUS.md configures the assistant you talk to** in the dashboard — the one
   that answers in chat and acts only when you ask. For the agent that *executes*
   your Runs, Schedules and Loops in the background, including unattended
-  firings with no browser open, you want [NOVA.md](/guides/nova-config) instead
-  (and that one is stored on the server, against your account, because it has to
-  reach a 3 a.m. Schedule). Two different agents, two different files; neither
-  one reads the other's.
+  firings with no browser open, you want [NOVA.md](/guides/nova-config) instead.
+  Two different agents, two different files; neither one reads the other's, and
+  both are stored against your account.
+</Aside>
+
+<Aside type="note" title="Wrote one before this changed?">
+  NUCLEUS.md used to live in your browser's local storage, which meant it stayed
+  behind on the machine you wrote it on. Any file still sitting in a browser is
+  **carried onto your account automatically** the first time that browser opens
+  Settings or sends a Nucleus message — you don't need to copy anything across.
+  If you had already written a *different* file on your account by then, the
+  account version is kept and the leftover browser copy is discarded.
 </Aside>
 
 ## Where to Edit
@@ -110,8 +118,7 @@ leaves it exactly as you typed it.
 
 - [Nucleus](/concepts/nucleus) — what the chat assistant does.
 - [NOVA.md](/guides/nova-config) — the standing file for the coordinator that
-  *executes* your Runs, Schedules and Loops, stored per account instead of per
-  browser.
+  *executes* your Runs, Schedules and Loops, unattended if need be.
 - [Prompt improver](/concepts/prompt-improver) — the ✦ on this editor, and why
   it rewrites this field differently from a chat message.
 - [Settings](/concepts/settings#app-ai-assistants) — the rest of the App AI

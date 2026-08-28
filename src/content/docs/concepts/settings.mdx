@@ -58,16 +58,16 @@ the ✦ [prompt improver](/concepts/prompt-improver), and both can be **reset**
 back to the default at any time.
 
 - **`NUCLEUS.md`** — [Nucleus](/concepts/nucleus), the assistant you talk to in
-  the dashboard. Stored **in this browser**. See
-  [Nucleus Configuration](/guides/nucleus-config).
+  the dashboard. See [Nucleus Configuration](/guides/nucleus-config).
 - **`NOVA.md`** — [Nova](/concepts/nova), the coordinator that executes your
-  Runs, Schedules, Loops and Prototypes. Stored **against your account**, so an
-  unattended Schedule firing at 3 a.m. still applies it. See
+  Runs, Schedules, Loops and Prototypes. See
   [Nova Configuration](/guides/nova-config).
 
-Both files cap at **10,000 characters**, and both count toward the prompt of
-every message or execution they apply to — the editors show a live token
-estimate.
+Both files are stored **against your account**, so they follow you to whichever
+browser you sign in from — and an unattended Schedule firing at 3 a.m., with no
+browser open at all, still applies NOVA.md. Both cap at **10,000 characters**,
+and both count toward the prompt of every message or execution they apply to —
+the editors show a live token estimate.
 
 Nova and Nucleus are both built on **Anthropic (Claude)** models. Every plan
 includes a monthly AI allowance, but you can **bring your own key** for usage
