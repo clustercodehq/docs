@@ -6,6 +6,7 @@ description: Run-until-verified standing goals — a maker agent iterates, deter
 import PlanLimitsTable from '../../../components/PlanLimitsTable.astro';
 
 import { Aside } from '@astrojs/starlight/components';
+import BetaAside from '../../../components/BetaAside.astro';
 
 A **Loop** is a standing goal with a verifiable definition of done. Instead of
 prompting an agent and shepherding it turn by turn, you describe the outcome
@@ -205,10 +206,46 @@ links to its Run so you can open the actual transcript. When a loop says
 "done", you can see exactly why it believes that — and when it says "stuck",
 you can see what it tried.
 
+{/* SCREENSHOT: loop-detail-verdicts — the iteration trail with gate results and the verifier verdict */}
+
+## Loop Library
+
+Writing a goal and a set of gates from a blank form is the slow way to start.
+The **Loop Library** is a docked panel on the Loops page — titled "Loop
+Library", collapsed by default — with 13 curated templates for common jobs:
+sweeping an API migration, hunting a flaky test, taking a GitHub issue to a
+merge-ready PR. Picking one stays on the Loops page: each card's **Use this
+loop** opens the create panel already filled in, floating over the library as
+it collapses back out of the way. What's filled in is the loop's name, a goal
+carrying `{placeholders}` you fill in, the gates (deterministic commands and
+`agent-check` rubrics alike), and a starting budget. What a template
+deliberately leaves blank is the host — worker, DevBox, image, repository —
+because those ids never travel between accounts; you always pick those
+yourself, and the create panel's submit-time validation flags anything still
+a placeholder before it lets you arm.
+
+{/* SCREENSHOT: loop-library — the docked Loop Library panel on the Loops page, showing template cards with tags and a Use this loop button */}
+
+| Template | What it does |
+|---|---|
+| **Hello, Loop** | One failing test, one pinned command — the smallest real loop, good for proving your target and credentials are wired up. |
+| **Run the review round** | Drives a change through sequential multi-engine review until every finding is fixed or refuted, with one evidence file per reviewer. |
+| **Issue to merge-ready** | Takes a GitHub issue to a merge-ready pull request: spec first, smallest change, tests that fail without it, nothing deferred. |
+| **Keep the branch in sync** | Merges the base branch in, resolves conflicts in favor of its intent, and leaves the branch building and green. |
+| **Fix it, then see it** | Fixes a UI bug, then proves it in a real browser inside the DevBox with a screenshot — for bugs a unit-test suite can't see. Marked experimental: it's the most expensive template in the library. |
+| **Make the suite green** | Fixes the implementation until a red suite passes, with a rubric that proves no test was weakened to get there. |
+| **Reproduce, then fix** | Writes a test that fails because of the bug first, finds the root cause, then fixes it — so the fix ships with its own regression test. |
+| **Hunt the flake** | Reruns a flaky test twenty times in a row, finds the actual source of non-determinism, and removes it — no retries, no `.skip`. |
+| **Refactor under tests** | Restructures a module toward a target shape while the existing tests stay green and unmodified — the safety net can't be edited. |
+| **Upgrade a dependency** | Moves one package to a target version and adapts the codebase to its breaking changes — nothing else moves. |
+| **Sweep an API migration** | Replaces every call site of an old API with the new one; a scripted grep decides when zero call sites remain. |
+| **Hit a performance budget** | Measures, changes one thing, measures again — until a benchmark script you supply comes in under the threshold. |
+| **Raise coverage honestly** | Takes one module's coverage past a threshold with tests that would actually catch a regression, not tests that just execute lines. |
+
 ## Availability
 
-<Aside type="note" title="Beta">Loops is in beta — the mechanics below are
-stable, but expect the surface to keep evolving.</Aside>
+<BetaAside feature="loops">Loops is in beta — the mechanics below are
+stable, but expect the surface to keep evolving.</BetaAside>
 
 Loops are available on **every plan**, with a per-tier cap on how many can be
 active at once:

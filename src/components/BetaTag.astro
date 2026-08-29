@@ -1,0 +1,12 @@
+---
+/**
+ * The inline "(Beta)" marker used in reference prose, gated on the feature's
+ * Beta treatment. Renders nothing when the treatment is off — the surrounding
+ * sentence still reads correctly, since the tag is always parenthetical.
+ */
+import { isBetaFeature } from '../beta.mjs';
+
+const { feature } = Astro.props;
+---
+
+{isBetaFeature(feature) && <em>(Beta)</em>}

@@ -1,0 +1,21 @@
+---
+/**
+ * The "this feature is in beta" notice, gated on the feature's Beta treatment.
+ *
+ * Renders exactly the `<Aside type="note" title="Beta">` the pages used to
+ * write by hand; when `PUBLIC_BETA_FEATURES` drops the feature, the whole
+ * notice disappears and the page reads as generally available.
+ */
+import { Aside } from '@astrojs/starlight/components';
+import { isBetaFeature } from '../beta.mjs';
+
+const { feature } = Astro.props;
+---
+
+{
+  isBetaFeature(feature) && (
+    <Aside type="note" title="Beta">
+      <slot />
+    </Aside>
+  )
+}
