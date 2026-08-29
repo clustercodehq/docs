@@ -16,10 +16,13 @@ in the two-layer model — distinct from the engine that writes the code.
   Like [Nucleus](/concepts/nucleus), Nova's coordination is powered
   internally by **Anthropic (Claude)** models, drawing on your plan's AI
   allowance. To add usage beyond your plan — or run on your own account —
-  **bring your own key** in
-  [Settings → Environment Variables](/concepts/settings#environment-variables): an
-  **Anthropic API key** or a **Claude OAuth token**. (The in-DevBox engines
-  may use their own credentials — see [Engines](/concepts/subagents).)
+  **bring your own key**: an **Anthropic API key** or a **Claude OAuth token**
+  stored under
+  [Environment Variables → Agent Secrets](/concepts/settings#environment-variables),
+  then switched on under
+  [Settings → App AI Assistants](/concepts/settings#app-ai-assistants) — one
+  switch, covering Nova and [Nucleus](/concepts/nucleus) together. (The in-DevBox
+  engines may use their own credentials — see [Engines](/concepts/subagents).)
 </Aside>
 
 ## Nucleus vs Nova
@@ -28,10 +31,15 @@ ClusterCode has two agents, both Anthropic-powered, with different jobs:
 
 - **[Nucleus](/concepts/nucleus)** — the **interactive assistant** in the
   dashboard. You chat with it to manage your cluster (launch DevBoxes, run
-  commands, check status).
+  commands, check status), and it answers you in the same breath.
 - **Nova** — the **background automation agent**. You don't chat with it
   directly; you give it a job (a Run or a Schedule) and it executes that job
-  end-to-end, on its own.
+  end-to-end, on its own, unattended if need be.
+
+Each has its own customization file, and neither reads the other's:
+[NOVA.md](/guides/nova-config) for this coordinator — there for an unattended
+Schedule with nobody watching — and [NUCLEUS.md](/guides/nucleus-config) for the
+chat assistant. Both are stored against your account.
 
 ## Two modes
 
@@ -66,6 +74,8 @@ Whichever mode, a Nova execution follows the same arc:
 
 ## Next
 
+- [Customize how Nova works for you](/guides/nova-config) — NOVA.md, your
+  standing preferences for every Run, Schedule and Loop.
 - [Run an agent on demand](/guides/run-on-demand) — recipes for interactive Runs.
 - [Automate recurring work](/guides/recurring-work) — recipes for Schedules.
 - [Engines](/concepts/subagents) — the CLIs Nova delegates the coding to.
