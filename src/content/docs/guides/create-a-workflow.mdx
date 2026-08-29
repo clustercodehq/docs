@@ -110,6 +110,27 @@ fix it if it didn't, and ask a human before shipping.
 
 </Steps>
 
+## Trying two approaches before committing to one
+
+When you don't yet know which approach is right, put a **Prototype** node after
+the node that sets the work up:
+
+```
+Design ──▶ Race (claude-print · codex) ──▶ Review
+```
+
+`Design` writes its plan and commits it on the run's branch. `Race` forks that
+branch into `proto/race/claude-print` and `proto/race/codex`, one DevBox each,
+and both variants start **from the design** — not from an empty checkout. When
+both finish, the run pauses and asks you to promote one. `Review` then runs on
+the run's branch with the winner's commits already merged in, in the winner's
+DevBox.
+
+The run never has more than one branch you have to care about: the fork is
+internal to the race, and it rejoins the moment you choose. See
+[Promotion is the approval step](/concepts/prototype-race-lifecycle) for what
+promoting does inside a workflow.
+
 ## What you get
 
 Run it again and answer the approval differently, and you get a genuinely

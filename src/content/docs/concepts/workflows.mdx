@@ -50,16 +50,31 @@ The DevBox is created by the first node that needs one and handed down the graph
 from there. You can also **pin** a workflow to an existing DevBox, in which case
 every run works in that same persistent environment instead of a fresh one.
 
+### One exception: a Prototype node
+
+A bake-off exists so you can compare approaches, and comparing them in one
+workspace would mean they overwrite each other. So a Prototype node forks: each
+variant gets **its own DevBox** and **its own branch**, `proto/<node>/<engine>`,
+taken from the run's branch — so every variant starts from the work the earlier
+nodes did, not from an empty checkout.
+
+When you promote a winner, its branch is fast-forwarded back onto
+`wf/<slug>/run-<n>` and the run continues on the one branch it started with. The
+divergence is temporary and always rejoins, so "one run, one branch" still holds
+either side of a race.
+
 ## The five node kinds
 
 Three kinds **do work**. Each one produces its own entity, with its own page you
-can open and read exactly as if you had started it by hand.
+can open and read exactly as if you had started it by hand. Two of the three run
+unattended; a **Prototype also stops for you**, because picking the winner of a
+bake-off is a judgement only a person can make.
 
 | Node | What it does | Produces |
 |---|---|---|
 | **Agent Run** | One autonomous agent run against a prompt | a [Run](/concepts/runs) |
 | **Loop** | Iterates until an independent verifier approves | a [Loop](/concepts/loops) |
-| **Prototype** | Races several engine+model variants on one brief | a [Prototype](/concepts/prototyping) |
+| **Prototype** | Races several engine+model variants on one brief, each in its own DevBox and branch, then **waits for you to pick a winner** | a [Prototype](/concepts/prototyping) |
 
 Two kinds **route**. They do no work themselves; they decide where the run goes
 next.
@@ -68,6 +83,15 @@ next.
 |---|---|
 | **Decision** | Picks a branch from the previous node's result |
 | **Human Approval** | Stops and waits for a person, then takes their answer's branch |
+
+#### Which kinds stop for a person
+
+**Two, not one.** Human Approval is the obvious one. A **Prototype** is the
+other: the race finishing is not the node finishing. A prototype node is an
+approval node that does work first — it holds the run until you promote a
+variant, and if the answer window lapses with nothing promoted the node fails
+rather than guessing. There is no default winner, because "which approach is
+better" is the one question the platform cannot answer for you.
 
 ### One exit, unless it routes
 

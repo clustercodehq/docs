@@ -150,6 +150,32 @@ its container so the resumed run can finish the push.
   merge button stays human.
 </Aside>
 
+### Inside a workflow, promotion IS the approval step
+
+When the race is a **Prototype node in a workflow**, promoting is not an optional
+tidy-up after the fact — it is the decision the node is waiting for. Until you
+promote, the node sits in the same waiting-for-verdict state a Human Approval
+node uses, and **the workflow does not advance**.
+
+Promoting then does four things rather than two:
+
+1. pushes the winner's branch and opens its pull request (as above);
+2. retires and tears down every other variant's DevBox;
+3. **fast-forwards the workflow run's branch** onto the winner, so the work
+   rejoins the one branch the run has been building;
+4. hands the run the winner's DevBox, so the next node continues in the
+   workspace that actually did the work.
+
+Each variant forked from the run's branch when the race started, so the
+fast-forward is exactly that — no merge commit, no conflict resolution happening
+without you. If it is ever *not* a fast-forward, the node fails and says so
+rather than merging something nobody reviewed.
+
+If the answer window lapses with nothing promoted, the node fails: *"the verdict
+window lapsed with no variant promoted."* There is no default winner, because
+"which approach is better" is the one question the platform cannot answer for
+you.
+
 ## Every way a race ends
 
 | End | What it means |
