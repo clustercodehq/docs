@@ -20,9 +20,19 @@ the real shell, and the real toolchain — the same Windows a developer would us
 running on a [Cloud worker](/concepts/cloud-workers) or one of your own
 [BYOM workers](/concepts/workers) that supports Windows VMs.
 
-Everything that works on a Linux DevBox works here: the same
-[Agent Runs](/concepts/runs), the same [Schedules](/concepts/schedules), the same
-live terminal, and the same [visual desktop](/guides/visual-testing) — on Windows.
+You get the same hands-on workflow you'd get on a Linux DevBox: launch it, take
+the live terminal, and work on the same [visual desktop](/guides/visual-testing)
+an agent can see and drive — on Windows.
+
+<Aside type="caution" title="Background agent Runs don't support Windows yet">
+  Windows DevBoxes support **launches**, the **live terminal**, the **visual
+  desktop**, and hands-on work. What they don't support yet is delegated,
+  background agent work: [Runs](/concepts/runs) and
+  [Schedules](/concepts/schedules) targeting a Windows image or Windows DevBox
+  are rejected at submit time, and the create panel asks you to pick a Linux
+  image or DevBox instead. Windows support for background agent Runs is on the
+  roadmap.
+</Aside>
 
 This is that desktop, in the browser — the real Windows shell, taskbar and all,
 served from a DevBox running on a worker:
@@ -79,8 +89,9 @@ first-boot install (~20–30 minutes — a genuine Windows install from scratch)
 You only pay that once. [Snapshot the configured Windows DevBox into your own
 golden image](/guides/build-image-from-container): every future launch on your
 worker then **skips the first-boot install** and comes up at a working desktop
-fast, because the post-install disk is baked into your image. The same golden
-images run on both Cloud workers and BYOM workers that support Windows VMs.
+fast, because the post-install disk is baked into your image. Your snapshot
+stays on the worker that built it — it isn't copied to your other workers or to
+Cloud workers.
 
 <Aside type="caution">
   Snapshotting a Windows DevBox stops it briefly to capture a consistent disk, so

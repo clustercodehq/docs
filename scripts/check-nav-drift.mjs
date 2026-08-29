@@ -4,7 +4,8 @@
  *
  * src/nav.mjs feeds the sidebar, header, mobile menu and search index, so a
  * page missing from it is invisible everywhere — which is exactly how the
- * whole Automation section stayed out of search and the mobile menu, and how
+ * whole AI Workforce section (then "Automation") stayed out of search and the
+ * mobile menu, and how
  * the palette kept linking `/guides/cron-workflows/` after that page was
  * renamed. This catches both directions.
  *

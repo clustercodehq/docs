@@ -1,26 +1,26 @@
 ---
-title: Welcome to ClusterCode
-description: Hand off a ticket. Get back a PR. ClusterCode turns your machines into an AI development cluster.
+title: Welcome to ClusterCode Docs
+description: The control center for your AI software workforce. Hand off a ticket, get back a verified PR, on machines you control.
 template: splash
 head:
   - tag: meta
     attrs:
       property: og:title
-      content: 'ClusterCode — from ticket to PR, on your own machines'
+      content: 'ClusterCode — the control center for your AI software workforce'
   - tag: meta
     attrs:
       property: og:description
-      content: 'AI agents work inside isolated DevBoxes with a live terminal. Watch, take over, or let them run — self-hosted or cloud.'
+      content: 'Claude, Codex, and Copilot work your tickets in isolated DevBoxes. Watch, take over, or let them run — your fleet or our cloud.'
   - tag: meta
     attrs:
       name: twitter:title
-      content: 'ClusterCode — from ticket to PR, on your own machines'
+      content: 'ClusterCode — the control center for your AI software workforce'
   - tag: meta
     attrs:
       name: twitter:description
-      content: 'AI agents work inside isolated DevBoxes with a live terminal. Watch, take over, or let them run — self-hosted or cloud.'
+      content: 'Claude, Codex, and Copilot work your tickets in isolated DevBoxes. Watch, take over, or let them run — your fleet or our cloud.'
 hero:
-  tagline: Hand off a ticket. Get back a PR. ClusterCode turns your machines into an AI development cluster.
+  tagline: The control center for your AI software workforce. Hand off a ticket, get back a verified PR, on machines you control.
   actions:
     - text: Get Started →
       link: /getting-started/quickstart
@@ -63,50 +63,55 @@ import LandingScrollReveal from '../../components/LandingScrollReveal.astro';
 
     [Launch guide →](/guides/launch-from-ticket)
   </Card>
-  <Card title="CLI Reference" icon="open-book">
-    Full reference for every `clustercode` command.
-
-    [CLI docs →](/cli/overview)
-  </Card>
 </CardGrid>
 
 <div class="automation-intro">
 
-## Automate your workflow
+## The AI Workforce
 
-Hand a task to an AI agent that spins up a DevBox, does the work, and tears
-down — on a schedule or on demand, all on infrastructure you own.
+The work side of ClusterCode: tickets assigned to agents, results verified,
+approval gates yours to define — on a schedule or on demand.
 
 </div>
 
 <CardGrid>
-  <Card title="Automation" icon="setting">
+  <Card title="Overview" icon="setting">
     The big picture: Schedules vs Runs, recipes, and the coordinator + engine model.
 
-    [Overview →](/concepts/automation)
-  </Card>
-  <Card title="Schedules" icon="rocket">
-    Recurring, autonomous cron jobs — wake up to draft PRs, audits, and sweeps.
-
-    [Schedules →](/concepts/schedules)
+    [AI Workforce overview →](/concepts/automation)
   </Card>
   <Card title="Runs" icon="random">
     On-demand and interactive — watch the timeline, steer it, answer its questions.
 
     [Runs →](/concepts/runs)
   </Card>
-  <Card title="Engines" icon="puzzle">
-    Claude Code, Codex, and Copilot — what each engine does and how it pauses.
+  <Card title="Schedules" icon="rocket">
+    Recurring, autonomous cron jobs — wake up to draft PRs, audits, and sweeps.
 
-    [Engines →](/concepts/subagents)
+    [Schedules →](/concepts/schedules)
+  </Card>
+  <Card title="Workflows" icon="setting">
+    Draw your development process as a graph — Runs, Loops, and Prototype races wired with decisions and human approvals.
+
+    [Workflows →](/concepts/workflows)
+  </Card>
+  <Card title="Loops & Prototyping" icon="approve-check">
+    Run until independently verified, or race several implementations and promote the winner.
+
+    [Loops →](/concepts/loops) · [Prototyping →](/concepts/prototyping)
+  </Card>
+  <Card title="A team of agents" icon="puzzle">
+    Claude plans, Codex reviews, Copilot tests — one run, real handoffs, each engine keeping its own session.
+
+    [Multi-agent runs →](/guides/multi-agent-runs)
   </Card>
 </CardGrid>
 
 <div class="automation-intro">
 
-## The platform
+## Infrastructure
 
-Everything around the DevBox: your machines, your projects, your whole fleet — visible, portable, yours.
+The machines side: disposable DevBoxes, your workers or our cloud, your whole fleet — visible, portable, yours.
 
 </div>
 
@@ -120,11 +125,6 @@ Everything around the DevBox: your machines, your projects, your whole fleet —
     A spare laptop, a home server, a $6 VPS — register it and it's part of your cluster. Or rent a Cloud worker.
 
     [Workers →](/concepts/workers)
-  </Card>
-  <Card title="A team of agents" icon="puzzle">
-    Claude plans, Codex reviews, Copilot tests — one run, real handoffs, each engine keeping its own session.
-
-    [Multi-agent runs →](/guides/multi-agent-runs)
   </Card>
   <Card title="Projects" icon="open-book">
     One workspace per effort — DevBoxes, runs, schedules, and environment variables every launch inherits.
