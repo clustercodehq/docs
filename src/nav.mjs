@@ -6,11 +6,12 @@
  * bottom-nav menu (`BottomNav.astro`), and the Ctrl+K command palette
  * (`CommandPalette.astro`).
  *
- * It used to be four hand-maintained copies, which drifted: the Automation
- * section reached the sidebar and the header but never the mobile menu or the
- * search index, and the palette still linked `/guides/cron-workflows/` long
- * after that page was renamed to `guides/recurring-work`. Adding a page here
- * now makes it appear on every surface at once.
+ * It used to be four hand-maintained copies, which drifted: the AI Workforce
+ * section (then labelled "Automation") reached the sidebar and the header but
+ * never the mobile menu or the search index, and the palette still linked
+ * `/guides/cron-workflows/` long after that page was renamed to
+ * `guides/recurring-work`. Adding a page here now makes it appear on every
+ * surface at once.
  *
  * Plain `.mjs` (not `.ts`) so `astro.config.mjs` can import it directly.
  *
@@ -27,7 +28,7 @@
  * Item fields: label, slug, desc (palette subtitle), badge (sidebar only).
  */
 
-import { betaBadge } from './beta.mjs';
+const beta = { text: 'Beta', variant: 'default', class: 'beta-badge' };
 
 export const nav = [
   {
@@ -53,7 +54,53 @@ export const nav = [
     ],
   },
   {
-    label: 'Concepts',
+    // The workforce pillar: the work the agents do. Renamed from "Automation";
+    // membership, order and slugs are unchanged (the group's landing page is
+    // still `/concepts/automation/`).
+    //
+    // Top-level (not nested under Infrastructure) and expanded by default so
+    // the Schedules/Runs guides + the timeline showcase are discoverable at a
+    // glance — they were getting lost two levels deep.
+    //
+    // Deliberately NOT `pinned`. The width objection that the old label carried
+    // has softened — "Automation" measured 66px at the bar's 11px mono against a
+    // 60px slot at 360px (6 slots: Menu + 4 pinned + Search), while 'Workforce'
+    // is 9 chars ≈ 59px, so it would *just* fit with no breathing room. The
+    // remaining reasons stand on their own: no product bar exceeds Menu + 4
+    // (portal marketing pins 3, orchestrator 4), and pinning wouldn't fix the
+    // no-highlight class — CLI Reference, Self-Hosting and Reference already
+    // light nothing, on more pages than AI Workforce has. The menu sheet carries
+    // the you-are-here signal, matching the portal, which keeps Admin
+    // sheet-only for the same reason.
+    label: 'AI Workforce',
+    short: 'Workforce',
+    icon: 'zap',
+    href: '/concepts/automation/',
+    collapsed: false,
+    primary: true,
+    items: [
+      { label: 'Overview', slug: 'concepts/automation', desc: 'Agents that work on their own' },
+      { label: 'Nova', slug: 'concepts/nova', desc: 'The coordinator behind every run' },
+      { label: 'Schedules', slug: 'concepts/schedules', desc: 'Recurring autonomous cron jobs' },
+      { label: 'Runs', slug: 'concepts/runs', desc: 'On-demand agent jobs you can steer' },
+      { label: 'Loops', slug: 'concepts/loops', desc: 'Run-until-verified standing goals', badge: beta },
+      { label: 'How a Loop run works', slug: 'concepts/loop-run-lifecycle', desc: 'Anatomy of a loop iteration', badge: beta },
+      { label: 'Prototyping', slug: 'concepts/prototyping', desc: 'Race agents on the same brief', badge: beta },
+      { label: 'Workflows', slug: 'concepts/workflows', desc: 'Draw a graph of runs, loops and approvals', badge: beta },
+      { label: 'How a Prototype race works', slug: 'concepts/prototype-race-lifecycle', desc: 'Anatomy of a prototype race', badge: beta },
+      { label: 'Multi-Agent Runs', slug: 'guides/multi-agent-runs', desc: 'A team of agents in one run' },
+      { label: 'Engines', slug: 'concepts/subagents', desc: 'Claude Code, Codex and Copilot' },
+    ],
+  },
+  {
+    // The infrastructure pillar: the machines the workforce runs on. Renamed
+    // from "Concepts" (the slugs stay under /concepts/ — no page moved) so the
+    // docs nav mirrors the product's two pillars, AI Workforce and
+    // Infrastructure. Stays `pinned`: the short label 'Infra' is 5 chars ≈ 33px
+    // at the bar's 11px mono, comfortably inside its slot, and it was already
+    // one of the three pinned groups so the bar's item count is unchanged.
+    label: 'Infrastructure',
+    short: 'Infra',
     icon: 'puzzle',
     href: '/concepts/workers/',
     collapsed: true,
@@ -88,37 +135,6 @@ export const nav = [
     ],
   },
   {
-    // Top-level (not nested under Concepts) and expanded by default so the
-    // Schedules/Runs guides + the timeline showcase are discoverable at a
-    // glance — they were getting lost two levels deep.
-    //
-    // Deliberately NOT `pinned`. "Automation" is 66px at the bar's 11px mono
-    // against a 60px slot at 360px, and no product bar exceeds Menu + 4 (portal
-    // marketing pins 3, orchestrator 4). Pinning it also wouldn't fix the
-    // no-highlight class — CLI Reference, Self-Hosting and Reference already
-    // light nothing, on more pages than Automation has. The menu sheet carries
-    // the you-are-here signal, matching the portal, which keeps Admin
-    // sheet-only for the same reason.
-    label: 'Automation',
-    icon: 'zap',
-    href: '/concepts/automation/',
-    collapsed: false,
-    primary: true,
-    items: [
-      { label: 'Overview', slug: 'concepts/automation', desc: 'Agents that work on their own' },
-      { label: 'Nova', slug: 'concepts/nova', desc: 'The coordinator behind every run' },
-      { label: 'Schedules', slug: 'concepts/schedules', desc: 'Recurring autonomous cron jobs' },
-      { label: 'Runs', slug: 'concepts/runs', desc: 'On-demand agent jobs you can steer' },
-      { label: 'Loops', slug: 'concepts/loops', desc: 'Run-until-verified standing goals', badge: betaBadge('loops') },
-      { label: 'How a Loop run works', slug: 'concepts/loop-run-lifecycle', desc: 'Anatomy of a loop iteration', badge: betaBadge('loops') },
-      { label: 'Prototyping', slug: 'concepts/prototyping', desc: 'Race agents on the same brief', badge: betaBadge('prototypes') },
-      { label: 'Workflows', slug: 'concepts/workflows', desc: 'Draw a graph of runs, loops and approvals', badge: betaBadge('workflows') },
-      { label: 'How a Prototype race works', slug: 'concepts/prototype-race-lifecycle', desc: 'Anatomy of a prototype race', badge: betaBadge('prototypes') },
-      { label: 'Multi-Agent Runs', slug: 'guides/multi-agent-runs', desc: 'A team of agents in one run' },
-      { label: 'Engines', slug: 'concepts/subagents', desc: 'Claude Code, Codex and Copilot' },
-    ],
-  },
-  {
     label: 'Guides',
     icon: 'map',
     href: '/guides/launch-from-ticket/',
@@ -135,9 +151,9 @@ export const nav = [
       { label: 'Launch from Ticket', slug: 'guides/launch-from-ticket', desc: 'Start a DevBox from an issue' },
       { label: 'Automate recurring work', slug: 'guides/recurring-work', desc: 'Three copy-paste Schedule recipes' },
       { label: 'Explore your fleet in the Observatory', slug: 'guides/explore-observatory', desc: 'Walkthrough of the galaxy view' },
-      { label: 'Create a Loop', slug: 'guides/create-a-loop', desc: 'Set up a run-until-verified loop', badge: betaBadge('loops') },
-      { label: 'Create a Prototype', slug: 'guides/create-a-prototype', desc: 'Race contenders and promote a winner', badge: betaBadge('prototypes') },
-      { label: 'Create a Workflow', slug: 'guides/create-a-workflow', desc: 'Draw a graph and fire it as one unit', badge: betaBadge('workflows') },
+      { label: 'Create a Loop', slug: 'guides/create-a-loop', desc: 'Set up a run-until-verified loop', badge: beta },
+      { label: 'Create a Prototype', slug: 'guides/create-a-prototype', desc: 'Race contenders and promote a winner', badge: beta },
+      { label: 'Create a Workflow', slug: 'guides/create-a-workflow', desc: 'Draw a graph and fire it as one unit', badge: beta },
       { label: 'Custom Containerfile', slug: 'guides/custom-containerfile', desc: 'Build your own runtime' },
       { label: 'Build from DevBox', slug: 'guides/build-image-from-container', desc: 'Snapshot a DevBox into an image' },
       // These two are the pair a reader has to tell apart — the assistant you
@@ -270,7 +286,10 @@ export function paletteItems() {
 export function primaryNav() {
   return nav
     .filter((group) => group.primary)
-    .map((group) => ({ key: group.label, label: group.short ?? group.label, href: group.href }));
+    // Full labels on the desktop header (room to spare); the mobile pinned bar
+    // keeps using `short` via pinnedGroups() — 'Infrastructure' at 11px mono
+    // would overflow its 60px slot there.
+    .map((group) => ({ key: group.label, label: group.label, href: group.href }));
 }
 
 /** Groups for the mobile bottom-nav menu panel. */
@@ -336,8 +355,8 @@ export function pinnedGroups() {
  *
  * Matches on the page's actual group membership rather than a path prefix,
  * because a group can hold pages from another section — `guides/multi-agent-runs`
- * lives under Automation, and `/concepts/automation/` must not light up
- * Concepts just because it starts with `/concepts/`.
+ * lives under AI Workforce, and `/concepts/automation/` must not light up
+ * Infrastructure just because it starts with `/concepts/`.
  */
 export function activeGroupLabel(pathname) {
   const slug = pathname.replace(/^\/+|\/+$/g, '');
@@ -345,8 +364,8 @@ export function activeGroupLabel(pathname) {
     if (group.items.some((item) => item.slug === slug)) return group.label;
   }
   // No path-prefix fallback on purpose. A group can hold pages from another
-  // section — Automation owns `guides/multi-agent-runs` — so a prefix scan
-  // returned Automation for ANY unlisted `/guides/*` page, which is worse than
+  // section — AI Workforce owns `guides/multi-agent-runs` — so a prefix scan
+  // returned that group for ANY unlisted `/guides/*` page, which is worse than
   // no highlight at all. `pnpm check:nav` guarantees every page is in a group,
   // so this only returns null for non-content routes (/, /404, /api/docs.json)
   // and for a brand-new page that has not been registered yet.

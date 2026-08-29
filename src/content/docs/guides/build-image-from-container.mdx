@@ -7,7 +7,11 @@ import { Aside, Steps } from '@astrojs/starlight/components';
 
 You've tuned a DevBox by hand — installed tools, cloned a repo, pasted credentials, finished the Windows first-boot install — and now you want every future launch to start from that exact state. **Building an image from a DevBox** snapshots a running DevBox into a reusable image (a "golden image") so you don't have to re-run a build or rewrite a Containerfile.
 
-Think of it as **replicating a tuned DevBox**: spend an afternoon getting one [DevBox](/concepts/runtime-catalog) exactly right — your toolchain, your deps, your weird internal CLI, your fixtures — then stamp out identical machines from it forever. Every DevBox you launch from the image comes up pre-built, with capabilities carried over automatically, and you can launch the clones on [Cloud workers](/concepts/cloud-workers) or your own [BYOM workers](/concepts/workers) — same image, your choice of where.
+Think of it as **replicating a tuned DevBox**: spend an afternoon getting one [DevBox](/concepts/runtime-catalog) exactly right — your toolchain, your deps, your weird internal CLI, your fixtures — then stamp out identical machines from it forever. Every DevBox you launch from the image comes up pre-built, with capabilities carried over automatically.
+
+<Aside type="caution" title="A snapshot stays on the worker that built it">
+  The image is stored on the single [worker](/concepts/workers) you built it on. You can stamp out as many identical DevBoxes as you like **on that worker**, but the snapshot is not copied to your other workers or to [Cloud workers](/concepts/cloud-workers) — cross-worker portability isn't available yet.
+</Aside>
 
 <Aside type="note">
   Building an image from a DevBox requires a **Pro or Enterprise** plan and the **owner**, **admin**, or **member** role. Starter users see an upgrade prompt in place of the form.
@@ -65,7 +69,7 @@ Re-declaring a capability the source already carries won't duplicate it — the 
 The payoff is large: launching from a Windows golden image skips the 20–30 minute first-boot Windows install and reaches a working desktop in seconds, because the post-install disk is baked into the image.
 
 <Aside type="note">
-  This self-snapshot flow is how you bake **your own** golden on a BYOM worker — pay the one-time Windows first-boot install once, snapshot, and every later launch on your worker comes up fast. Windows DevBoxes on [Cloud workers](/concepts/cloud-workers) already launch from **ClusterCode-maintained golden images**, so there's no first-boot install to wait through there. The same golden images run on both Cloud workers and BYOM workers that support Windows VMs.
+  This self-snapshot flow is how you bake **your own** golden on a BYOM worker — pay the one-time Windows first-boot install once, snapshot, and every later launch on your worker comes up fast. Windows DevBoxes on [Cloud workers](/concepts/cloud-workers) already launch from **ClusterCode-maintained golden images**, so there's no first-boot install to wait through there. Those are a separate, ClusterCode-managed set — your own snapshot stays on the BYOM worker that built it and doesn't move to a Cloud worker.
 </Aside>
 
 ## Launch from your golden image

@@ -38,6 +38,17 @@ Tenant-managed allowlist only — no built-in domains are included. The filesyst
 
 No internet access at all. Read-only filesystem. Environment variables (API keys, tokens) are **not injected** into the DevBox. This is maximum isolation — the DevBox can only work with what's already in the image and mounted workspace.
 
+<Aside type="caution" title="Egress enforcement is strongest on Podman workers">
+  The allowlist profiles (Standard and Strict) isolate DNS by creating the
+  restricted network with Podman's `--disable-dns`, so a domain that isn't on the
+  allowlist can't be resolved at all. Docker has no equivalent flag: on a
+  Docker-backed worker the network keeps Docker's embedded resolver, so DNS and
+  egress restrictions are **not enforced to the same standard** and a
+  non-allowlisted domain may still resolve. If you rely on strict network
+  isolation, run those DevBoxes on a Podman worker. Docker parity is on the
+  roadmap.
+</Aside>
+
 ## Resource Limits by Profile
 
 | Resource | Open | Standard | Strict | Offline |
