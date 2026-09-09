@@ -7,8 +7,8 @@
   "unlimitedSentinel": -1,
   "plans": {
     "free": {
-      "maxWorkers": 2,
-      "maxContainers": 4,
+      "maxWorkers": 3,
+      "maxContainers": 6,
       "maxCloudWorkerContainers": 0,
       "maxConcurrentTerminals": 2,
       "maxConcurrentDisplays": 1,
@@ -18,6 +18,7 @@
       "maxActiveLoops": 1,
       "maxActivePrototypes": 1,
       "maxEnginesPerPrototype": 2,
+      "maxActiveWorkflows": 1,
       "minScheduleIntervalMinutes": 360,
       "maxProjects": 1,
       "maxTenants": 1,
@@ -34,11 +35,12 @@
       "maxActiveSubagents": 1,
       "maxImages": 3,
       "displayIdleTimeoutMinutes": 1,
+      "maxActiveAttachmentBytes": 536870912,
       "persistWorkspace": false
     },
     "starter": {
-      "maxWorkers": 5,
-      "maxContainers": 10,
+      "maxWorkers": 8,
+      "maxContainers": 16,
       "maxCloudWorkerContainers": 5,
       "maxConcurrentTerminals": 5,
       "maxConcurrentDisplays": 2,
@@ -48,6 +50,7 @@
       "maxActiveLoops": 3,
       "maxActivePrototypes": 2,
       "maxEnginesPerPrototype": 3,
+      "maxActiveWorkflows": 2,
       "minScheduleIntervalMinutes": 60,
       "maxProjects": 3,
       "maxTenants": 1,
@@ -64,11 +67,12 @@
       "maxActiveSubagents": 3,
       "maxImages": -1,
       "displayIdleTimeoutMinutes": 2,
+      "maxActiveAttachmentBytes": 536870912,
       "persistWorkspace": false
     },
     "pro": {
-      "maxWorkers": 25,
-      "maxContainers": 50,
+      "maxWorkers": 40,
+      "maxContainers": 80,
       "maxCloudWorkerContainers": 10,
       "maxConcurrentTerminals": 10,
       "maxConcurrentDisplays": 3,
@@ -78,6 +82,7 @@
       "maxActiveLoops": 15,
       "maxActivePrototypes": 10,
       "maxEnginesPerPrototype": 4,
+      "maxActiveWorkflows": 10,
       "minScheduleIntervalMinutes": 12,
       "maxProjects": 25,
       "maxTenants": 5,
@@ -94,11 +99,12 @@
       "maxActiveSubagents": 15,
       "maxImages": -1,
       "displayIdleTimeoutMinutes": 3,
+      "maxActiveAttachmentBytes": 536870912,
       "persistWorkspace": false
     },
     "enterprise": {
-      "maxWorkers": 100,
-      "maxContainers": 200,
+      "maxWorkers": 160,
+      "maxContainers": 320,
       "maxCloudWorkerContainers": 25,
       "maxConcurrentTerminals": 15,
       "maxConcurrentDisplays": 4,
@@ -108,6 +114,7 @@
       "maxActiveLoops": 60,
       "maxActivePrototypes": 40,
       "maxEnginesPerPrototype": 6,
+      "maxActiveWorkflows": 40,
       "minScheduleIntervalMinutes": 1,
       "maxProjects": 60,
       "maxTenants": 500,
@@ -124,6 +131,7 @@
       "maxActiveSubagents": 60,
       "maxImages": -1,
       "displayIdleTimeoutMinutes": 5,
+      "maxActiveAttachmentBytes": 536870912,
       "persistWorkspace": false
     }
   }
