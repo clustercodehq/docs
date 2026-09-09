@@ -93,10 +93,15 @@ leaving the page.
 
 Credentials for the agents themselves — all four live under
 **Settings → Environment Variables → Agent Secrets**. The **Claude OAuth
-token** and **Anthropic API key** additionally carry two toggles: **Use for
-Nucleus (Bring Your Own Key)** routes Nucleus's own requests through your key,
-and **Use for DevBox authentication** injects the key into the DevBoxes you
-launch; the **OpenAI** and **Copilot** tokens are plain injected tokens.
+token** and **Anthropic API key** additionally carry a **Use for DevBox
+authentication** toggle, which injects the key into the DevBoxes you launch;
+the **OpenAI** and **Copilot** tokens are plain injected tokens.
+
+Running the platform's own agents on your Claude credential — [Nova](/concepts/nova),
+[Nucleus](/concepts/nucleus) and the [prompt improver](/concepts/prompt-improver) —
+is a **separate** switch, and it is not on the credential row: it lives under
+**Settings → App AI Assistants**, where one control covers all three (and lets
+you pick the Claude model they run on).
 Alternatively, sign in interactively inside a DevBox — those logins persist
 across DevBox recreation via shared config volumes,
 [encrypted end-to-end with a per-user key](/concepts/session-persistence).

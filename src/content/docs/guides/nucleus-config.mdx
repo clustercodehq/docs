@@ -1,20 +1,46 @@
 ---
 title: Nucleus Configuration
-description: Customize Nucleus behavior with a NUCLEUS.md file.
+description: NUCLEUS.md — your standing instructions for the assistant you chat with in the dashboard.
 ---
 
-**NUCLEUS.md** is a per-tenant configuration file that customizes how Nucleus behaves. It lets you define workflows, skip confirmation prompts, and set up post-launch automation — all in plain Markdown.
+import { Aside } from '@astrojs/starlight/components';
+
+**NUCLEUS.md** is a configuration file that customizes how [Nucleus](/concepts/nucleus) behaves. It lets you define workflows, skip confirmation prompts, and set up post-launch automation — all in plain Markdown.
+
+It is stored **on the server, against your account**, so it follows you to another browser, another machine and another session. It is personal, not shared with your team: teammates each have their own, and nobody else can read yours.
+
+<Aside type="tip" title="Which file do I want?">
+  **NUCLEUS.md configures the assistant you talk to** in the dashboard — the one
+  that answers in chat and acts only when you ask. For the agent that *executes*
+  your Runs, Schedules and Loops in the background, including unattended
+  firings with no browser open, you want [NOVA.md](/guides/nova-config) instead.
+  Two different agents, two different files; neither one reads the other's, and
+  both are stored against your account.
+</Aside>
+
+<Aside type="note" title="Wrote one before this changed?">
+  NUCLEUS.md used to live in your browser's local storage, which meant it stayed
+  behind on the machine you wrote it on. Any file still sitting in a browser is
+  **carried onto your account automatically** the first time that browser opens
+  Settings or sends a Nucleus message — you don't need to copy anything across.
+  If you had already written a *different* file on your account by then, the
+  account version is kept and the leftover browser copy is discarded.
+</Aside>
 
 ## Where to Edit
 
 NUCLEUS.md is managed in the orchestrator dashboard:
 
 1. Open the orchestrator at your deployment URL
-2. Go to **Settings**
-3. Find the **NUCLEUS.md** section
+2. Go to **Settings** → **App AI Assistants**
+3. Find the **NUCLEUS.md** block, above the NOVA.md one
 4. Click **Edit NUCLEUS.md**
 
-Nucleus applies your NUCLEUS.md to every message you send. Maximum length is 10,000 characters.
+Nucleus applies your NUCLEUS.md to every message you send. The editor shows a
+live character count against a limit of **10,000 characters**, plus an estimate
+of the tokens your file adds to every Nucleus message. Past the limit the
+counter turns red and **Save** tells you how much to trim instead of writing —
+your text is left exactly as you typed it, never silently truncated.
 
 ## How It Works
 
@@ -68,6 +94,18 @@ auto-launch
 - When I say "go", treat it as a launch request
 ```
 
+## Improving your draft
+
+The editor carries the sparkle (✦) — the
+[prompt improver](/concepts/prompt-improver). Because this field holds a
+standing configuration rather than a one-off job, the sparkle here runs the
+**system-prompt** rewrite: it regroups your directives and preferences under
+your own headings, keeps your voice and your naming templates, and never turns
+"be more concise" into a numbered work order. The *instruction* rewrite — goal,
+steps, what "done" means — is what the same sparkle does in the Nucleus chat
+composer, or in a Run or Schedule field. Accept replaces the draft; Discard
+leaves it exactly as you typed it.
+
 ## Tips
 
 - Keep instructions clear and actionable — Nucleus follows them literally
@@ -75,3 +113,13 @@ auto-launch
 - The Preferences section is free-form — Nucleus interprets it as behavioral guidance
 - You can reset to defaults at any time from the Settings page
 - Changes take effect on the next Nucleus message — no restart needed
+
+## Next
+
+- [Nucleus](/concepts/nucleus) — what the chat assistant does.
+- [NOVA.md](/guides/nova-config) — the standing file for the coordinator that
+  *executes* your Runs, Schedules and Loops, unattended if need be.
+- [Prompt improver](/concepts/prompt-improver) — the ✦ on this editor, and why
+  it rewrites this field differently from a chat message.
+- [Settings](/concepts/settings#app-ai-assistants) — the rest of the App AI
+  Assistants section.

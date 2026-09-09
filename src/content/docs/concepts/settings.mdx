@@ -1,13 +1,13 @@
 ---
 title: Settings
-description: Your per-user ClusterCode preferences — environment variables, service tokens and agent secrets, Nucleus instructions, appearance, DevBox display, notifications, and version info.
+description: Your per-user ClusterCode preferences — environment variables, service tokens and agent secrets, the NUCLEUS.md and NOVA.md assistant files, appearance, DevBox display, notifications, and version info.
 ---
 
 import { Aside } from '@astrojs/starlight/components';
 
 **Settings** holds your preferences for the orchestrator — open it from the
-sidebar. Most of it is **per-user** (your tokens and variables, Nucleus
-instructions, theme); the **DevBox Security** profiles are **tenant-level** —
+sidebar. Most of it is **per-user** (your tokens and variables, your NUCLEUS.md
+and NOVA.md, theme); the **DevBox Security** profiles are **tenant-level** —
 shared across your team. The page is organised into the sections below (the
 right-hand nav jumps between them).
 
@@ -27,11 +27,12 @@ groups:
   alternative to signing each agent in per worker: the **Claude OAuth token**
   (`CLAUDE_CODE_OAUTH_TOKEN`), **Anthropic API key** (`ANTHROPIC_API_KEY`),
   **GitHub Copilot token** (`COPILOT_GITHUB_TOKEN`), and **OpenAI API key**
-  (`OPENAI_API_KEY`). The Claude and Anthropic keys additionally carry two
-  toggles — **Use for Nucleus (Bring Your Own Key)** routes Nucleus's own
-  requests through your key, and **Use for DevBox authentication** injects the
-  key into the DevBoxes you launch; the Copilot and OpenAI tokens are plain
-  injected tokens. See
+  (`OPENAI_API_KEY`). The Claude and Anthropic keys additionally carry a
+  **Use for DevBox authentication** toggle, which injects the key into the
+  DevBoxes you launch; the Copilot and OpenAI tokens are plain injected tokens.
+  Running Nova, Nucleus and the [prompt improver](/concepts/prompt-improver) on
+  your Claude credential is a separate switch that lives in
+  [App AI Assistants](#app-ai-assistants), not on the credential row. See
   [agent secrets](/reference/environment-variables/#agent-secrets).
 - **Global variables** — free-form variables injected into **every** DevBox
   you launch. Mark a variable **secret** to encrypt it at rest and redact its
@@ -47,23 +48,37 @@ Agent sign-in (Claude, Codex, Copilot) is **per worker**, not per user — set
 it up from any worker's page via **Manage agent sign-in**, or see the
 [agent sign-in guide](/guides/agent-sign-in).
 
-## Nucleus
+## App AI Assistants
 
-Customize [Nucleus](/concepts/nucleus)'s behavior with a personal instruction
-file — a **`NUCLEUS.md`**, conceptually like a `CLAUDE.md`. Use it to set tone,
-standing preferences, or project context the assistant should always keep in
-mind. You can edit it inline and **reset** it back to the default at any time.
-This section holds the `NUCLEUS.md` only.
+The two agents that run *inside* ClusterCode — the assistant you chat with and
+the coordinator that executes your work — are configured here. Each has its own
+personal instruction file, conceptually like a `CLAUDE.md`: set tone, standing
+preferences, or context the agent should always keep in mind. Both editors carry
+the ✦ [prompt improver](/concepts/prompt-improver), and both can be **reset**
+back to the default at any time.
 
-Nucleus is built on **Anthropic (Claude)** models. Every plan includes a
-monthly AI allowance, but you can **bring your own key** for usage beyond your
-plan — or to run entirely on your own account. The keys live under
-[Environment Variables → Agent Secrets](#environment-variables): add an
-**Anthropic API key** or a **Claude OAuth token** and enable **Use for Nucleus
-(Bring Your Own Key)**. The OAuth option routes Nucleus through your personal
-Claude Code subscription — make sure your usage complies with Anthropic's
-terms. See also [AI Credits](/guides/ai-credits) for how plan allowance and
-BYOK interact.
+- **`NUCLEUS.md`** — [Nucleus](/concepts/nucleus), the assistant you talk to in
+  the dashboard. See [Nucleus Configuration](/guides/nucleus-config).
+- **`NOVA.md`** — [Nova](/concepts/nova), the coordinator that executes your
+  Runs, Schedules, Loops and Prototypes. See
+  [Nova Configuration](/guides/nova-config).
+
+Both files are stored **against your account**, so they follow you to whichever
+browser you sign in from — and an unattended Schedule firing at 3 a.m., with no
+browser open at all, still applies NOVA.md. Both cap at **10,000 characters**,
+and both count toward the prompt of every message or execution they apply to —
+the editors show a live token estimate.
+
+Nova and Nucleus are both built on **Anthropic (Claude)** models. Every plan
+includes a monthly AI allowance, but you can **bring your own key** for usage
+beyond your plan — or to run entirely on your own account. Store the credential
+under [Environment Variables → Agent Secrets](#environment-variables) (an
+**Anthropic API key** or a **Claude OAuth token**), then switch it on for both
+agents from the **Bring your own key** control in this section, which also lets
+you pick the Claude model they run on. The OAuth option routes them through your
+personal Claude Code subscription — make sure your usage complies with
+Anthropic's terms. See also [AI Credits](/guides/ai-credits) for how plan
+allowance and BYOK interact.
 
 ## Appearance
 

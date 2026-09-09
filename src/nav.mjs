@@ -119,8 +119,12 @@ export const nav = [
       // team's / one project's" — the reader meets the scope before the thing
       // that is scoped to it.
       { label: 'Shortcuts', slug: 'concepts/shortcuts', desc: 'Prompts you save once and reuse' },
-      { label: 'Nucleus', slug: 'concepts/nucleus', desc: 'The in-platform AI assistant' },
-      { label: 'Prompt improver', slug: 'concepts/prompt-improver', desc: 'Rewrite a draft into an agent-ready instruction' },
+      // Paired against Automation's 'Nova' entry ('The coordinator behind every
+      // run'): "the in-platform AI assistant" described Nova just as well, and
+      // the two entries live in different groups, so neither desc can lean on
+      // adjacency to disambiguate. Each has to say which agent it is on its own.
+      { label: 'Nucleus', slug: 'concepts/nucleus', desc: 'The assistant you chat with in the dashboard' },
+      { label: 'Prompt improver', slug: 'concepts/prompt-improver', desc: 'Rewrite a task draft — or an agent config file' },
       { label: 'Observatory', slug: 'concepts/observatory', desc: 'Galaxy view of your fleet' },
       { label: 'Tickets', slug: 'concepts/tickets', desc: 'Work items from issue trackers' },
       { label: 'Runtime Catalog', slug: 'concepts/runtime-catalog', desc: "What's inside a DevBox" },
@@ -152,7 +156,15 @@ export const nav = [
       { label: 'Create a Workflow', slug: 'guides/create-a-workflow', desc: 'Draw a graph and fire it as one unit', badge: beta },
       { label: 'Custom Containerfile', slug: 'guides/custom-containerfile', desc: 'Build your own runtime' },
       { label: 'Build from DevBox', slug: 'guides/build-image-from-container', desc: 'Snapshot a DevBox into an image' },
-      { label: 'Nucleus Configuration', slug: 'guides/nucleus-config', desc: 'Customize Nucleus with NUCLEUS.md' },
+      // These two are the pair a reader has to tell apart — the assistant you
+      // chat with vs. the coordinator that executes the work — so they sit
+      // adjacent, and their `desc` lines are written as a CONTRAST rather than
+      // as two parallel "Customize X with X.md" blanks. In the palette and the
+      // mobile menu the desc is all the reader gets before opening a page;
+      // "Customize Nova with NOVA.md" told them nothing they didn't already
+      // read in the label.
+      { label: 'Nucleus Configuration', slug: 'guides/nucleus-config', desc: 'NUCLEUS.md — standing rules for the assistant you chat with' },
+      { label: 'Nova Configuration', slug: 'guides/nova-config', desc: 'NOVA.md — standing rules for the agent that runs your work' },
       { label: 'Privileged Mode (Nested Containers)', slug: 'guides/privileged-nested-containers', desc: 'Run a container engine inside a DevBox' },
       { label: 'Windows Golden Image', slug: 'guides/windows-golden-image', desc: 'Boot Windows DevBoxes in seconds' },
       { label: 'Visual Testing', slug: 'guides/visual-testing', desc: 'Give an agent a real desktop' },
