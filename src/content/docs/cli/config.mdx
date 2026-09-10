@@ -41,6 +41,7 @@ clustercode config list
 |-----|-------------|
 | `WORKER_NAME` | Display name for this worker (max 64 characters) |
 | `RUNTIME_MEMORY_MB` | Memory, in MiB (1024-based), to give the container runtime. `8192` is 8 GiB. The `MB` in the key name is historical. |
+| `RUNTIME_RECLAIM_VERIFIED` | `yes` or `no` — whether the WSL2 VM has been measured actually returning memory to Windows on this machine. |
 
 Only the keys listed above are accepted. Attempting to set an unknown key returns an error.
 
@@ -74,6 +75,40 @@ sizing prompts and the platform-specific apply steps (including the Windows
 [Sizing container runtime memory](/self-hosting/runtime-memory) for the full
 guide.
 
+### `RUNTIME_RECLAIM_VERIFIED`
+
+```bash
+clustercode config set RUNTIME_RECLAIM_VERIFIED yes
+```
+
+Accepts `yes` or `no`; anything else is rejected with
+`Reclaim verification must be yes or no (or run clustercode onboard --verify-reclaim to measure it)`.
+
+On Windows, the WSL2 VM only returns memory to the host when
+`[experimental] autoMemoryReclaim` is set — and even then, only if the build
+honours it. The setting is a request, and it has been observed accepted and
+completely inert. So the CLI sizes the runtime optimistically for exactly one
+state: reclaim **measured** working on this machine. This key is that
+measurement.
+
+Normally you don't set it by hand:
+[`clustercode onboard --verify-reclaim`](/cli/onboard#verifying-that-memory-reclaim-works)
+runs the experiment and records the answer. Set it yourself when you've
+[measured it manually](/self-hosting/runtime-memory#measuring-it-by-hand)
+instead.
+
+A verdict is only meaningful next to the WSL build it describes, so it's stored
+alongside a companion `RUNTIME_RECLAIM_VERIFIED_WSL` stamp, which
+`clustercode config list` shows and `config set` does **not** accept — the CLI
+writes it for you, whichever way the verdict was recorded. When the running WSL
+version stops matching the stamp, the verdict is treated as unanswered rather
+than carried forward: the CLI goes back to sizing as if reclaim doesn't work,
+and asks again. That's deliberate — this behaviour is a property of the WSL
+build, and an upgrade can fix it or break it.
+
+Clearing the key (or losing the stamp) is safe in the same direction: with no
+usable verdict, the runtime is sized as though reclaim does nothing.
+
 ## Configuration File
 
 Location: `~/.clustercode/config.json`
@@ -81,6 +116,8 @@ Location: `~/.clustercode/config.json`
 ```json
 {
   "WORKER_NAME": "my-dev-machine",
-  "RUNTIME_MEMORY_MB": "24576"
+  "RUNTIME_MEMORY_MB": "24576",
+  "RUNTIME_RECLAIM_VERIFIED": "no",
+  "RUNTIME_RECLAIM_VERIFIED_WSL": "2.7.13.0"
 }
 ```

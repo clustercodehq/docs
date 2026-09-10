@@ -37,7 +37,7 @@ shows GiB.
 [`clustercode onboard`](/cli/onboard) asks how this machine is used and offers
 a preset for each:
 
-| Use | The runtime gets | Host keeps, with memory reclaim | Host keeps, without |
+| Use | The runtime gets | Host keeps, with memory reclaim **verified** | Host keeps, otherwise |
 |---|---|---|---|
 | **Dedicated worker** — mostly hosts DevBoxes | Everything except the host's reserve | 6 GiB | `max(8 GiB, 25% of RAM)` |
 | **Shared** — you also work on this machine day to day | At most half the machine | 12 GiB | 12 GiB |
@@ -51,16 +51,20 @@ it can give away nearly everything.
 
 The two right-hand columns are the important part. A reserve is only real if
 something makes the VM give memory back — otherwise the host "keeps" a number
-that the VM slowly eats. The smaller *Dedicated* reserve of 6 GiB therefore
-applies only where `onboard` can enforce reclaim: Windows, Podman, the WSL
-backend, WSL 2.0 or newer. Everywhere else the VM has to be assumed fully
-inflated, so the *Dedicated* preset leaves `max(8 GiB, 25% of RAM)` behind
-instead — that covers macOS, Hyper-V, Docker as the engine, and WSL builds
-older than 2.0. The *Shared* reserve is already sized for a machine somebody
+that the VM slowly eats. And *writing* the reclaim setting is not the same as
+the VM honouring it: the setting is a request, and it has been measured
+accepted and completely inert. So the smaller *Dedicated* reserve of 6 GiB
+applies on exactly one condition — reclaim has been **measured** to work on
+this machine, with
+[`clustercode onboard --verify-reclaim`](#verifying-it-works-on-your-machine)
+or by hand. Until then, and everywhere reclaim cannot exist at all (macOS,
+Hyper-V, Docker as the engine, WSL builds older than 2.0), the VM is assumed
+fully inflated and the *Dedicated* preset leaves `max(8 GiB, 25% of RAM)`
+behind instead. The *Shared* reserve is already sized for a machine somebody
 works on, so it doesn't move.
 
-On a 31.6 GiB Windows host that's a *Dedicated* preset of 25 GiB with reclaim,
-and 23 GiB without.
+On a 31.6 GiB Windows host that's a *Dedicated* preset of 25 GiB once reclaim
+is verified, and 23 GiB until it is.
 
 ## It's a ceiling, not a reservation
 
@@ -73,14 +77,16 @@ table above actually protects your machine:
   reclaim* is enabled (`[experimental] autoMemoryReclaim=gradual` in
   `.wslconfig`, WSL 2.0 or newer). Without it the VM keeps everything it has
   ever touched — including the guest file cache left behind by image pulls and
-  builds — until `wsl --shutdown`. Treat the ceiling as fully used.
+  builds — until `wsl --shutdown`. And the setting is a request the build is
+  free to ignore, so treat the ceiling as fully used until you have
+  [measured otherwise](#verifying-it-works-on-your-machine).
 - **macOS** — the VM does not return memory to the host until it restarts.
   Treat the ceiling as fully used.
 
 So size for the number you are willing to have the machine hold *permanently*,
-not for the peak you expect. Where reclaim is enabled the VM hovers near its
-working set and only approaches the ceiling under load; where it isn't, the
-ceiling behaves like a floor the VM climbs to and stays at.
+not for the peak you expect. Where reclaim is enabled **and working** the VM
+hovers near its working set and only approaches the ceiling under load;
+otherwise the ceiling behaves like a floor the VM climbs to and stays at.
 
 ## Hard ceilings
 
@@ -91,8 +97,8 @@ number. Keeping them apart matters on Windows, where they differ:
 
 | | Windows | macOS | Linux |
 |---|---|---|---|
-| **Preset reserve** — what *Dedicated* leaves behind, with memory reclaim | 6 GiB | — | none |
-| **Preset reserve** — what *Dedicated* leaves behind, without | `max(8 GiB, 25% of RAM)` | `max(8 GiB, 25% of RAM)` | none |
+| **Preset reserve** — what *Dedicated* leaves behind, with memory reclaim **verified** | 6 GiB | — | none |
+| **Preset reserve** — what *Dedicated* leaves behind, otherwise | `max(8 GiB, 25% of RAM)` | `max(8 GiB, 25% of RAM)` | none |
 | **Preset reserve** — what *Shared* leaves behind | 12 GiB | 12 GiB | none |
 | **Hard OS reserve** — the most any value may take | 4 GiB | 6 GiB | none (no VM) |
 
@@ -103,8 +109,10 @@ never exceed host RAM minus that figure, whatever you type.
 macOS has no reclaim setting at all, so its *Dedicated* preset is always the
 no-reclaim one.
 
-So on a 32 GiB Windows host with reclaim enabled the *Dedicated* preset offers
-26 GiB (leaving exactly 6); without reclaim it offers 24 GiB (leaving 8). A
+So on a 32 GiB Windows host with reclaim **verified**, the *Dedicated* preset
+offers 26 GiB (leaving exactly 6). Until it is verified — including while the
+setting is written and simply unchecked — the preset offers 24 GiB (leaving 8),
+because a machine sized on an unverified promise is a machine sized wrong. A
 custom value may go as high as 28 GiB (leaving exactly 4) either way — but on
 a machine that never gives memory back, 28 GiB is what the VM will eventually
 be holding.
@@ -138,11 +146,34 @@ Two modes are recognised:
 
 - **`gradual`** — what `onboard` writes, and Microsoft's recommended setting.
   It returns memory while the VM is idle.
-- **`dropcache`** — the aggressive alternative. `clustercode` accepts it as
-  "reclaim is on" if you've set it by hand, but never writes it.
+- **`dropcache`** — the aggressive alternative. `clustercode` recognises it if
+  you've set it by hand, but never writes it.
 
-Anything else — the key absent, commented out, or set to another value — counts
-as off.
+Either value counts as *configured*. Anything else — the key absent, commented
+out, or set to another value — counts as off. Neither value, on its own, is
+treated as reclaim that works: see the next section for why.
+
+### Four states, not two
+
+Whether the VM gives memory back is a property of your Windows build, not of
+your config file, so the CLI keeps configuration and behaviour apart:
+
+| State | What it means | What the runtime is sized for |
+|---|---|---|
+| **Off** | The entry isn't there (or your WSL predates 2.0) | A VM that never gives memory back |
+| **Configured** | The entry is there; nobody has measured it | A VM that never gives memory back |
+| **Verified** | Measured, on this machine, against this WSL build: memory comes back | The 6 GiB *Dedicated* reserve |
+| **Inert** | Measured, and this build returns nothing | A VM that never gives memory back |
+
+Only **verified** buys the smaller reserve. Everything else is sized as if
+reclaim does not exist, which is deliberately the safe direction to be wrong
+in. Each state has its own `doctor` wording — see
+[Memory reclaim](/cli/doctor#memory-reclaim-windows-wsl-backend).
+
+A verdict is stored together with the WSL version it was measured against.
+Upgrading WSL clears the question rather than carrying an old answer forward,
+so the CLI drops back to *configured* and asks again — which is right, because
+this behaviour has changed between builds.
 
 ### Checking whether it's on
 
@@ -150,17 +181,77 @@ as off.
 clustercode doctor
 ```
 
-The [runtime-memory check](/cli/doctor#runtime-memory) appends
-`memory reclaim is off, so the runtime keeps memory the host may need` to its
-line and drops to a warning when the setting isn't in effect, and the
-[host-memory check](/cli/doctor#host-memory) on the next line tells you what
-Windows actually has left. Running `clustercode onboard` on a machine whose
-size is already correct still offers to turn reclaim on, with no resize.
+The [runtime-memory check](/cli/doctor#runtime-memory) appends what it found to
+its line. With nothing set it warns:
+
+```
+memory reclaim is off, so the runtime keeps memory the host may need
+```
+
+With the entry present but never measured, it still passes, and says so:
+
+```
+(memory reclaim configured but unverified — `clustercode onboard --verify-reclaim`)
+```
+
+The [host-memory check](/cli/doctor#host-memory) on the next line tells you what
+Windows actually has left. Running `clustercode onboard` on a machine whose size
+is already correct still offers to turn reclaim on, with no resize.
 
 ### Verifying it works on your machine
 
-Reclaim only runs while the guest is idle, so it isn't instantaneous, and on
-some older Windows builds it may not trigger at all. To check your own host:
+Reclaim only runs while the guest is idle, so it isn't instantaneous — and on
+some builds it never happens at all, however the file is written. The CLI can
+measure it for you:
+
+```bash
+clustercode onboard --verify-reclaim
+```
+
+What that does: it reads back up to 4 GiB of the container runtime's *existing*
+image data to load the VM's page cache — reading, never writing, so it consumes
+no disk — then leaves the machine completely alone and watches the VM's working
+set from the Windows side for up to twelve minutes. It samples only from
+Windows, because any command into the guest resets the idleness reclaim is
+waiting for.
+
+It's Windows-only, Podman-only, and it needs a genuinely idle runtime: with
+containers running it stops immediately with
+`Containers are running, so the runtime never goes idle. Stop them and try
+again.` `onboard` also offers the same measurement, unprompted, at the one
+moment the answer matters most — right after it has turned reclaim on:
+
+```
+Verify that memory reclaim works on this machine now? Takes about 10 minutes; the runtime must stay idle.
+```
+
+There are **three** outcomes, not two:
+
+- **Yes** — `Memory reclaim works here: the VM gave back 3.4 GiB while idle.`
+  The verdict is recorded, and `onboard` then offers to raise the runtime to
+  the size a verified host has earned (`Reclaim verified — raise the runtime to
+  25 GiB?`).
+- **No** — `Memory reclaim did not return memory on this machine: the VM still
+  holds 16.3 GiB after idling. The runtime will be sized as if reclaim does not
+  work.` The verdict is recorded, and the CLI tells you the ceiling that
+  follows from it: `Sized as if reclaim does not work, the ceiling for this
+  machine is 23552MB.`
+- **Inconclusive** — the run couldn't establish either answer, and says why:
+  containers were running, the VM wasn't up, or there simply wasn't enough
+  existing data to pull through the cache
+  (`Could not load the VM's cache: the runtime has only 210 MiB of cacheable
+  data and headroom, which is too little to measure reclaim against.`). Nothing
+  is recorded — "we couldn't tell" is not evidence for either answer — so the
+  runtime stays sized conservatively and you can re-run once the runtime has
+  pulled a few images.
+
+The result is stored as
+[`RUNTIME_RECLAIM_VERIFIED`](/cli/config#runtime_reclaim_verified), stamped with
+the WSL version it was measured against.
+
+#### Measuring it by hand
+
+The same experiment, if you'd rather run it yourself:
 
 1. Give the VM some cache to hold — pull an image or run a build.
 2. Note `vmmem` (or `vmmemWSL`) in Task Manager's Details tab, and the amount
@@ -169,8 +260,17 @@ some older Windows builds it may not trigger at all. To check your own host:
 4. Watch `vmmem` shrink and Windows' available memory rise by a comparable
    amount.
 
-If `vmmem` stays flat through a long idle window, reclaim isn't doing anything
-on your build — use the fallbacks in
+Then record what you found, so the sizing matches reality:
+
+```bash
+clustercode config set RUNTIME_RECLAIM_VERIFIED yes   # or: no
+```
+
+Don't assume the answer. On a Windows 10 21H1 machine with WSL 2.7.13, neither
+mode returned any of ~9 GB of cache in 16 minutes idle, while dropping the
+cache by hand returned ~10 GB in 20 seconds — the setting can be present and
+inert. If `vmmem` stays flat through a long idle window, that's your host: use
+the fallbacks in
 [Windows becomes slow or hangs while the worker runs](/self-hosting/troubleshooting#windows-becomes-slow-or-hangs-while-the-worker-runs).
 
 `onboard` does **not** write this setting for Docker Desktop's WSL2 backend,
@@ -246,7 +346,9 @@ After a successful apply, `onboard` records the value it applied as
 `doctor` the size was a deliberate choice rather than an install default, so it
 stops suggesting a different one. And on a machine that is already the right
 size, `onboard` still offers to enable memory reclaim — that path changes no
-allocation at all.
+allocation at all, and once the entry is written it offers to
+[measure](#verifying-it-works-on-your-machine) whether it does anything, then
+to raise the size if it does.
 
 For Docker, `onboard` never applies the change at all, on any platform — see
 below.
@@ -303,4 +405,6 @@ be stopped first — `onboard` handles the stop/set/start sequence for you.
   the interactive wizard and `--memory` flag
 - [`clustercode config`](/cli/config#runtime_memory_mb) — the
   `RUNTIME_MEMORY_MB` key
+- [`clustercode config`](/cli/config#runtime_reclaim_verified) — the
+  `RUNTIME_RECLAIM_VERIFIED` key
 - [Requirements](/self-hosting/requirements) — baseline hardware and software

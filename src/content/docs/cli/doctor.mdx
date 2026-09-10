@@ -108,16 +108,69 @@ Runtime memory: 26.0 GiB of 31.6 GiB host — fits ~6 default (4 GiB) DevBoxes �
 
 It won't tell a runtime that's already at or below that ceiling to "lower"
 itself to a bigger number — in that case you just get the explanation. Both
-forms drop the check to a warning, and neither is ever shown for a Hyper-V
-backend, which doesn't read `.wslconfig`, or on macOS and Linux, which have no
-such setting. A reclaim status that couldn't be probed is graded as though it
-were off.
+forms drop the check to a warning.
+
+Writing the setting isn't the same as the VM honouring it, so the check
+distinguishes *configured* from *measured*. With the entry present but never
+verified, and the runtime sized as though it works, that's a warning with two
+ways out — measure it, or size for the truth you currently have:
+
+```
+Runtime memory: 25.0 GiB of 31.6 GiB host — fits ~5 default (4 GiB) DevBoxes — memory reclaim is configured but unverified, and the runtime is sized as if it works; verify with `clustercode onboard --verify-reclaim` or lower to `clustercode onboard --memory 23552`
+```
+
+If the runtime is already within what a no-reclaim host can afford, nothing is
+wrong — the check passes and just notes the open question:
+
+```
+Runtime memory: 16.0 GiB of 31.6 GiB host — fits ~3 default (4 GiB) DevBoxes (memory reclaim configured but unverified — `clustercode onboard --verify-reclaim`)
+```
+
+Once it *has* been measured and found to do nothing on this build, no amount of
+configuration will change that, so the only lever left is the size:
+
+```
+Runtime memory: 25.0 GiB of 31.6 GiB host — fits ~5 default (4 GiB) DevBoxes — memory reclaim does not return memory on this Windows build; lower to `clustercode onboard --memory 23552`
+```
+
+and, again, a runtime already sized for that reality passes with a note
+instead:
+
+```
+Runtime memory: 16.0 GiB of 31.6 GiB host — fits ~3 default (4 GiB) DevBoxes (memory reclaim inert on this build)
+```
+
+Measured and working is the one status that buys the smaller reserve — which
+may be news to a runtime that was sized conservatively before anyone knew:
+
+```
+Runtime memory: 16.0 GiB of 31.6 GiB host — fits ~3 default (4 GiB) DevBoxes (memory reclaim verified — up to 25.0 GiB; see `clustercode onboard`)
+```
+
+The rule underneath all of these: **only a verified status changes the
+sizing.** Off, unsupported, configured-but-unverified and inert are all graded
+the same way — as a VM that keeps what it takes. None of these lines is ever
+shown for a Hyper-V backend, which doesn't read `.wslconfig`, or on macOS and
+Linux, which have no such setting.
+
+At most one reclaim note appears, and it takes the place of the "dedicated
+worker?" nudge rather than joining it — `doctor` prints one line per check, and
+two suggestions on one line is neither.
+
+With Docker as the engine, every "lower to `clustercode onboard --memory N`"
+above reads `lower [wsl2] memory= to NMB` instead, because `onboard` won't edit
+that file for you.
+
+See [Verifying it works on your machine](/self-hosting/runtime-memory#verifying-it-works-on-your-machine)
+for what the measurement actually does, and for recording a verdict you took by
+hand.
 
 This check never fails — an undersized runtime just caps how much work the
 worker takes on, it doesn't break it. It warns when the engine is too small
 to fit even one default-sized DevBox, when it's below what's recommended
-for a shared machine and nothing was deliberately configured, or when memory
-reclaim isn't in effect. On Linux, Podman
+for a shared machine and nothing was deliberately configured, or when the
+runtime is sized larger than a host without working memory reclaim can afford.
+On Linux, Podman
 runs containers directly with no VM in between, so this reports host memory
 directly. If the runtime is stopped, it reports "unknown" rather than
 guessing.
@@ -173,8 +226,17 @@ shrink, so the line reports the reclaim state instead:
 Host memory: 3.1 GiB available of 31.6 GiB — below the 4.0 GiB the host needs; memory reclaim is off — see the docs
 ```
 
-With reclaim enabled and the host still short, the same line reads
-`memory reclaim is on but not keeping up`. If the container runtime isn't
+The tail of that line names which of the four reclaim states you're in, because
+they're different diagnoses with different next steps:
+
+| Tail | What it means |
+|---|---|
+| `memory reclaim is off — see the docs` | Nothing is set (or WSL is older than 2.0) |
+| `memory reclaim is configured but unverified — see the docs` | The entry is written; nobody has measured it |
+| `memory reclaim is on but inert on this build — see the docs` | Measured, and it returns nothing here |
+| `memory reclaim is on but not keeping up — see the docs` | Measured and working, simply outpaced |
+
+If the container runtime isn't
 running, it isn't the cause of the pressure, so no runtime advice is offered at
 all — and on Linux there is no VM holding memory apart from the host, so the
 warning carries no runtime instructions there either.

@@ -107,23 +107,43 @@ charged to Windows until `wsl --shutdown`. The reserve the CLI subtracted when
 sizing the runtime is notional in that state, and Windows eventually thrashes
 into the pagefile.
 
+Setting the entry doesn't guarantee an escape from this: it's a request, and
+some builds accept it and do nothing. On a Windows 10 21H1 machine with WSL
+2.7.13, neither `gradual` nor `dropcache` returned any of ~9 GB of cache in 16
+minutes idle, while dropping the cache by hand returned ~10 GB in 20 seconds.
+So the ladder below is *enable, then verify* — and a setting measured inert is
+graded exactly like no reclaim at all, which lowers the ceiling the CLI thinks
+this machine can carry.
+
 **Diagnose:**
 ```bash
 clustercode doctor
 ```
-Look for two lines: `Runtime memory: …` carrying
-`memory reclaim is off, so the runtime keeps memory the host may need`, and
-`Host memory: …` reporting less available than the 4 GiB floor Windows needs.
+Look for two lines: `Runtime memory: …` carrying either
+`memory reclaim is off, so the runtime keeps memory the host may need` or
+`memory reclaim is configured but unverified, and the runtime is sized as if it
+works`, and `Host memory: …` reporting less available than the 4 GiB floor
+Windows needs — its tail names the reclaim state too
+(`memory reclaim is on but inert on this build`, and so on).
 `vmmem` (or `vmmemWSL`) in Task Manager's Details tab shows the same thing from
 the other side.
 
 **Fix, in order:**
 
-1. **Turn on memory reclaim.** `clustercode onboard` offers this even when the
-   size is already right, and applies it with no resize. It writes
-   `[experimental] autoMemoryReclaim=gradual` into `%UserProfile%\.wslconfig`
-   (keeping a `.wslconfig.bak` copy the first time) and runs `wsl --shutdown`,
-   which restarts every WSL distribution. See
+1. **Turn on memory reclaim — and verify it.** `clustercode onboard` offers
+   this even when the size is already right, and applies it with no resize. It
+   writes `[experimental] autoMemoryReclaim=gradual` into
+   `%UserProfile%\.wslconfig` (keeping a `.wslconfig.bak` copy the first time)
+   and runs `wsl --shutdown`, which restarts every WSL distribution. It then
+   offers to measure whether the VM really gives memory back; take it, or run
+   the measurement yourself once the machine is idle:
+   ```bash
+   clustercode onboard --verify-reclaim
+   ```
+   If the answer is no, that's the end of this step — a configured-but-inert
+   setting is graded as no reclaim at all, the ceiling for this machine drops
+   accordingly, and step 3 is your real fix. If it's yes, `onboard` offers to
+   raise the runtime to the larger size a verified host has earned. See
    [Memory reclaim on Windows](/self-hosting/runtime-memory#memory-reclaim-on-windows).
 2. **Drop the guest's page cache, for memory you need back now.** Reclaim only
    runs while the VM is idle, and on some older Windows builds it may not
@@ -138,9 +158,9 @@ the other side.
    from 16.7 GB to 6.8 GB and gave Windows back roughly 10 GB with a DevBox
    still running. It's a stopgap, not a fix: the cache refills as work
    continues.
-3. **Lower the ceiling.** If reclaim is unavailable or doesn't reclaim on your
-   build, size the runtime for a VM you assume stays fully inflated. `doctor`
-   names the value in its own warning — use exactly that:
+3. **Lower the ceiling.** If reclaim is unavailable, unverified, or measured
+   inert on your build, size the runtime for a VM you assume stays fully
+   inflated. `doctor` names the value in its own warning — use exactly that:
    ```bash
    clustercode onboard --memory 23552
    ```

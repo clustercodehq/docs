@@ -23,7 +23,7 @@ An interactive wizard that walks you through the complete setup:
    - **container runtime missing** → installs and starts Podman
    - **Orchestrator unreachable** → shows configuration guidance
 3. Offers to size the container runtime's memory and, on Windows with WSL 2.0+,
-   enables memory reclaim — see below
+   enables memory reclaim — then offers to measure whether it works — see below
 4. Re-runs all checks to verify fixes
 
 ## Options
@@ -31,6 +31,7 @@ An interactive wizard that walks you through the complete setup:
 | Flag | Description |
 |------|-------------|
 | `--memory <mb>` | Set the container runtime's memory allocation, in MiB (see below) |
+| `--verify-reclaim` | Measure whether the runtime returns memory to the host (~10 min; keep the runtime idle), and record the result (see below) |
 
 `--memory` skips the sizing questions either way. In a script or CI (no TTY)
 it also applies the change without prompting, and is the only way to apply a
@@ -50,11 +51,13 @@ historical; the CLI displays GiB throughout.
 If nothing has been configured yet, the wizard asks how the machine is used:
 
 - **Dedicated worker** — mostly hosts DevBoxes. Gets everything except a
-  *preset* reserve of 6 GiB — but that smaller reserve only applies where the
-  VM can be made to give memory back, which means Windows with Podman on the
-  WSL backend and WSL 2.0 or newer. Everywhere else (macOS, Hyper-V, Docker as
-  the engine, WSL older than 2.0) the preset leaves `max(8 GiB, 25% of RAM)`
-  behind instead. Nothing is reserved on Linux, which has no VM in the way.
+  *preset* reserve of 6 GiB — but that smaller reserve applies only once the VM
+  has been **measured** giving memory back on this machine, with
+  `--verify-reclaim` or by hand. Writing the reclaim setting is not enough:
+  until there's a verdict, and everywhere the feature can't exist at all
+  (macOS, Hyper-V, Docker as the engine, WSL older than 2.0), the preset leaves
+  `max(8 GiB, 25% of RAM)` behind instead. Nothing is reserved on Linux, which
+  has no VM in the way.
 - **Shared** — you also work on this machine day to day. Capped at half the
   host, with a larger preset reserve of 12 GiB on Windows/macOS so the desktop
   stays usable — the same figure with or without memory reclaim.
@@ -95,12 +98,62 @@ clustercode onboard --memory 24576
 
 The allocation is a **ceiling, not a reservation** — it caps what the runtime
 *can* take rather than setting it aside up front. That is not the same as the
-memory coming back, though. On Windows, the WSL2 VM only returns memory to the
-host while `[experimental] autoMemoryReclaim` is enabled; without it, it keeps
-everything it has ever touched until `wsl --shutdown`. On macOS the VM doesn't
-release memory until it restarts. In both of those cases, treat the ceiling as
-fully used — see
+memory coming back, though, and `onboard` says which case you're in before it
+asks you to pick a number. On Windows that note is one of four:
+
+```
+This is a ceiling, not a reservation — memory is used while DevBoxes run and returned to Windows gradually while the runtime is idle.
+Memory reclaim is configured but has not been verified on this machine — this number is sized as if it does not work; run `clustercode onboard --verify-reclaim` to check.
+Memory reclaim does not return memory on this Windows build, so treat this number as fully used.
+Without memory reclaim (WSL 2.0+), the runtime keeps everything it has touched until `wsl --shutdown`, so treat this number as fully used.
+```
+
+Only the first — reclaim measured and working — is a ceiling the VM hovers
+below. On macOS the VM doesn't release memory until it restarts, so treat the
+ceiling as fully used there too. See
 [It's a ceiling, not a reservation](/self-hosting/runtime-memory#its-a-ceiling-not-a-reservation).
+
+### Verifying that memory reclaim works
+
+`--verify-reclaim` measures whether the WSL2 VM actually hands memory back,
+rather than trusting that the setting does what it says. It loads the VM's page
+cache by *reading* up to 4 GiB of the runtime's own image data (so it consumes
+no disk), then leaves the machine alone and watches the VM from the Windows
+side for up to twelve minutes:
+
+```bash
+clustercode onboard --verify-reclaim
+```
+
+It needs Windows, Podman, and an idle runtime — with containers running it
+declines rather than measuring your workload instead of your machine. The
+result is recorded as
+[`RUNTIME_RECLAIM_VERIFIED`](/cli/config#runtime_reclaim_verified), stamped
+with the WSL version it was measured against, and it's what unlocks the 6 GiB
+*Dedicated* reserve.
+
+You don't have to remember the flag. Right after `onboard` turns reclaim on —
+the one moment the answer changes what you should do next — it offers the
+measurement itself:
+
+```
+Verify that memory reclaim works on this machine now? Takes about 10 minutes; the runtime must stay idle.
+```
+
+Decline, and it tells you the ceiling that a machine sized for no reclaim
+should use (`Sized as if reclaim does not work, the ceiling for this machine is
+23552MB.`). Accept, and if the answer is yes, `onboard` offers to hand the
+runtime the memory it just earned:
+
+```
+Reclaim verified — raise the runtime to 25 GiB?
+```
+
+A run can also come back **inconclusive** — for example when the runtime hasn't
+pulled enough images to fill a meaningful amount of cache. Nothing is recorded
+in that case, so the runtime stays sized conservatively and you can try again
+later. Full details in
+[Verifying it works on your machine](/self-hosting/runtime-memory#verifying-it-works-on-your-machine).
 
 After a successful apply, `onboard` stores the value it applied as
 [`RUNTIME_MEMORY_MB`](/cli/config#runtime_memory_mb), which is what stops
