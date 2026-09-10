@@ -37,10 +37,10 @@ shows GiB.
 [`clustercode onboard`](/cli/onboard) asks how this machine is used and offers
 a preset for each:
 
-| Use | The runtime gets | Host keeps (Windows/macOS) |
-|---|---|---|
-| **Dedicated worker** — mostly hosts DevBoxes | Everything except the host's reserve | ~6 GiB |
-| **Shared** — you also work on this machine day to day | At most half the machine | ~12 GiB |
+| Use | The runtime gets | Host keeps, with memory reclaim | Host keeps, without |
+|---|---|---|---|
+| **Dedicated worker** — mostly hosts DevBoxes | Everything except the host's reserve | 6 GiB | `max(8 GiB, 25% of RAM)` |
+| **Shared** — you also work on this machine day to day | At most half the machine | 12 GiB | 12 GiB |
 
 Linux has no VM in the way — the container runtime *is* the host, so there's
 nothing to reserve or size separately.
@@ -49,18 +49,38 @@ The larger reserve on a shared machine exists so the desktop stays usable
 while DevBoxes are running; a dedicated worker doesn't need that headroom, so
 it can give away nearly everything.
 
+The two right-hand columns are the important part. A reserve is only real if
+something makes the VM give memory back — otherwise the host "keeps" a number
+that the VM slowly eats. The smaller *Dedicated* reserve of 6 GiB therefore
+applies only where `onboard` can enforce reclaim: Windows, Podman, the WSL
+backend, WSL 2.0 or newer. Everywhere else the VM has to be assumed fully
+inflated, so the *Dedicated* preset leaves `max(8 GiB, 25% of RAM)` behind
+instead — that covers macOS, Hyper-V, Docker as the engine, and WSL builds
+older than 2.0. The *Shared* reserve is already sized for a machine somebody
+works on, so it doesn't move.
+
+On a 31.6 GiB Windows host that's a *Dedicated* preset of 25 GiB with reclaim,
+and 23 GiB without.
+
 ## It's a ceiling, not a reservation
 
 The number you configure caps what the container runtime **can** take — it
-isn't set aside up front. Memory is only actually used while DevBoxes are
-running:
+isn't set aside up front. But "not set aside up front" is not the same as
+"given back," and that distinction is what decides whether the reserve in the
+table above actually protects your machine:
 
-- **Windows** — WSL2 gives most of it back to the host once DevBoxes stop.
-- **macOS** — the VM may not release memory back to the host until the
-  machine restarts.
+- **Windows** — the WSL2 VM returns memory to Windows only when *memory
+  reclaim* is enabled (`[experimental] autoMemoryReclaim=gradual` in
+  `.wslconfig`, WSL 2.0 or newer). Without it the VM keeps everything it has
+  ever touched — including the guest file cache left behind by image pulls and
+  builds — until `wsl --shutdown`. Treat the ceiling as fully used.
+- **macOS** — the VM does not return memory to the host until it restarts.
+  Treat the ceiling as fully used.
 
-This means it's usually safe to size generously on a dedicated worker: the
-ceiling only matters when DevBoxes are actually using that memory.
+So size for the number you are willing to have the machine hold *permanently*,
+not for the peak you expect. Where reclaim is enabled the VM hovers near its
+working set and only approaches the ceiling under load; where it isn't, the
+ceiling behaves like a floor the VM climbs to and stays at.
 
 ## Hard ceilings
 
@@ -71,7 +91,8 @@ number. Keeping them apart matters on Windows, where they differ:
 
 | | Windows | macOS | Linux |
 |---|---|---|---|
-| **Preset reserve** — what *Dedicated* leaves behind | 6 GiB | 6 GiB | none |
+| **Preset reserve** — what *Dedicated* leaves behind, with memory reclaim | 6 GiB | — | none |
+| **Preset reserve** — what *Dedicated* leaves behind, without | `max(8 GiB, 25% of RAM)` | `max(8 GiB, 25% of RAM)` | none |
 | **Preset reserve** — what *Shared* leaves behind | 12 GiB | 12 GiB | none |
 | **Hard OS reserve** — the most any value may take | 4 GiB | 6 GiB | none (no VM) |
 
@@ -79,9 +100,14 @@ The preset reserves are conservative defaults chosen so the machine stays
 comfortable. The hard OS reserve is the absolute limit: `RUNTIME_MEMORY_MB` can
 never exceed host RAM minus that figure, whatever you type.
 
-So on a 32 GiB Windows host the *Dedicated* preset offers 26 GiB (leaving
-exactly 6), while a custom value may go as high as 28 GiB (leaving exactly 4).
-On macOS the two happen to coincide at 6 GiB.
+macOS has no reclaim setting at all, so its *Dedicated* preset is always the
+no-reclaim one.
+
+So on a 32 GiB Windows host with reclaim enabled the *Dedicated* preset offers
+26 GiB (leaving exactly 6); without reclaim it offers 24 GiB (leaving 8). A
+custom value may go as high as 28 GiB (leaving exactly 4) either way — but on
+a machine that never gives memory back, 28 GiB is what the VM will eventually
+be holding.
 
 [`clustercode config set RUNTIME_MEMORY_MB`](/cli/config#runtime_memory_mb)
 and the `onboard` prompts both enforce this — a value above the ceiling is
@@ -90,6 +116,77 @@ rejected with the exact limit for your machine, not silently clamped.
 At the other end, 2048 MiB is a hard floor, not a usable recommendation — a
 value that low cannot host even one default-sized (4 GiB) DevBox once the
 host reserve is subtracted. Hosting one needs roughly 6 GiB.
+
+## Memory reclaim on Windows
+
+WSL2 sizes its VM with a balloon that only ever inflates. `[wsl2] memory=` is
+the ceiling on that balloon, and nothing deflates it unless you ask:
+
+```ini
+[experimental]
+autoMemoryReclaim=gradual
+```
+
+`clustercode onboard` writes exactly that entry, alongside `[wsl2] memory=`,
+in `%UserProfile%\.wslconfig` — one read, one backup, one write, whether the
+allocation is changing too. Your existing comments, blank lines, unrelated
+keys and unrelated sections survive verbatim, and the first write keeps a
+`.wslconfig.bak` copy. Like any `.wslconfig` change it takes effect on the
+next `wsl --shutdown`, which `onboard` runs for you after asking.
+
+Two modes are recognised:
+
+- **`gradual`** — what `onboard` writes, and Microsoft's recommended setting.
+  It returns memory while the VM is idle.
+- **`dropcache`** — the aggressive alternative. `clustercode` accepts it as
+  "reclaim is on" if you've set it by hand, but never writes it.
+
+Anything else — the key absent, commented out, or set to another value — counts
+as off.
+
+### Checking whether it's on
+
+```bash
+clustercode doctor
+```
+
+The [runtime-memory check](/cli/doctor#runtime-memory) appends
+`memory reclaim is off, so the runtime keeps memory the host may need` to its
+line and drops to a warning when the setting isn't in effect, and the
+[host-memory check](/cli/doctor#host-memory) on the next line tells you what
+Windows actually has left. Running `clustercode onboard` on a machine whose
+size is already correct still offers to turn reclaim on, with no resize.
+
+### Verifying it works on your machine
+
+Reclaim only runs while the guest is idle, so it isn't instantaneous, and on
+some older Windows builds it may not trigger at all. To check your own host:
+
+1. Give the VM some cache to hold — pull an image or run a build.
+2. Note `vmmem` (or `vmmemWSL`) in Task Manager's Details tab, and the amount
+   of available memory on the Performance tab.
+3. Leave the machine idle for 10–15 minutes with no DevBoxes running.
+4. Watch `vmmem` shrink and Windows' available memory rise by a comparable
+   amount.
+
+If `vmmem` stays flat through a long idle window, reclaim isn't doing anything
+on your build — use the fallbacks in
+[Windows becomes slow or hangs while the worker runs](/self-hosting/troubleshooting#windows-becomes-slow-or-hangs-while-the-worker-runs).
+
+`onboard` does **not** write this setting for Docker Desktop's WSL2 backend,
+the same way it doesn't write `memory=` there. Add the `[experimental]` block
+yourself and run `wsl --shutdown`. Hyper-V backends don't read `.wslconfig` at
+all and have no equivalent setting.
+
+## What the scheduler sees
+
+On Windows and macOS the worker advertises the smaller of two figures: the
+memory the container runtime says is available, and the memory the *host*
+itself says is available. The dashboard's Capacity panel shows that smaller
+number, so a host under memory pressure is never handed DevBoxes it cannot
+physically hold — even when the runtime's own accounting still looks roomy. As
+reclaim returns memory to the host, Free rises again and the worker's advertised
+capacity recovers with it.
 
 ## The DevBox fit table
 
@@ -144,6 +241,13 @@ Two ways to set it:
 applies immediately rather than prompting. With a terminal attached, the same
 flag still confirms before applying — it only skips the sizing questions.
 
+After a successful apply, `onboard` records the value it applied as
+[`RUNTIME_MEMORY_MB`](/cli/config#runtime_memory_mb). That's what tells
+`doctor` the size was a deliberate choice rather than an install default, so it
+stops suggesting a different one. And on a machine that is already the right
+size, `onboard` still offers to enable memory reclaim — that path changes no
+allocation at all.
+
 For Docker, `onboard` never applies the change at all, on any platform — see
 below.
 
@@ -158,8 +262,11 @@ below.
   other keys, and keeping a one-time `.bak` copy — then runs `wsl --shutdown`
   to make it take effect. That command **restarts all of your WSL
   distributions**, so save any work in other WSL sessions before confirming
-  the change. WSL's own out-of-the-box default, before you configure anything,
-  is roughly half of host RAM.
+  the change. The same applies when only memory reclaim is being turned on:
+  the `[experimental]` entry is read at VM start like every other key, so that
+  change restarts every WSL distribution too, even though no allocation moves.
+  WSL's own out-of-the-box default, before you configure anything, is roughly
+  half of host RAM.
 </Aside>
 
 On macOS, `podman machine set --memory` works directly, but the machine must
@@ -179,13 +286,19 @@ be stopped first — `onboard` handles the stop/set/start sequence for you.
   - **macOS** — Docker Desktop's own Resources settings.
 
   Set the value yourself, then restart Docker (or run `wsl --shutdown` for
-  the WSL2 backend) for it to take effect.
+  the WSL2 backend) for it to take effect. On the WSL2 backend the
+  `[experimental] autoMemoryReclaim=gradual` entry is yours to add by hand as
+  well — `doctor` still reports whether it's in effect.
 </Aside>
 
 ## See also
 
 - [`clustercode doctor`](/cli/doctor#runtime-memory) — the health check that
   reports current runtime memory
+- [`clustercode doctor`](/cli/doctor#host-memory) — the host-memory check, which
+  reports what the host itself has left
+- [Troubleshooting](/self-hosting/troubleshooting#windows-becomes-slow-or-hangs-while-the-worker-runs)
+  — what to do when the runtime is holding memory Windows needs
 - [`clustercode onboard`](/cli/onboard#sizing-the-container-runtimes-memory) —
   the interactive wizard and `--memory` flag
 - [`clustercode config`](/cli/config#runtime_memory_mb) — the

@@ -20,6 +20,7 @@ Runs a comprehensive health check on this machine's ClusterCode setup. Checks:
 - **WSL2** — (Windows only) WSL2 installed with a Linux distro
 - **container runtime** — Podman or Docker installed and running
 - **Runtime memory** — memory the container runtime can actually see, against host RAM and how many DevBoxes that fits (see below)
+- **Host memory** — memory the host itself still has available, against the floor it needs to stay responsive; warns when the container runtime is holding more than the host can spare (see below)
 - **Disk space** — at least 5 GB free
 - **Memory** — at least 1 GB free
 
@@ -39,6 +40,7 @@ Each check shows a pass/fail/warn status:
   ✓ Reachable (console.clustercode.io)
   ✓ podman v5.3.1
   ✓ Runtime memory: 25.0 GiB of 31.6 GiB host — fits ~5 default (4 GiB) DevBoxes
+  ✓ Host memory: 18.3 GiB available of 31.6 GiB
   ✓ 42.0GB free
   ⚠ Low memory: 0.8GB free of 16.0GB
 ```
@@ -77,10 +79,45 @@ still grows a nudge rather than staying silent:
 Runtime memory: 16.0 GiB of 31.6 GiB host — fits ~3 default (4 GiB) DevBoxes (dedicated worker? up to 25.0 GiB — see `clustercode onboard`)
 ```
 
+#### Memory reclaim (Windows, WSL backend)
+
+A runtime of a perfectly reasonable size is still a problem when nothing ever
+returns what it borrows. On Windows the WSL2 VM only hands memory back to the
+host when `[experimental] autoMemoryReclaim` is set, so this check reads
+`.wslconfig` and your WSL version and appends what it finds. With Podman, the
+fix is a command:
+
+```
+Runtime memory: 25.0 GiB of 31.6 GiB host — fits ~5 default (4 GiB) DevBoxes — memory reclaim is off, so the runtime keeps memory the host may need; run `clustercode onboard` to enable it
+```
+
+With Docker as the engine, `onboard` doesn't edit `.wslconfig`, so the check
+names the setting instead:
+
+```
+Docker memory: 25.0 GiB of 31.6 GiB host — fits ~5 default (4 GiB) DevBoxes — memory reclaim is off, so the runtime keeps memory the host may need; set [experimental] autoMemoryReclaim=gradual in .wslconfig, then `wsl --shutdown`
+```
+
+On WSL builds older than 2.0 the setting doesn't exist at all, so the only
+remedy is a smaller ceiling — and the check names the size the no-reclaim
+sizing would have recommended in the first place:
+
+```
+Runtime memory: 26.0 GiB of 31.6 GiB host — fits ~6 default (4 GiB) DevBoxes — memory reclaim needs WSL 2.0 or newer, so the runtime keeps everything it touches; lower to `clustercode onboard --memory 23552`
+```
+
+It won't tell a runtime that's already at or below that ceiling to "lower"
+itself to a bigger number — in that case you just get the explanation. Both
+forms drop the check to a warning, and neither is ever shown for a Hyper-V
+backend, which doesn't read `.wslconfig`, or on macOS and Linux, which have no
+such setting. A reclaim status that couldn't be probed is graded as though it
+were off.
+
 This check never fails — an undersized runtime just caps how much work the
 worker takes on, it doesn't break it. It warns when the engine is too small
-to fit even one default-sized DevBox, or when it's below what's recommended
-for a shared machine and nothing was deliberately configured. On Linux, Podman
+to fit even one default-sized DevBox, when it's below what's recommended
+for a shared machine and nothing was deliberately configured, or when memory
+reclaim isn't in effect. On Linux, Podman
 runs containers directly with no VM in between, so this reports host memory
 directly. If the runtime is stopped, it reports "unknown" rather than
 guessing.
@@ -88,9 +125,65 @@ guessing.
 On Windows with Docker, this check only reports the number — `doctor` (and
 `onboard`) never resize Docker's memory for you. The setting lives in
 `[wsl2] memory=` in `.wslconfig` (Docker Desktop's WSL2 backend) or in Docker
-Desktop's own settings (its Hyper-V backend). See
+Desktop's own settings (its Hyper-V backend). The
+`[experimental] autoMemoryReclaim` entry is likewise yours to set by hand on
+the WSL2 backend — `doctor` reports whether it's in effect, but `onboard`
+won't write it. See
 [Sizing container runtime memory](/self-hosting/runtime-memory) for how to
-change it.
+change either.
+
+### Host memory
+
+Every other memory figure `doctor` prints is a *plan*: a ceiling written into a
+config file, a reserve subtracted once at sizing time. This one is a
+*measurement*, and it's the only check that can tell you the reserve isn't
+being honoured — a VM that never returns what it borrows passes every other
+check while the machine pages itself to a standstill.
+
+What it reads, per platform:
+
+| Platform | Reading | Floor the host needs |
+|---|---|---|
+| Windows | available physical memory | 4 GiB |
+| macOS | free + inactive pages, from `vm_stat` | 6 GiB |
+| Linux | `MemAvailable` | 2 GiB |
+
+(macOS is the one platform where "free memory" is the wrong number — a healthy
+Mac keeps almost no free pages and hands out inactive ones on demand, so
+reporting free pages alone would make every Mac look permanently starved.)
+
+Above the floor, the line is just the two numbers:
+
+```
+Host memory: 18.3 GiB available of 31.6 GiB
+```
+
+Below it, the check warns and names the floor. When a running container
+runtime is sized above what a host without memory reclaim can afford, it also
+names the value to shrink to:
+
+```
+Host memory: 2.0 GiB available of 31.6 GiB — below the 4.0 GiB the host needs; the container runtime is holding memory the host cannot spare — lower it with `clustercode onboard --memory 23552`
+```
+
+When the runtime is already at or below that ceiling, there's nothing to
+shrink, so the line reports the reclaim state instead:
+
+```
+Host memory: 3.1 GiB available of 31.6 GiB — below the 4.0 GiB the host needs; memory reclaim is off — see the docs
+```
+
+With reclaim enabled and the host still short, the same line reads
+`memory reclaim is on but not keeping up`. If the container runtime isn't
+running, it isn't the cause of the pressure, so no runtime advice is offered at
+all — and on Linux there is no VM holding memory apart from the host, so the
+warning carries no runtime instructions there either.
+
+This check **never fails**, whatever the reading: a host under memory pressure
+is a machine still doing its job, and `doctor`'s exit code gates scripted
+setup. The reading is also instantaneous — it can dip during a build or an
+image pull and recover a moment later. Act on it when it persists, not on a
+single sample.
 
 ## Interactive Fix
 

@@ -59,6 +59,13 @@ in the key name is historical; the CLI displays GiB throughout.
 default 4 GiB DevBox once the host reserve is subtracted. Hosting one needs
 roughly 6 GiB.
 
+`onboard` writes this key itself after a successful apply, recording the value
+it applied. That stored value is what makes `doctor` stop suggesting a
+different size: a measured runtime within about 7% of it counts as "the size
+you asked for" — the guest kernel keeps some of what's allocated, so an exact
+match never happens — and is left alone instead of being re-litigated on every
+run.
+
 Setting this key by itself doesn't move any memory around — it takes effect
 the next time a container-runtime machine is created, or the next time you
 run [`clustercode onboard`](/cli/onboard), which is also where the interactive
