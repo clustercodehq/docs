@@ -94,8 +94,7 @@ const VISIBLE_ROWS: Row[] = rowFilter
 /**
  * Mirrors core's `planLadderMultiplier` (packages/shared/src/limits/plan-limits.ts).
  * Only rows where Pro is EXACTLY 5x Starter and Enterprise EXACTLY 20x may show
- * the badge — several dimensions are deliberately off-ladder (notably DevBoxes,
- * 25→50→100), and claiming 5x/20x there would be provably false.
+ * the badge; rows that do not match that exact ladder must not render it.
  */
 function ladder(key: string): boolean {
   const p = limits.plans as Record<string, Record<string, number>>;
