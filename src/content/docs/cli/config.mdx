@@ -101,12 +101,13 @@ A verdict is only meaningful next to the WSL build and the reclaim mode it
 describes, so it's stored alongside two companion stamps:
 `RUNTIME_RECLAIM_VERIFIED_WSL` (the WSL version, such as `2.7.13.0`) and
 `RUNTIME_RECLAIM_VERIFIED_MODE` (the reclaim mode in effect, `gradual` or
-`dropcache` — `dropcache` where `.wslconfig` doesn't set one). `clustercode config
+`dropcache` — `dropcache` where `.wslconfig` doesn't set one, on WSL 2.1.3 and
+later). `clustercode config
 list` shows both, and `config set` accepts neither — the CLI writes them for
 you, whichever way the verdict was recorded, and confirms what it stamped:
 
 ```
-Set RUNTIME_RECLAIM_VERIFIED = yes (WSL 2.7.13.0, autoMemoryReclaim=gradual)
+Set RUNTIME_RECLAIM_VERIFIED = yes (WSL 2.7.13.0, reclaim mode gradual)
 ```
 
 Setting the key by hand is refused, with nothing recorded and a non-zero exit,
@@ -114,7 +115,7 @@ when there's nothing for a verdict to describe:
 
 - off Windows: `Memory reclaim verification only applies to Windows with WSL. Nothing was recorded.`
 - when the WSL version can't be read: ``Could not read the WSL version (`wsl --version`), so the verdict cannot be tied to a WSL build. Nothing was recorded.``
-- when reclaim is off, or `.wslconfig` can't be read: `Memory reclaim is off ([experimental] autoMemoryReclaim is disabled, or unset on WSL older than 2.5.10), or .wslconfig could not be read, so there is nothing for a verdict to describe. Nothing was recorded.`
+- when reclaim is not in effect, or `.wslconfig` can't be read: `Memory reclaim is not in effect ([experimental] autoMemoryReclaim is disabled, is unset or unrecognised on WSL older than 2.1.3, or WSL is older than 2.0), or .wslconfig could not be read, so there is nothing for a verdict to describe. Nothing was recorded.`
 
 When the running WSL version or the reclaim mode stops matching the stamps, the
 verdict is treated as unanswered rather than carried forward: the status goes

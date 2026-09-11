@@ -131,13 +131,13 @@ the other side.
 **Fix, in order:**
 
 1. **Turn on memory reclaim — and verify it.** Where reclaim is off
-   (`disabled`, or unset on WSL older than 2.5.10), `clustercode onboard`
+   (`disabled`, or unset on WSL older than 2.1.3), `clustercode onboard`
    offers to turn it on even when the size is already right, and applies it
    with no resize. It writes `[experimental] autoMemoryReclaim=gradual` into
    `%UserProfile%\.wslconfig` (keeping a `.wslconfig.bak` copy the first time)
    and runs `wsl --shutdown`, which restarts every WSL distribution. It then
    offers to measure whether the VM really gives memory back. Where reclaim is
-   already on — WSL's default from 2.5.10 — there's nothing to write, so go
+   already on — WSL's default from 2.1.3 — there's nothing to write, so go
    straight to the measurement. Take the offer, or run the measurement yourself
    once the machine is idle — stop the worker first, because the measurement
    won't run while a ClusterCode worker is running:

@@ -77,7 +77,7 @@ table above actually protects your machine:
 
 - **Windows** — the WSL2 VM returns memory to Windows only while *memory
   reclaim* is on (`[experimental] autoMemoryReclaim` in `.wslconfig`, WSL 2.0
-  or newer; from WSL 2.5.10 it's on unless you set it to `disabled`). With it
+  or newer; from WSL 2.1.3 it's on unless you set it to `disabled`). With it
   off the VM keeps everything it has ever touched — including the guest file
   cache left behind by image pulls and builds — until `wsl --shutdown`. And
   reclaim is a request the build is free to ignore, so treat the ceiling as
@@ -142,25 +142,41 @@ autoMemoryReclaim=gradual
 WSL accepts three values, in any letter case:
 
 - **`dropCache`** — drops the guest's page cache once the VM goes idle. This is
-  WSL's default: from WSL 2.5.10, a `.wslconfig` without the key — or with it
+  WSL's default: from WSL 2.1.3, a `.wslconfig` without the key — or with it
   commented out, in another section, or set to a value WSL doesn't recognise —
   gets `dropCache`.
 - **`gradual`** — returns memory a little at a time while the VM is idle, and
   Microsoft's recommended setting.
 - **`disabled`** — the only value that turns reclaim off.
 
-The CLI reads the file the way WSL does: a missing or unrecognised value is
-WSL's default, so reclaim counts as on, and only `disabled` counts as off. The
-exception is WSL 2.0 up to 2.5.10, whose default the CLI can't confirm — there
-a missing or unrecognised value counts as off. Builds older than 2.0 ignore the
-key altogether.
+The CLI reads the file the way WSL's own parser does:
+
+- `#` starts a comment, including after a value, so
+  `autoMemoryReclaim=disabled # for now` is `disabled`. `;` doesn't: in
+  `autoMemoryReclaim=disabled ; for now` the whole of `disabled ; for now` is
+  the value, which WSL doesn't recognise, and a line that starts with `;` is
+  skipped.
+- Quotes around a value are dropped, and letter case doesn't matter in section
+  names, keys or values.
+- A section header has no spaces inside its brackets: WSL doesn't treat
+  `[ experimental ]` as a header.
+- If a key appears more than once, in one `[experimental]` section or across
+  repeated ones, the **first** one counts and WSL ignores the rest.
+
+A missing or unrecognised value is WSL's default, so reclaim counts as on, and
+only `disabled` counts as off. The exception is WSL 2.0 up to 2.1.3, which came
+before `dropCache` became the default: there a missing or unrecognised value
+counts as off. Builds older than 2.0 ignore the key altogether.
 
 Where reclaim is off, `clustercode onboard` writes the entry above, alongside
 `[wsl2] memory=` — one read, one backup, one write, whether the allocation is
 changing too. It never writes over a mode that is already in effect, whether
 you set it or WSL's default did. Your existing comments, blank lines, unrelated
 keys and unrelated sections survive verbatim, and the first write keeps a
-`.wslconfig.bak` copy. Like any `.wslconfig` change it takes effect on the
+`.wslconfig.bak` copy. If the file is laid out so that WSL wouldn't read the
+entry where the CLI would write it (a `[ experimental ]` header, for example),
+`onboard` writes nothing and names the setting to add by hand. Like any
+`.wslconfig` change it takes effect on the
 next `wsl --shutdown`, which `onboard` runs for you after asking. That command
 stops every WSL distribution on the machine, not only Podman's.
 
@@ -175,7 +191,7 @@ your config file, so the CLI keeps configuration and behaviour apart:
 
 | State | What it means | What the runtime is sized for |
 |---|---|---|
-| **Off** | `autoMemoryReclaim=disabled` — or, on WSL 2.0 up to 2.5.10, no value WSL recognises | A VM that never gives memory back |
+| **Off** | `autoMemoryReclaim=disabled`; or, on WSL 2.0 up to 2.1.3, no value WSL recognises; or a `.wslconfig` the CLI can't read as UTF-8 | A VM that never gives memory back |
 | **Unsupported** | Your WSL predates 2.0, or its version can't be read | A VM that never gives memory back |
 | **Configured** | Reclaim is on, set by you or by WSL's default; nobody has measured it | A VM that never gives memory back |
 | **Verified** | Measured, on this machine, against this WSL build and reclaim mode: memory comes back | The 6 GiB *Dedicated* reserve |
@@ -379,7 +395,7 @@ The CLI stamps the verdict with the running WSL version and the reclaim mode in
 effect (`dropcache` where the key isn't set), and confirms both:
 
 ```
-Set RUNTIME_RECLAIM_VERIFIED = yes (WSL 2.7.13.0, autoMemoryReclaim=gradual)
+Set RUNTIME_RECLAIM_VERIFIED = yes (WSL 2.7.13.0, reclaim mode gradual)
 ```
 
 It refuses, records nothing and exits with an error when there is nothing
@@ -394,7 +410,7 @@ the fallbacks in
 [Windows becomes slow or hangs while the worker runs](/self-hosting/troubleshooting#windows-becomes-slow-or-hangs-while-the-worker-runs).
 
 `onboard` does **not** write this setting for Docker Desktop's WSL2 backend,
-the same way it doesn't write `memory=` there. From WSL 2.5.10 reclaim is on
+the same way it doesn't write `memory=` there. From WSL 2.1.3 reclaim is on
 there too unless the key says `disabled`; you can set the `[experimental]` key
 yourself and apply it with `wsl --shutdown` (which stops every WSL
 distribution), but don't size on it: the CLI can't measure Docker's VM, so it
@@ -592,7 +608,7 @@ be stopped first — `onboard` handles the stop/set/start sequence for you.
   Set the value yourself, then restart Docker (or, for the WSL2 backend, run
   `wsl --shutdown`, which stops every WSL distribution) for it to take effect.
   On the WSL2 backend `[experimental] autoMemoryReclaim` is yours to set by
-  hand as well (from WSL 2.5.10 reclaim is on unless it says `disabled`).
+  hand as well (from WSL 2.1.3 reclaim is on unless it says `disabled`).
   `doctor` reports whether it's on, but the CLI can't verify it for Docker, so
   size Docker as if reclaim does not work.
 </Aside>

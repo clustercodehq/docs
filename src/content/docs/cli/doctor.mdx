@@ -265,7 +265,7 @@ different diagnoses with different next steps:
 
 | Tail | What it means |
 |---|---|
-| `memory reclaim is off — see the docs` | `autoMemoryReclaim=disabled`, or unset on WSL older than 2.5.10 |
+| `memory reclaim is off — see the docs` | `autoMemoryReclaim=disabled`, or unset or unrecognised on WSL older than 2.1.3, or a `.wslconfig` the CLI can't read as UTF-8 |
 | `memory reclaim needs WSL 2.0 or newer — see the docs` | This WSL build predates the setting, or its version can't be read |
 | `memory reclaim is configured but unverified — see the docs` | Reclaim is on (set by hand, or WSL's default); nobody has measured it (as far as Docker ever gets) |
 | `memory reclaim is on but inert on this build — see the docs` | Measured, and it returns nothing here |

@@ -192,11 +192,12 @@ different one.
   **all** of your WSL distributions, not only the one Podman uses. Save work
   in other WSL sessions before confirming the change.
 
-  Where memory reclaim is off (`disabled`, or unset on WSL older than 2.5.10),
+  Where memory reclaim is off (`disabled`, or unset or unrecognised on WSL
+  older than 2.1.3),
   `onboard` also sets `[experimental] autoMemoryReclaim=gradual` in the same
   write, so the VM hands memory back to Windows instead of holding everything
   it has touched. It leaves the key alone where reclaim is already on,
-  including WSL's own default from 2.5.10. On a machine whose allocation is
+  including WSL's own default from 2.1.3. On a machine whose allocation is
   already correct, `onboard` offers that entry on its own — and because
   `.wslconfig` is only read when the VM starts, even a reclaim-only change
   restarts every WSL distribution just the same.
@@ -209,7 +210,7 @@ different one.
   `%UserProfile%\.wslconfig`, the same file described above; on its Hyper-V
   backend, it's Docker Desktop's own Resources settings. Either way, set it
   yourself. On the WSL2 backend you can set
-  `[experimental] autoMemoryReclaim` by hand too (from WSL 2.5.10 reclaim is on
+  `[experimental] autoMemoryReclaim` by hand too (from WSL 2.1.3 reclaim is on
   unless it says `disabled`), which `onboard` likewise won't write for you —
   but the CLI can't verify it for Docker, so
   size Docker's memory as if reclaim does not work.
