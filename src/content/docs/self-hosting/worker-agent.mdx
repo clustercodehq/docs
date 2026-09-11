@@ -78,8 +78,9 @@ looks after the machine itself:
   left alone. Once the agent's drop-in exists, drop-ins take precedence over
   the main file, so set your own limit in a drop-in whose name sorts after the
   agent's (for example `50-journal-size.conf`). Deleting the agent's file
-  removes its cap; unless you've set your own limit or turned the cleanup off
-  (below), the agent writes it again the next time it starts.
+  removes its cap once journald restarts; unless you've set your own limit or
+  turned the cleanup off (below), the agent writes it again the next time it
+  starts.
 
   Containers that use the journald log driver keep their logs in the journal,
   so the cap also limits how much of their log history is kept.
