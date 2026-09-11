@@ -97,6 +97,102 @@ Docker, `onboard` doesn't apply the change at all; it only tells you whether
 to edit `.wslconfig` (WSL2 backend) or Docker Desktop's settings (Hyper-V
 backend).
 
+### Windows becomes slow or hangs while the worker runs
+
+**Cause:** The WSL2 VM has grown to its memory ceiling and isn't giving any of
+it back. `[wsl2] memory=` is a ceiling on a balloon that only inflates: with
+memory reclaim off (`[experimental] autoMemoryReclaim=disabled`, or a WSL build
+older than 2.0), the guest's page cache — everything image pulls and builds have touched — stays
+charged to Windows until `wsl --shutdown`. The reserve the CLI subtracted when
+sizing the runtime is notional in that state, and Windows eventually thrashes
+into the pagefile.
+
+Reclaim being on — by default or by hand — doesn't guarantee an escape from this: it's a request, and
+some builds accept it and do nothing. On a Windows 10 21H1 machine with WSL
+2.7.13, neither `gradual` nor `dropcache` returned any of ~9 GB of cache in 16
+minutes idle, while dropping the cache by hand returned ~10 GB in 20 seconds.
+So the ladder below is *enable, then verify* — and a setting measured inert is
+graded exactly like no reclaim at all, which lowers the ceiling the CLI thinks
+this machine can carry.
+
+**Diagnose:**
+```bash
+clustercode doctor
+```
+Look for two lines: `Runtime memory: …` carrying either
+`memory reclaim is off, so the runtime keeps memory the host may need` or
+`memory reclaim is configured but unverified, and the runtime is sized as if it
+works`, and `Host memory: …` reporting less available than the 4 GiB floor
+Windows needs — its tail names the reclaim state too
+(`memory reclaim is on but inert on this build`, and so on).
+`vmmem` (or `vmmemWSL`) in Task Manager's Details tab shows the same thing from
+the other side.
+
+**Fix, in order:**
+
+1. **Turn on memory reclaim — and verify it.** Where reclaim is off
+   (`disabled`, or unset on WSL older than 2.1.3), `clustercode onboard`
+   offers to turn it on even when the size is already right, and applies it
+   with no resize. It writes `[experimental] autoMemoryReclaim=gradual` into
+   `%UserProfile%\.wslconfig` (keeping a `.wslconfig.bak` copy the first time)
+   and runs `wsl --shutdown`, which restarts every WSL distribution. It then
+   offers to measure whether the VM really gives memory back. Where reclaim is
+   already on — WSL's default from 2.1.3 — there's nothing to write, so go
+   straight to the measurement. Take the offer, or run the measurement yourself
+   once the machine is idle — stop the worker first, because the measurement
+   won't run while a ClusterCode worker is running:
+   ```bash
+   clustercode onboard --verify-reclaim
+   ```
+   On WSL older than 2.9.8 in `dropCache` mode, which is also what a
+   `.wslconfig` without the key gets, the measurement refuses to run:
+   WSL drops the cache there only after about 10 idle minutes, once per idle
+   period, which a run can't measure reliably. Go on to steps 2 and 3. See
+   [dropCache before WSL 2.9.8](/self-hosting/runtime-memory#dropcache-before-wsl-298).
+   If the answer is no, that's the end of this step — a configured-but-inert
+   setting is graded as no reclaim at all, the ceiling for this machine drops
+   accordingly, and step 3 is your real fix. If it's yes, `onboard` offers to
+   raise the runtime to the larger size a verified host has earned. See
+   [Memory reclaim on Windows](/self-hosting/runtime-memory#memory-reclaim-on-windows).
+2. **Drop the guest's page cache, for memory you need back now.** Reclaim only
+   runs while the VM is idle, and on some older Windows builds it may not
+   trigger at all. The worker already covers this: with Podman on the WSL
+   backend it drops the cache itself whenever Windows falls below 4 GiB
+   available, at most once every 5 minutes and never starting one during a
+   build or commit — see
+   [The worker drops the cache itself](/self-hosting/runtime-memory#the-worker-drops-the-cache-itself).
+   Check the worker's log: a warning that a drop did not raise
+   Windows' available memory means this step can't help on your machine, so
+   go to step 3. To free the cache by hand — when the worker isn't running, or
+   you want the memory back before Windows gets that low — make the same drop
+   the worker makes, interactively from inside the machine:
+   ```bash
+   podman machine ssh
+   sudo sh -c 'sync && echo 1 > /proc/sys/vm/drop_caches'
+   ```
+   `echo 1` frees the page cache, which is where this memory is — for the
+   whole WSL VM, which every WSL2 distribution shares. Don't use
+   `echo 3`: it also discards the kernel's directory and inode caches,
+   which buys nothing here. This returns the freed pages to Windows within
+   seconds and does **not** stop your DevBoxes or any WSL distribution. It's a
+   stopgap, not a fix: the cache refills as work continues.
+3. **Lower the ceiling.** If reclaim is unavailable, unverified, or measured
+   inert on your build, size the runtime for a VM you assume stays fully
+   inflated. `doctor` names the value in its own warning — use exactly that:
+   ```bash
+   clustercode onboard --memory 23552
+   ```
+   (23552 is the figure for a 31.6 GiB host; yours will differ.) With Docker,
+   `onboard` doesn't resize anything: lower `[wsl2] memory=` in `.wslconfig`
+   (WSL2 backend) or the memory in Docker Desktop's settings (Hyper-V backend)
+   to the figure `doctor` names. Docker is always sized as if reclaim does not
+   work, because the CLI can't measure its VM.
+4. **`wsl --shutdown`** releases everything immediately. It's the blunt option
+   — it stops your DevBoxes and every other WSL distribution on the machine —
+   so reach for it only when steps 2 and 3 aren't enough. Stopping only the
+   Podman distribution may not return the memory: WSL 2 distributions share
+   one VM, which can keep holding it while any of them is still running.
+
 ### `.wslconfig` change didn't take effect
 
 **Cause:** `.wslconfig` is encoded as something other than UTF-8 (a common
@@ -104,8 +200,20 @@ result of Notepad's legacy "ANSI" save, or PowerShell's `Set-Content`), so the
 CLI refuses to rewrite it rather than risk corrupting your other settings.
 
 **Fix:** Open `%UserProfile%\.wslconfig`, re-save it as UTF-8, and re-run
-`clustercode onboard --memory <mb>`. Or set `[wsl2] memory=<mb>MB` by hand and
-run `wsl --shutdown` yourself.
+`clustercode onboard --memory <mb>`. Or set the keys by hand and apply them
+with `wsl --shutdown` yourself, which stops every WSL distribution on the
+machine:
+
+```ini
+[wsl2]
+memory=<mb>MB
+
+[experimental]
+autoMemoryReclaim=gradual
+```
+
+Note the `MB` suffix on `memory=` is mandatory — WSL reads an unsuffixed number
+as bytes.
 
 ### WSL issues (Windows)
 
