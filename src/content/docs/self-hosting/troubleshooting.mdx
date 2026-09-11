@@ -107,7 +107,8 @@ the machine to reuse, but returns nothing to Windows.
 1. Run `clustercode doctor`. The **Runtime disk** line shows how much space
    can be given back ([details](/cli/doctor#runtime-disk-windows)).
 2. Stop `clustercode worker`, and make sure no DevBox is running — the next
-   step refuses while anything is.
+   step refuses while anything is. Leave the Podman machine itself running:
+   the command needs it up to check and trim, and stops and restarts it for you.
 3. Remove stopped DevBoxes you no longer need in the console's
    [Fleet Cleaner](https://console.clustercode.io/fleet/cleaner), so their
    space is free before you compact.
@@ -117,14 +118,15 @@ the machine to reuse, but returns nothing to Windows.
 5. Start the worker again.
 
 If the command times out waiting for the disk to be released, another WSL
-distribution (Ubuntu, Docker Desktop's) is keeping WSL's VM alive. Run
-`wsl --list --running`, stop the others with `wsl --terminate <name>`, and try
-again.
+distribution (Ubuntu, Docker Desktop's) is usually keeping WSL's VM alive; the
+message names the ones it found. Run `wsl --list --running`, stop the others
+with `wsl --terminate <name>`, and try again.
 
 Two things **not** to do:
 
-- **Don't run `wsl --shutdown`** to speed it up. It stops every WSL
-  distribution on the computer, not just the Podman one.
+- **Don't run `wsl --shutdown`** to get a compact through. It stops every WSL
+  distribution on the computer, not just the Podman one, and kills whatever is
+  running in them.
 - **Don't enable sparse VHDX** for the Podman machine. WSL flags the option as
   unsafe over data-corruption risk, it can't be undone, and a sparse disk can
   no longer be compacted.
@@ -168,7 +170,9 @@ CLI refuses to rewrite it rather than risk corrupting your other settings.
 
 **Fix:** Open `%UserProfile%\.wslconfig`, re-save it as UTF-8, and re-run
 `clustercode onboard --memory <mb>`. Or set `[wsl2] memory=<mb>MB` by hand and
-run `wsl --shutdown` yourself.
+run `wsl --shutdown` yourself. Unlike a compact, applying `.wslconfig` does
+need it — but it stops **every** WSL distribution, including the Podman
+machine, so stop running DevBoxes and save work in other distributions first.
 
 ### WSL issues (Windows)
 
