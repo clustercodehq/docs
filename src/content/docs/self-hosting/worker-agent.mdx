@@ -3,6 +3,8 @@ title: Worker Agent
 description: The worker that runs on each machine and executes DevBoxes.
 ---
 
+import { Aside } from '@astrojs/starlight/components';
+
 The worker agent is a lightweight, standalone binary that runs on each machine and executes DevBoxes on behalf of the orchestrator. It has no runtime dependencies — the `clustercode` CLI downloads and runs it for you.
 
 ## How it connects
@@ -31,6 +33,213 @@ Once connected, the agent runs DevBox operations locally (create, start, stop, t
 ## Live terminals
 
 Terminal and display output from a DevBox streams back through the agent to your browser, giving you a live web terminal for each DevBox.
+
+## Disk hygiene
+
+Image builds leave things behind: images a rebuild replaced, the intermediate
+layers of a build that failed, and — inside the Podman machine on Windows —
+scratch directories and logs that no Podman command shows. The agent cleans
+these up, under the rules below. It never prunes, and it never removes your own
+images, containers or volumes.
+
+### Images it replaced or failed to build
+
+The agent looks at exactly two kinds of image, and nothing else on the engine:
+
+- **The intermediate images of a failed build** (Podman only). These are the
+  images that build itself committed, as its own build output reports them —
+  not layers it reused from cache, and not any image that already existed when
+  the build started. A build that was cancelled or timed out counts as failed.
+  The agent passes `--layer-label io.clustercode.build-id=<random>` to the
+  build, and an intermediate must carry that label key too. On Docker, or on a
+  Podman whose `podman build` has no `--layer-label` option, a failed build's
+  intermediates are left in place.
+- **The image a rebuild or a [DevBox snapshot](/guides/build-image-from-container)
+  replaced** (Podman or Docker). Only the exact image the name pointed at just
+  before the rebuild or snapshot, and only when it carries an
+  `io.clustercode.*` label — an image you built yourself under that name is
+  left alone.
+
+Being one of those is not enough. An image is removed only when **all** of
+these hold:
+
+- it has **no name** — no tag and no digest reference (a `podman tag` backup
+  keeps it);
+- **no other image** has it as its parent;
+- **no container** uses it — running, stopped, or a build's working container;
+- **no local manifest list** references it (Podman). The agent reads every
+  local manifest list itself rather than trusting the engine's verdict;
+- the engine itself reports it as **dangling**.
+
+The agent checks these against a fresh read of the image and of the manifest
+lists immediately before each removal, and removes it with
+`rmi --no-prune <full image ID>` — never `--force`, and never the engine's own
+parent pruning. If any read fails or can't be understood — the image listing,
+a manifest list, the image itself — it stops and removes nothing more.
+
+After that, it works up through the parent layers of what it removed, one at a
+time and under the same rules, with the same fresh read before each removal.
+It stops at the first layer that is named (a base image such as
+`ubuntu:24.04`, for example), still has another child, is in use, or is part
+of a manifest list, and after at most 64 attempts in one cleanup.
+
+The cleanup starts once the build or snapshot has reported its result, so it
+never delays that result. It never runs while another build or snapshot by the
+agent is in progress: it waits up to 15 minutes for them to finish, and leaves
+the images if they don't. A build that starts while a cleanup is running
+waits for it (a cleanup is limited to 10 minutes), and its build output shows:
+
+```
+Waiting for image cleanup on this worker to finish before the build starts...
+```
+
+`WORKER_GUEST_CLEAN` (below) does **not** affect this image cleanup; it only
+controls the cleanup inside the Podman machine.
+
+### Inside the Podman machine (Windows)
+
+When the worker's container runtime is a local Podman machine on WSL2 — the
+setup [`clustercode onboard`](/cli/onboard) creates on Windows — the agent also
+looks after the machine itself. It acts only on the machine it has verified
+its engine runs on, and runs its commands there with `sudo -n`, so `sudo` must
+work in the machine without a password (as it does in a standard Podman
+machine).
+
+- **Journal size.** Each time the agent starts, it reads the machine's
+  effective journald configuration (`systemd-analyze cat-config
+  systemd/journald.conf`: the main file and every drop-in, from every
+  configuration directory). If **no** size or retention setting is configured
+  anywhere — no `SystemMaxUse=`, `SystemKeepFree=`, `SystemMaxFileSize=`,
+  `SystemMaxFiles=`, `MaxRetentionSec=`, `MaxFileSec=`, and no
+  `Storage=volatile` or `Storage=none` (an empty value such as
+  `SystemMaxUse=` counts as set) — it writes its own drop-in,
+  `/etc/systemd/journald.conf.d/00-clustercode-journal-cap.conf`, restarts
+  journald, trims the journal to the cap (`journalctl --vacuum-size=256M`),
+  and logs `guest clean: capped the podman machine's journal`. The drop-in
+  contains exactly:
+
+  ```ini
+  # Written by the ClusterCode worker agent: no journald size or retention setting was configured.
+  # Set a size or retention limit (SystemMaxUse=, MaxRetentionSec=, ...) in a drop-in of your own and the agent removes this file the next time it starts.
+  # Do not edit this file: an edited copy is treated as your own configuration and left alone.
+  [Journal]
+  SystemMaxUse=256M
+  ```
+
+  It never creates or edits a main `journald.conf`. Without
+  `systemd-analyze`, or if it can't read the configuration, it changes
+  nothing.
+
+  If a size or retention setting **is** configured anywhere, the agent leaves
+  journald alone. If you add one after the agent has written its drop-in, the
+  agent removes its drop-in the next time it starts, restarts journald, and
+  logs
+  `guest clean: journald now has its own size or retention settings; removed the agent's journald cap`.
+  Until then its drop-in still applies: drop-ins take precedence over the main
+  `journald.conf`, so to have your limit apply at once, put it in a drop-in of
+  your own whose name sorts after the agent's (for example
+  `50-journal-size.conf`).
+
+  The file counts as the agent's only while it is a regular file holding
+  exactly what the agent wrote (the content of an earlier agent version is
+  updated to the current one). If you edit it, replace it, or put a symlink
+  there, it is treated as your own configuration: the agent never rewrites or
+  removes it, and logs
+  `guest clean: the agent's journald drop-in was changed or replaced; leaving it as your own configuration`.
+
+  Deleting the agent's file removes its cap once journald restarts; unless
+  you've set your own limit or turned the cleanup off (below), the agent
+  writes it again the next time it starts.
+
+  Containers that use the journald log driver keep their logs in the journal,
+  so the cap also limits how much of their log history is kept.
+- **Leftover build scratch.** A build that is interrupted can leave a large
+  temporary directory behind in the machine — invisible to `podman system df`
+  and untouched by `podman system prune`. Every 15 minutes (the first run is
+  about 2 minutes after the worker starts), the agent removes directories
+  directly in the machine's `/var/tmp` named `buildah` followed by digits, or
+  `clustercode-commit.` followed by 8 letters or digits (left by a DevBox
+  snapshot), that are real directories (not symlinks) last modified longer ago
+  than the scratch age (**3 hours** by default). It skips a directory that any
+  process or mount is still using, and skips the whole run while any build is
+  running in the machine or the agent's own build or snapshot is in progress.
+  If it can't check for running builds or in-use directories, it removes
+  nothing that run.
+
+What it will **never** do:
+
+- Prune, force a removal, or remove all images. Your own images, containers
+  and volumes are never touched, and a layer one of your images builds on is
+  kept.
+- Remove stopped DevBoxes. A stopped DevBox keeps its disk until you remove
+  it — review and remove the ones you no longer need in the console's
+  [Fleet Cleaner](https://console.clustercode.io/fleet/cleaner).
+
+To turn the in-machine cleanup off, or change the scratch age, set these in
+the environment you start `clustercode worker` from (the CLI passes its
+environment on to the agent), then restart the worker:
+
+| Variable | Default | Effect |
+|----------|---------|--------|
+| `WORKER_GUEST_CLEAN` | on | `off`, `false`, `0`, `no` or `disabled` stops the journal cap and the scratch cleanup. Unset, empty, `on`, `true`, `1`, `yes` or `enabled` keeps them on. Any other value also turns them off, with a warning in the worker log. Doesn't affect the image cleanup above. |
+| `WORKER_GUEST_CLEAN_SCRATCH_AGE_HOURS` | `3` | How old, in whole hours (1–168), leftover build scratch must be before it's removed. Any other value is ignored with a warning, and the default applies. |
+
+```powershell
+$env:WORKER_GUEST_CLEAN = "off"
+clustercode worker
+```
+
+Turning the cleanup off doesn't remove a journal drop-in the agent has already
+written; delete that file yourself if you don't want the cap.
+
+<Aside type="note" title="This doesn't shrink the disk file on Windows">
+  Cleanup frees space *inside* the machine, which slows how fast its virtual
+  disk grows. On Windows that disk file never shrinks by itself, so space it
+  has already taken stays taken until you run
+  [`clustercode machine compact`](/cli/machine). `clustercode doctor` tells
+  you when that's worth doing.
+</Aside>
+
+### Log lines
+
+The worker logs what the cleanup did. At startup it logs
+`guest disk cleanup active`, or `guest disk cleanup inactive` with the reason
+(for example, that the engine isn't a Podman machine on Windows). Lines you may
+see afterwards:
+
+**Images**
+
+| Line | Meaning |
+|------|---------|
+| `build reclaim: removed intermediate images left by a failed build` | A failed build's intermediates (and any parent layers they freed) were removed. |
+| `build reclaim: removed image superseded by rebuild` / `commit reclaim: removed image superseded by commit` | The image a rebuild or snapshot replaced was removed. |
+| `build reclaim: leaving some intermediate images of a failed build` | Some of the build's intermediates were kept; each comes with the reason. |
+| `build reclaim: not removing superseded image; leaving it` / `commit reclaim: not removing superseded image; leaving it` | The replaced image was kept, with the `reason` — for example `is referenced by a local manifest list`, `is used by a container`, or `is the parent of another image`. |
+| `build reclaim: superseded image is not a ClusterCode image; leaving it` | The replaced image has no `io.clustercode.*` label, so it isn't the agent's to remove. |
+| `build reclaim: could not list images to reclaim the failed build's intermediates` | A read failed before anything was removed; nothing was removed. |
+| `build reclaim: could not list images to check the superseded image; leaving it` / `commit reclaim: could not list images to check the superseded image; leaving it` | The same, for a replaced image. This warning repeats until whatever blocks the read (for example, a manifest list that can't be read) is fixed. |
+| `image reclaim: could not re-read an image before removing it; stopping` / `image reclaim: could not re-read a parent image; stopping` | A fresh read right before a removal failed, so the cleanup stopped there. |
+| `build reclaim: other image builds or commits kept the engine busy; leaving the images for now` | Other builds or snapshots kept running for 15 minutes; this cleanup was skipped. |
+| `build reclaim: podman build has no --layer-label; intermediate images of a failed build cannot be attributed to the agent and will not be reclaimed` | This Podman is too old for failed-build cleanup. |
+
+The `commit reclaim:` and `build reclaim:` prefixes say whether a snapshot or a
+build was being cleaned up after.
+
+**Inside the Podman machine**
+
+| Line | Meaning |
+|------|---------|
+| `guest clean: capped the podman machine's journal` | The agent wrote its journald drop-in. |
+| `guest clean: journald already has its own size or retention settings; leaving them` | A limit is configured, so the agent did nothing. |
+| `guest clean: journald now has its own size or retention settings; removed the agent's journald cap` | A limit appeared, so the agent removed its own drop-in. |
+| `guest clean: the agent's journald drop-in was changed or replaced; leaving it as your own configuration` | The file at the agent's path isn't what the agent wrote; it is left alone. |
+| `guest clean: wrote the journald cap but could not restart journald; the cap takes effect the next time journald starts` | The drop-in is in place but journald wasn't restarted. |
+| `guest clean: could not apply the journald cap; not retrying until the agent restarts` | Nothing was changed; the output says why (for example, `systemd-analyze` isn't installed). |
+| `guest clean: removed stale build scratch` | Leftover scratch directories were removed. |
+| `guest clean: stale build scratch is still in use; leaving it` | An old scratch directory is still used by a process or mount. |
+| `guest clean: could not check for running builds or in-use scratch in the podman machine; skipping scratch reap` | The safety checks couldn't run, so nothing was removed. |
+| `guest clean: scratch reap has been paused by a build-like process in the podman machine for longer than the scratch age` | A long-running build (or a process that looks like one) has kept the scratch cleanup waiting. |
+| `guest clean: could not run the cleanup in the podman machine (is it running, and does sudo work without a password?); will retry` | The agent couldn't reach the machine or run `sudo -n` in it. |
 
 ## Running it
 

@@ -190,6 +190,7 @@ export const nav = [
       { label: 'onboard', slug: 'cli/onboard', desc: 'First-time setup wizard' },
       { label: 'config', slug: 'cli/config', desc: 'View and set configuration' },
       { label: 'status', slug: 'cli/status', desc: 'Check worker status' },
+      { label: 'machine', slug: 'cli/machine', desc: 'Reclaim runtime disk space on Windows' },
     ],
   },
   {
