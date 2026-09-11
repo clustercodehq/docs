@@ -41,11 +41,9 @@ Each check shows a pass/fail/warn status:
   ✓ podman v5.3.1
   ✓ Runtime memory: 25.0 GiB of 31.6 GiB host — fits ~5 default (4 GiB) DevBoxes
   ✓ Disk: 42.0GB free on C:
-  ⚠ Runtime disk: 70.8 GB on host, 43.0 GB used inside — ~27.8 GB reclaimable (C: 42.0 GB free); run clustercode machine compact
+  ⚠ Runtime disk: 70.8 GB on host, 43.0 GB used inside — ~27.8 GB reclaimable (C: 42.0 GB free); run `clustercode machine compact`
   ✓ RAM: 31.6GB total
 ```
-
-{/* confirm-cli-output: the Runtime disk line above is provisional */}
 
 Icons: **✓** pass, **✗** fail, **⚠** warning. Disk space, runtime disk and memory use warnings (⚠) instead of failures — they won't block you but indicate potential issues.
 
@@ -120,21 +118,29 @@ free space** on the drive that holds the disk file, and passes otherwise.
 Twenty gigabytes of dead space with 30 GB free warns; the same 20 GB with
 500 GB free passes.
 
-{/* confirm-cli-output */}
-
 ```
-Runtime disk: 31.6 GB on host, 29.0 GB used inside — ~2.6 GB reclaimable (C: 69.8 GB free)
+Runtime disk: 44.2 GB on host, 43.0 GB used inside — ~1.2 GB reclaimable (C: 58.6 GB free)
 ```
 
 When it warns, the line names the command to run:
 
 ```
-Runtime disk: 70.8 GB on host, 43.0 GB used inside — ~27.8 GB reclaimable (C: 32.0 GB free); run clustercode machine compact
+Runtime disk: 70.8 GB on host, 43.0 GB used inside — ~27.8 GB reclaimable (C: 32.0 GB free); run `clustercode machine compact`
 ```
+
+If the machine also holds stopped containers, the warning adds
+`; stopped containers also hold space; stopped DevBoxes can be cleaned up in the console`
+— compacting doesn't return their space.
+
+Sizes are labelled GB but computed in 1024-based units, the same as the Disk
+space line.
 
 The size used inside can only be measured while the machine is running. If
 it's stopped, the check warns and asks you to start the container runtime
-rather than guessing.
+rather than guessing; if it's running but doesn't answer within 30 seconds,
+the check warns that it could not measure usage inside the machine. If your
+drive's free space can't be read within 15 seconds, the free space is left
+off the line and the check warns whenever at least 5 GB could be reclaimed.
 
 This check **never fails**: dead space is wasteful, not broken, and `doctor`'s
 exit code gates scripted setup. It is read-only — it never stops, trims, or

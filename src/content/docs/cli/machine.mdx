@@ -42,120 +42,202 @@ really used inside the machine.
 
 ### Before you run it
 
+- **The machine must be running.** The command needs it running to check
+  that no containers are running and to trim free space, so it **refuses** if
+  the machine is stopped and tells you to start it with
+  `podman machine start <machine>`.
 - **Nothing may be running.** The command **refuses** while any DevBox or
   other container is running in the machine, rather than stopping it under
   you. Stop them first and run it again. It also refuses when it can't tell —
-  for example when the runtime reports running but doesn't answer.
-- **Stop the worker.** The container runtime is unavailable for the few
-  minutes the compact takes, so stop `clustercode worker` first; a DevBox
-  launch routed to this worker in that window would fail.
+  when Podman doesn't answer the question of what is running. It asks again
+  right before it stops the machine, so a DevBox started while the command
+  was trimming isn't stopped either.
+- **Stop the worker.** The machine, and anything that uses it, is unavailable
+  until it has been started again — compacting a large disk can take several
+  minutes — so stop `clustercode worker` first; a DevBox launch routed to this
+  worker in that window would fail.
 - **Free space inside the machine first.** Compacting can only return space
   that is already free inside the machine. Stopped DevBoxes still hold their
-  disk — remove the ones you no longer need in the console's
+  disk — the command tells you how many stopped containers it found — so
+  remove the ones you no longer need in the console's
   [Fleet Cleaner](https://console.clustercode.io/fleet/cleaner) before you
   compact.
-- **Administrator rights.** Compacting a virtual disk needs elevation, so
+- **Administrator approval.** Compacting a virtual disk needs elevation, so
   Windows shows one **UAC prompt** part-way through.
 
 ### What it does
 
-The command shows you the whole plan and asks for confirmation **before**
-anything is stopped. Then:
+Before anything is stopped, the command measures the disk, checks that nothing
+is running, checks that `diskpart` can read the disk file's path (see
+[It refused before stopping anything](#it-refused-before-stopping-anything)),
+and shows you the whole plan and asks for confirmation. Then:
 
-1. **Measures.** It compares the virtual disk's size on your drive with the
-   space actually used inside the machine; the difference is roughly what it
-   can give back.
-2. **Trims** free space inside the machine while it is still running. This is
-   a required preparation step — on its own it returns nothing to Windows.
-3. **Stops the Podman machine**, then terminates **only** the machine's own
-   WSL distribution. Every other WSL distribution keeps running.
-4. **Waits for WSL to let go of the disk.** WSL's lightweight VM stays alive
-   for a while after its last distribution stops (about a minute by default)
-   and keeps the disk file open until it exits. Compacting before then fails,
-   so the command waits until the file is really released, up to a timeout.
+1. **Trims** free space inside the machine (`fstrim`) while it is still
+   running. This is a required preparation step — on its own it returns
+   nothing to Windows. If the trim doesn't complete, the command warns and
+   carries on; less space may come back.
+2. **Checks again that no containers are running.** If one started during the
+   trim, it stops here: the machine was never stopped, so nothing needs
+   restarting.
+3. **Stops the Podman machine**, then stops **only** the machine's own WSL
+   distribution with `wsl --terminate <distribution>`. It never runs
+   `wsl --shutdown`: every other WSL distribution keeps running.
+4. **Waits for WSL to let go of the disk**, for up to 3 minutes. WSL's
+   lightweight VM stays alive for a while after its last distribution stops
+   (about a minute by default) and keeps the disk file open until it exits.
+   Compacting before then fails, so the command waits until the file is really
+   released.
 5. **Compacts** the disk with Windows' built-in `diskpart`, in an elevated
-   window (this is the UAC prompt). The disk is always detached again
-   afterwards — even if the compact itself fails — so it is never left
-   attached. `diskpart` is used because it is available on every Windows
-   edition, including Home.
-6. **Starts the machine again.** This happens on **every** path — success,
-   declined prompt, timeout, or failure — so you are never left with a stopped
-   runtime.
+   process (this is the UAC prompt). The disk is attached read-only, compacted,
+   and detached again — the detach is repeated even if the compact fails, so
+   the disk is never left attached. `diskpart` is used because it is available
+   on every Windows edition, including Home. This step has a 2-hour limit,
+   which includes the time the UAC prompt waits for you.
+6. **Starts the machine again.** Once the machine has been stopped, this
+   happens on **every** path — success, declined prompt, timeout, or failure.
+   If the machine doesn't start, the command says so, prints the
+   `podman machine start` command to run, and exits with an error.
 7. **Reports** the disk file's size and your drive's free space, before and
    after.
 
 Your images, containers, and volumes are not touched. The command changes the
 size of the file that holds them, not what is inside it.
 
-### Options
+Pressing **Ctrl+C** after you've confirmed doesn't abandon the compact
+half-way, which could leave the machine stopped. The command prints
+`Finishing safely first — the machine will be started again when this completes.`,
+carries on to the restart, and reports the result.
 
-{/* confirm-cli-flags */}
+### Options
 
 | Flag | Description |
 |------|-------------|
-| `--yes` | Skip the confirmation prompt |
+| `-y`, `--yes` | Skip the confirmation prompt (Windows still asks for administrator approval) |
 
 In a script or scheduled task (no terminal), the command won't run without
-`--yes` — it prints how to re-run it instead. The UAC prompt still appears
-either way; `--yes` can't answer it for you.
+`--yes` — it prints the plan, says to re-run with `--yes`, and exits with an
+error. The UAC prompt still appears either way; `--yes` can't answer it for
+you.
 
 ### Output
 
-A successful run ends with a before/after summary along these lines:
-
-{/* confirm-cli-output */}
+A successful run looks along these lines (the machine and distribution names
+are your own):
 
 ```
 Runtime disk: 70.8 GB on host, 43.0 GB used inside — ~27.8 GB reclaimable (C: 32.0 GB free)
+Will run:
+  1. Trim free space inside the machine (sudo -n fstrim -av)
+  2. Stop the machine (podman machine stop podman-machine-default)
+  3. Stop its WSL distribution (wsl --terminate podman-machine-default)
+  4. Wait for WSL to release the disk (up to 3 min)
+  5. Compact the disk with diskpart (asks for administrator approval)
+  6. Start the machine again (podman machine start podman-machine-default)
+The machine, and anything that uses it, is unavailable until the last step finishes. Compacting a large disk can take several minutes.
+Compact the machine disk now?
 ...
-Virtual disk: 70.8 GB → 31.6 GB
-C: free:      32.0 GB → 69.8 GB
+Disk: 70.8 GB → 44.2 GB (26.6 GB returned to Windows)
+C: free: 32.0 GB → 58.6 GB
+The machine was started again.
+Machine disk compacted.
 ```
 
-How much comes back depends on how much was free inside the machine — a
-machine whose disk is genuinely full has nothing to give back.
+Sizes are printed as GB but computed in 1024-based units, the same as
+`clustercode doctor`'s disk lines. How much comes back depends on how much was
+free inside the machine — the disk can't shrink below what is used inside it,
+so a machine whose disk is genuinely full has nothing to give back. When the
+file didn't get any smaller, the report says so instead:
 
-Exit code is 0 when the compact completed, and 1 when it was refused,
-declined, timed out, or failed.
+```
+Compacted, but no space was returned: the disk is still 70.8 GB.
+```
+
+Exit code is **0** when the disk was compacted and the machine started again
+(including when no space was returned), and when you answer no at the
+confirmation prompt — nothing is changed then. It is **1** when the command
+refused, when there was no terminal to confirm and no `--yes`, when
+administrator approval was declined or unavailable, when the disk wasn't
+released in time, when the compact failed, when the machine didn't start
+again, and on any setup other than a WSL2-backed Podman machine on Windows.
 
 ### When it doesn't finish
 
-In every case below, the machine is started again before the command exits.
+#### It refused before stopping anything
+
+In these cases nothing was stopped, so there is nothing to restart.
+
+- **Something is running**, or Podman couldn't say what is. The message names
+  up to five running containers. Stop them (or, if Podman didn't answer, make
+  sure the machine is running) and run the command again. If they started
+  while the command was trimming, the message adds that free space was trimmed
+  but the machine was never stopped.
+- **`diskpart` can't read the disk's path.** `diskpart` reads the path in the
+  system's OEM code page. If the path has characters outside it — for example
+  a Windows user name in another script — the command gives `diskpart` the
+  file's short (8.3) name instead. If there is no usable short name either
+  (short names can be turned off per drive), it refuses:
+  `The disk's path has characters diskpart cannot read on this system, and it has no short (8.3) name to use instead, so nothing was stopped or compacted.`
+  If the check itself couldn't run, it refuses with
+  `Could not check that diskpart can read the disk's path, so nothing was stopped or compacted.`
+
+In every case below, the machine had been stopped, and it is started again
+before the command exits.
 
 #### You declined the UAC prompt
 
-Nothing was compacted and the disk file is unchanged. Run the command again
-and accept the prompt when you're ready.
+`Administrator approval was declined, so nothing was compacted.` The disk file
+is unchanged. Run the command again and accept the prompt when you're ready.
+
+If Windows couldn't ask for approval at all, the command says it could not get
+administrator approval and that compacting needs an account that can approve
+administrator access. Nothing was compacted.
 
 #### It timed out waiting for the disk to be released
+
+The message starts
+`The machine's disk was still in use after 180 s, so nothing was compacted.`
 
 The most common cause is **another WSL distribution** — Ubuntu, or Docker
 Desktop's own distributions — still running. While any distribution runs,
 WSL's VM stays up and keeps the disk file busy. The message names the
-distributions it found running. Stop just those, then run the command again:
+distributions it found running, with a `wsl --terminate` command for each.
+Stop just those, then run the command again:
 
 ```powershell
 wsl --list --running
 wsl --terminate <name>
 ```
 
-<Aside type="caution" title="Don't use wsl --shutdown">
+If no other distribution is running, the message says instead that WSL's VM
+hasn't exited yet (run the command again in a minute), or that another program
+has the disk file open.
+
+<Aside type="caution" title="Don't use wsl --shutdown to get a compact through">
   `wsl --shutdown` stops **every** WSL distribution on the computer, not only
-  the Podman one — anything running in them is killed. This command never
-  uses it, and you don't need it: `wsl --terminate <name>` stops one
-  distribution at a time.
+  the Podman one — anything running in them is killed. The compact never uses
+  it, and you don't need it: `wsl --terminate <name>` stops one distribution
+  at a time. (Applying a `.wslconfig` change is a separate job that does
+  restart WSL — see
+  [Sizing container runtime memory](/self-hosting/runtime-memory).)
 </Aside>
-
-#### It refused because something is running
-
-Stop the running DevBoxes (or other containers) and run it again. Nothing was
-stopped or changed.
 
 #### The compact failed
 
-The command shows the tail of the `diskpart` log. The disk was detached and
-the machine restarted, so the runtime is in the same state as before; the disk
-file just didn't shrink. Run it again, and include that output if you
+The command prints why, followed by the last lines of the `diskpart` log:
+
+- `diskpart could not compact the disk (exit code N).`
+- `diskpart reported an error, so the disk was not compacted.` — `diskpart`
+  exited 0, but its log contains an error. Only `diskpart`'s English error
+  messages are recognised; on another Windows display language, a failure like
+  this shows up as a compact that returned no space instead.
+- `The disk was not compacted.` — followed by the reason, for example that the
+  UAC prompt wasn't answered, or `diskpart` didn't finish, within 120 minutes.
+
+The disk was detached and the machine restarted, so the runtime is in the same
+state as before; the disk file just didn't shrink. The one exception is a
+`diskpart` still running after 120 minutes: the machine can't start until it
+finishes, so once it has, start the machine with `podman machine start`. Run
+the compact again, and include that output if you
 [report a problem](/self-hosting/troubleshooting#still-stuck).
 
 ### Don't enable sparse VHDX
