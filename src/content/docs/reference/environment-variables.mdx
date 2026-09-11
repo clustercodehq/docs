@@ -134,14 +134,12 @@ See [CLI: config](/cli/config) and
 ### Worker disk hygiene
 
 Two optional overrides for the worker's
-[disk hygiene](/self-hosting/worker-agent#disk-hygiene) inside a Podman
-machine. Leave them unset unless you have a reason to change the defaults. Set
+[disk hygiene](/self-hosting/worker-agent#disk-hygiene) inside the Podman
+machine on Windows. Leave them unset unless you have a reason to change the defaults. Set
 them in the environment you run `clustercode worker` from — the CLI passes its
 environment on to the agent.
 
-{/* confirm-env-names */}
-
 | Variable | Default | Effect |
 |----------|---------|--------|
-| `WORKER_GUEST_CLEAN` | on | Set to `off` to stop the agent reaping orphaned build scratch and capping the machine's journal |
-| `WORKER_GUEST_CLEAN_SCRATCH_AGE_HOURS` | `3` | Minimum age, in hours, before orphaned build scratch is removed |
+| `WORKER_GUEST_CLEAN` | on | Set to `off` to stop the agent capping the machine's journal and removing leftover build scratch |
+| `WORKER_GUEST_CLEAN_SCRATCH_AGE_HOURS` | `3` | Minimum age, in hours (1–168), before leftover build scratch is removed |

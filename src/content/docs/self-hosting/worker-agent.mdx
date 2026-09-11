@@ -36,36 +36,76 @@ Terminal and display output from a DevBox streams back through the agent to your
 
 ## Disk hygiene
 
-On Windows and macOS, Podman runs inside a machine (a small Linux VM), and
-image builds leave things behind in it that no Podman command shows or
-cleans up. When the container runtime is a Podman machine, the agent tidies
-up after itself inside the machine:
+Image builds leave things behind: images a rebuild replaced, the intermediate
+layers of a build that failed, and — inside the Podman machine on Windows —
+scratch directories and logs that no Podman command shows. The agent cleans
+these up, under the rules below.
 
-- **Orphaned build scratch.** A build that is interrupted can leave a large
+### Images it replaced or failed to build
+
+On the worker's container engine (Podman or Docker), the agent removes images
+left behind by:
+
+- a **failed image build** — only intermediate images that carry that build's
+  ID;
+- a **rebuild** that replaces an image, or a
+  [snapshot of a DevBox](/guides/build-image-from-container) that replaces one
+  — only the image it has just replaced.
+
+Even then, an image is removed only when it has **no name** (no tag or
+digest), **no child images**, and **no container** using it. The agent then
+works up through that image's parent layers, removing each one only while it
+is unnamed, has no other child, and is unused. It stops at the first layer
+that is named (a base image such as `ubuntu:24.04`, for example), shared with
+another image, or in use, and after at most 64 layers.
+
+### Inside the Podman machine (Windows)
+
+When the worker's container runtime is a local Podman machine on WSL2 — the
+setup [`clustercode onboard`](/cli/onboard) creates on Windows — the agent also
+looks after the machine itself:
+
+- **Journal size.** If no `SystemMaxUse=` is set anywhere in the machine's
+  journald configuration (every configuration directory, drop-ins included),
+  the agent writes its own drop-in,
+  `/etc/systemd/journald.conf.d/00-clustercode-journal-cap.conf`, containing
+  `SystemMaxUse=256M`, and restarts journald once. It logs
+  `guest clean: capped the podman machine's journal` with the drop-in's path.
+  It never edits `/etc/systemd/journald.conf`, and if it can't read journald's
+  configuration it does nothing.
+
+  A `SystemMaxUse=` you've already set, in any journald configuration file, is
+  left alone. Once the agent's drop-in exists, drop-ins take precedence over
+  the main file, so set your own limit in a drop-in whose name sorts after the
+  agent's (for example `50-journal-size.conf`). Deleting the agent's file
+  removes its cap; unless you've set your own limit or turned the cleanup off
+  (below), the agent writes it again the next time it starts.
+
+  Containers that use the journald log driver keep their logs in the journal,
+  so the cap also limits how much of their log history is kept.
+- **Leftover build scratch.** A build that is interrupted can leave a large
   temporary directory behind in the machine — invisible to `podman system df`
-  and untouched by `podman system prune`. The agent removes only directories
-  that match a build's scratch naming, are **at least 3 hours old**, and only
-  while **no image build is running**, so a build in progress is never
-  disturbed.
-- **Log size.** The machine's system journal has no size limit by default and
-  can grow to gigabytes. The agent caps it at **256 MB**.
-  {/* confirm-worker-behaviour: an existing SystemMaxUse you set yourself is left alone */}
-  If you've already set your own limit, it's left alone.
-- **Its own leftovers.** After a build or a
-  [snapshot of a DevBox](/guides/build-image-from-container), the agent
-  reclaims what that operation left behind — for example the older image a
-  rebuild replaced — but only when it can prove it created it.
+  and untouched by `podman system prune`. Every 15 minutes (the first run is
+  about 2 minutes after the worker starts), the agent removes directories in
+  the machine's `/var/tmp` named `buildah` followed by digits, or
+  `clustercode-commit.XXXXXXXX` (left by a DevBox snapshot), that are older
+  than the scratch age (**3 hours** by default). It removes them only when no
+  build is running in the machine and nothing is using the directory. If it
+  can't check for running builds, it skips that run and logs
+  `guest clean: could not check for running builds or in-use scratch in the podman machine; skipping scratch reap`.
+  If a build-like process keeps it waiting for longer than the scratch age, it
+  logs
+  `guest clean: scratch reap has been paused by a build-like process in the podman machine for longer than the scratch age`
+  once.
 
 What it will **never** do:
 
-- Run a machine-wide prune, or remove any image, container, or volume it
-  can't prove belongs to its own work. On a machine you also use yourself,
-  your own images and containers are safe.
+- Prune, force a removal, or remove all images. Your own images and
+  containers are never touched, and a layer one of your images builds on is
+  kept.
 - Remove stopped DevBoxes. A stopped DevBox keeps its disk until you remove
   it — review and remove the ones you no longer need in the console's
   [Fleet Cleaner](https://console.clustercode.io/fleet/cleaner).
-
-{/* confirm-env-names */}
 
 To turn the in-machine cleanup off, or change the scratch age, set these in
 the environment you start `clustercode worker` from (the CLI passes its
@@ -73,13 +113,16 @@ environment on to the agent):
 
 | Variable | Default | Effect |
 |----------|---------|--------|
-| `WORKER_GUEST_CLEAN` | on | Set to `off` to stop reaping build scratch and capping the journal |
-| `WORKER_GUEST_CLEAN_SCRATCH_AGE_HOURS` | `3` | How old, in hours, orphaned build scratch must be before it's removed |
+| `WORKER_GUEST_CLEAN` | on | Set to `off` to stop capping the machine's journal and removing leftover build scratch |
+| `WORKER_GUEST_CLEAN_SCRATCH_AGE_HOURS` | `3` | How old, in hours (1–168), leftover build scratch must be before it's removed |
 
 ```powershell
 $env:WORKER_GUEST_CLEAN = "off"
 clustercode worker
 ```
+
+Turning the cleanup off doesn't remove a journal drop-in the agent has already
+written; delete that file yourself if you don't want the cap.
 
 <Aside type="note" title="This doesn't shrink the disk file on Windows">
   Cleanup frees space *inside* the machine, which slows how fast its virtual
