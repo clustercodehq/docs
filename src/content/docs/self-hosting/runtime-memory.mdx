@@ -279,21 +279,22 @@ It runs only when:
   from the CLI, and a Hyper-V backend has no reclaim setting;
 - memory reclaim is **on** (not `disabled`, and `.wslconfig` can be read), and
   the WSL version can be read so the result can be tied to it;
+- no **ClusterCode worker** is running on this machine (see below);
 - the runtime memory step of `onboard` **completed**, so there is a settled
   runtime to measure;
 - the runtime is **idle** — with containers running it stops immediately with
   `Containers are running, so the runtime never goes idle. Stop them and try
   again.`
 
-Otherwise it says why and records nothing. Budget for more than the
-10 minutes the prompt mentions: loading the cache comes before the idle watch,
-so on a slow disk a run can take well over twelve minutes.
+Otherwise it says why and records nothing. Budget for 10 minutes or more, as
+the prompt says: loading the cache comes before the idle watch, so on a slow
+disk a run can take well over twelve minutes.
 
 `onboard` also offers the same measurement, unprompted, at the one moment the
 answer matters most — right after it has turned reclaim on:
 
 ```
-Verify that memory reclaim works on this machine now? Takes about 10 minutes; the runtime must stay idle.
+Verify that memory reclaim works on this machine now? Takes 10 minutes or more; the runtime must stay idle.
 ```
 
 There are **three** outcomes, not two:
@@ -309,7 +310,8 @@ There are **three** outcomes, not two:
   tells you the ceiling that follows from it: `Sized as if reclaim does not
   work, the ceiling for this machine is 23552MB.`
 - **Inconclusive** — the run couldn't establish either answer, and says why.
-  Typical reasons: containers were running; the VM wasn't up, or restarted
+  Typical reasons: containers were running; a ClusterCode worker was running,
+  or started during the run; the VM wasn't up, or restarted
   during the run; Windows itself ran short of memory, which shrinks the VM
   whether or not reclaim works; `.wslconfig` changed after the VM started, so
   it hasn't loaded the setting yet (the message tells you to run
@@ -327,19 +329,29 @@ The result is stored as
 [`RUNTIME_RECLAIM_VERIFIED`](/cli/config#runtime_reclaim_verified), stamped with
 the WSL version and the reclaim mode it was measured under.
 
-A worker running on the same machine can
-[drop the VM's cache itself](#the-worker-drops-the-cache-itself), and a drop
-during the idle watch is not WSL's reclaim at work. The run reads the VM's
-cache-drop counters (`/proc/vmstat`) before and after the idle watch, so a drop
-can't pass for a *yes*: if one happened, the run is inconclusive
-(`Reclaim could not be measured: something dropped the VM's cache during the
-measurement (a running ClusterCode worker does this when Windows runs low on
-memory), so the result would not show reclaim at work. Stop the worker and try
-again.`). If the counters can't be read, a *yes* isn't recorded either
-(`Windows got memory back from the VM, but the VM's cache-drop counters
-(/proc/vmstat) could not be read, so something else dropping its cache cannot
-be ruled out. Nothing was recorded.`). A *no* still stands in that case, since
-a drop could only have made the VM smaller.
+A worker running on the same machine keeps the runtime busy, so the VM never
+goes idle, and it can
+[drop the VM's cache itself](#the-worker-drops-the-cache-itself) — which from
+Windows looks just like reclaim at work. So the run won't start while a
+ClusterCode worker process is running on this machine, which it checks with
+`tasklist`:
+
+```
+A ClusterCode worker is running on this machine. It keeps the runtime busy and drops the VM's cache when Windows runs low on memory, either of which would skew the result. Stop the worker and try again.
+```
+
+It checks again after every sample of the idle watch and once more before
+giving an answer. A worker that has appeared by then makes the run
+inconclusive (`Reclaim could not be measured: a ClusterCode worker started
+during the measurement, and a worker keeps the runtime busy and drops the VM's
+cache when Windows runs low on memory. Stop the worker and try again.`). If the
+process list can't be read, the run doesn't guess: at the start it measures
+nothing (`Could not list the running processes (tasklist) to check that no
+ClusterCode worker is running, so nothing was measured. Try again.`), and later
+it records nothing (`Reclaim could not be measured: the running processes could
+not be listed (tasklist) to check that no ClusterCode worker started during the
+measurement. Nothing was recorded.`). A worker that starts and exits entirely
+between two samples, about 30 seconds apart, isn't seen.
 
 #### Measuring it by hand
 
@@ -348,7 +360,8 @@ The same experiment, if you'd rather run it yourself:
 1. Give the VM some cache to hold — pull an image or run a build.
 2. Note `vmmem` (or `vmmemWSL`) in Task Manager's Details tab, and the amount
    of available memory on the Performance tab.
-3. Leave the machine idle for 10–15 minutes with no DevBoxes running. Keep
+3. Leave the machine idle for 10–15 minutes with no DevBoxes and no worker
+   running. Keep
    Windows comfortably above 4 GiB available the whole time: below that,
    Windows trims the VM on its own, and so does the
    [worker's cache drop](#the-worker-drops-the-cache-itself) — neither is

@@ -102,17 +102,19 @@ clustercode onboard --memory 24576
 The allocation is a **ceiling, not a reservation** — it caps what the runtime
 *can* take rather than setting it aside up front. That is not the same as the
 memory coming back, though, and `onboard` says which case you're in before it
-asks you to pick a number. On Windows that note is one of four:
+asks you to pick a number. On Windows that note is one of five:
 
 ```
-This is a ceiling, not a reservation — memory is used while DevBoxes run and returned to Windows gradually while the runtime is idle.
+This is a ceiling, not a reservation — memory is used while DevBoxes run and returned to Windows while the runtime is idle.
 Memory reclaim is configured but has not been verified on this machine — this number is sized as if it does not work; run `clustercode onboard --verify-reclaim` to check.
 Memory reclaim does not return memory on this Windows build, so treat this number as fully used.
+The Podman machine runs on Hyper-V, not WSL, and holds the whole amount while it runs, so treat this number as fully used.
 Without memory reclaim (WSL 2.0+), the runtime keeps everything it has touched until `wsl --shutdown`, so treat this number as fully used.
 ```
 
 Only the first — reclaim measured and working — is a ceiling the VM hovers
-below. On macOS the VM doesn't release memory until it restarts, so treat the
+below. The fourth is for a Podman machine on Hyper-V, which has no reclaim
+setting and holds its whole allocation. On macOS the VM doesn't release memory until it restarts, so treat the
 ceiling as fully used there too. See
 [It's a ceiling, not a reservation](/self-hosting/runtime-memory#its-a-ceiling-not-a-reservation).
 
@@ -131,15 +133,16 @@ clustercode onboard --verify-reclaim
 
 It runs only for **Podman on the WSL backend**, with memory reclaim
 **on**, once the runtime memory step has **completed**, and with an
-**idle** runtime — with containers running it declines rather than measuring
-your workload instead of your machine. Anything else (Docker, a Hyper-V
+**idle** runtime — with containers running, or a ClusterCode worker running on
+the machine, it declines rather than measuring your workload instead of your
+machine. Anything else (Docker, a Hyper-V
 backend, reclaim switched off, a WSL version it can't read) is refused with the
 reason, and nothing is recorded. Docker in particular is never measured: the
 CLI can't see into its VM, so Docker is always sized as if reclaim does not
 work.
 
-Allow more than the 10 minutes the prompt below estimates: loading the cache
-comes first, so a run can take well over twelve minutes.
+Allow 10 minutes or more, as the prompt below says: loading the cache comes
+first, so a run can take well over twelve minutes.
 
 The result is recorded as
 [`RUNTIME_RECLAIM_VERIFIED`](/cli/config#runtime_reclaim_verified), stamped
@@ -153,7 +156,7 @@ the one moment the answer changes what you should do next — it offers the
 measurement itself:
 
 ```
-Verify that memory reclaim works on this machine now? Takes about 10 minutes; the runtime must stay idle.
+Verify that memory reclaim works on this machine now? Takes 10 minutes or more; the runtime must stay idle.
 ```
 
 Decline, and it tells you the ceiling that a machine sized for no reclaim
@@ -166,8 +169,9 @@ Reclaim verified — raise the runtime to 25 GiB?
 ```
 
 A run can also come back **inconclusive** — for example when the runtime hasn't
-pulled enough images to fill a meaningful amount of cache, or Windows ran short
-of memory during the run and trimmed the VM itself. Nothing is recorded
+pulled enough images to fill a meaningful amount of cache, Windows ran short
+of memory during the run and trimmed the VM itself, or a ClusterCode worker
+started during the run. Nothing is recorded
 in that case, so the runtime stays sized conservatively and you can try again
 later. Full details in
 [Verifying it works on your machine](/self-hosting/runtime-memory#verifying-it-works-on-your-machine).

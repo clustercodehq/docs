@@ -139,7 +139,8 @@ the other side.
    offers to measure whether the VM really gives memory back. Where reclaim is
    already on — WSL's default from 2.5.10 — there's nothing to write, so go
    straight to the measurement. Take the offer, or run the measurement yourself
-   once the machine is idle:
+   once the machine is idle — stop the worker first, because the measurement
+   won't run while a ClusterCode worker is running:
    ```bash
    clustercode onboard --verify-reclaim
    ```
