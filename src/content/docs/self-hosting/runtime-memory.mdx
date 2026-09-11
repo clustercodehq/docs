@@ -313,10 +313,17 @@ the WSL version and the reclaim mode it was measured under.
 
 A worker running on the same machine can
 [drop the VM's cache itself](#the-worker-drops-the-cache-itself), and a drop
-during the idle watch is not WSL's reclaim at work. The worker only does that
-once Windows is below its floor, which normally makes the run inconclusive
-anyway. If you've raised that floor, stop the worker
-while you measure.
+during the idle watch is not WSL's reclaim at work. The run reads the VM's
+cache-drop counters (`/proc/vmstat`) before and after the idle watch, so a drop
+can't pass for a *yes*: if one happened, the run is inconclusive
+(`Reclaim could not be measured: something dropped the VM's cache during the
+measurement (a running ClusterCode worker does this when Windows runs low on
+memory), so the result would not show reclaim at work. Stop the worker and try
+again.`). If the counters can't be read, a *yes* isn't recorded either
+(`Windows got memory back from the VM, but the VM's cache-drop counters
+(/proc/vmstat) could not be read, so something else dropping its cache cannot
+be ruled out. Nothing was recorded.`). A *no* still stands in that case, since
+a drop could only have made the VM smaller.
 
 #### Measuring it by hand
 
