@@ -100,14 +100,14 @@ backend).
 ### Windows becomes slow or hangs while the worker runs
 
 **Cause:** The WSL2 VM has grown to its memory ceiling and isn't giving any of
-it back. `[wsl2] memory=` is a ceiling on a balloon that only inflates: without
-`[experimental] autoMemoryReclaim` (or on WSL builds older than 2.0), the
-guest's page cache — everything image pulls and builds have touched — stays
+it back. `[wsl2] memory=` is a ceiling on a balloon that only inflates: with
+memory reclaim off (`[experimental] autoMemoryReclaim=disabled`, or a WSL build
+older than 2.0), the guest's page cache — everything image pulls and builds have touched — stays
 charged to Windows until `wsl --shutdown`. The reserve the CLI subtracted when
 sizing the runtime is notional in that state, and Windows eventually thrashes
 into the pagefile.
 
-Setting the entry doesn't guarantee an escape from this: it's a request, and
+Reclaim being on — by default or by hand — doesn't guarantee an escape from this: it's a request, and
 some builds accept it and do nothing. On a Windows 10 21H1 machine with WSL
 2.7.13, neither `gradual` nor `dropcache` returned any of ~9 GB of cache in 16
 minutes idle, while dropping the cache by hand returned ~10 GB in 20 seconds.
@@ -130,13 +130,16 @@ the other side.
 
 **Fix, in order:**
 
-1. **Turn on memory reclaim — and verify it.** `clustercode onboard` offers
-   this even when the size is already right, and applies it with no resize. It
-   writes `[experimental] autoMemoryReclaim=gradual` into
+1. **Turn on memory reclaim — and verify it.** Where reclaim is off
+   (`disabled`, or unset on WSL older than 2.5.10), `clustercode onboard`
+   offers to turn it on even when the size is already right, and applies it
+   with no resize. It writes `[experimental] autoMemoryReclaim=gradual` into
    `%UserProfile%\.wslconfig` (keeping a `.wslconfig.bak` copy the first time)
    and runs `wsl --shutdown`, which restarts every WSL distribution. It then
-   offers to measure whether the VM really gives memory back; take it, or run
-   the measurement yourself once the machine is idle:
+   offers to measure whether the VM really gives memory back. Where reclaim is
+   already on — WSL's default from 2.5.10 — there's nothing to write, so go
+   straight to the measurement. Take the offer, or run the measurement yourself
+   once the machine is idle:
    ```bash
    clustercode onboard --verify-reclaim
    ```

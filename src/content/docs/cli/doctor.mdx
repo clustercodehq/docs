@@ -83,7 +83,7 @@ Runtime memory: 16.0 GiB of 31.6 GiB host — fits ~3 default (4 GiB) DevBoxes (
 
 A runtime of a perfectly reasonable size is still a problem when nothing ever
 returns what it borrows. On Windows the WSL2 VM only hands memory back to the
-host when `[experimental] autoMemoryReclaim` is set, so this check reads
+host while memory reclaim (`[experimental] autoMemoryReclaim`) is on, so this check reads
 `.wslconfig` and your WSL version and appends what it finds. With Podman, the
 fix is a command:
 
@@ -111,7 +111,7 @@ itself to a bigger number — in that case you just get the explanation. Both
 forms drop the check to a warning.
 
 Writing the setting isn't the same as the VM honouring it, so the check
-distinguishes *configured* from *measured*. With the entry present but never
+distinguishes *configured* from *measured*. With reclaim on (set by hand, or WSL's default) but never
 verified, and the runtime sized as though it works, that's a warning with two
 ways out — measure it, or size for the truth you currently have:
 
@@ -198,7 +198,7 @@ On Windows with Docker, this check only reports the number — `doctor` (and
 `[wsl2] memory=` in `.wslconfig` (Docker Desktop's WSL2 backend) or in Docker
 Desktop's own settings (its Hyper-V backend). The
 `[experimental] autoMemoryReclaim` entry is likewise yours to set by hand on
-the WSL2 backend — `doctor` reports whether it's set, but `onboard` won't
+the WSL2 backend — `doctor` reports whether it's on, but `onboard` won't
 write it, and nothing can verify it for Docker, so Docker is always sized as if
 reclaim does not work. The lever that protects the host is a smaller
 `[wsl2] memory=` (WSL2 backend) or a smaller memory setting in Docker Desktop
@@ -265,9 +265,9 @@ different diagnoses with different next steps:
 
 | Tail | What it means |
 |---|---|
-| `memory reclaim is off — see the docs` | Nothing is set |
-| `memory reclaim needs WSL 2.0 or newer — see the docs` | This WSL build predates the setting |
-| `memory reclaim is configured but unverified — see the docs` | The entry is written; nobody has measured it (as far as Docker ever gets) |
+| `memory reclaim is off — see the docs` | `autoMemoryReclaim=disabled`, or unset on WSL older than 2.5.10 |
+| `memory reclaim needs WSL 2.0 or newer — see the docs` | This WSL build predates the setting, or its version can't be read |
+| `memory reclaim is configured but unverified — see the docs` | Reclaim is on (set by hand, or WSL's default); nobody has measured it (as far as Docker ever gets) |
 | `memory reclaim is on but inert on this build — see the docs` | Measured, and it returns nothing here |
 | `memory reclaim is on but not keeping up — see the docs` | Measured and working, simply outpaced |
 

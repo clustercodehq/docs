@@ -23,8 +23,8 @@ An interactive wizard that walks you through the complete setup:
    - **container runtime missing** → installs and starts Podman
    - **Orchestrator unreachable** → shows configuration guidance
 3. Offers to size the container runtime's memory and, for Podman on the WSL
-   backend (WSL 2.0+), enables memory reclaim — then offers to measure whether
-   it works — see below
+   backend (WSL 2.0+), turns memory reclaim on where it's off — then offers to
+   measure whether it works — see below
 4. Re-runs all checks to verify fixes
 
 ## Options
@@ -54,12 +54,12 @@ If nothing has been configured yet, the wizard asks how the machine is used:
 - **Dedicated worker** — mostly hosts DevBoxes. Gets everything except a
   *preset* reserve of 6 GiB — but that smaller reserve applies only once the VM
   has been **measured** giving memory back on this machine, with
-  `--verify-reclaim` or by hand. Writing the reclaim setting is not enough:
+  `--verify-reclaim` or by hand. Reclaim being on is not enough:
   until there's a verdict, the preset leaves `max(8 GiB, 25% of RAM)` behind
   instead. The same goes everywhere the feature can't exist at all (macOS,
   Hyper-V, WSL older than 2.0), and always for Docker, whose VM the CLI can't
-  measure — so Docker is sized as if reclaim does not work even with the
-  setting written. Nothing is reserved on Linux, which
+  measure — so Docker is sized as if reclaim does not work even with
+  reclaim on. Nothing is reserved on Linux, which
   has no VM in the way.
 - **Shared** — you also work on this machine day to day. Capped at half the
   host, with a larger preset reserve of 12 GiB on Windows/macOS so the desktop
@@ -130,7 +130,7 @@ clustercode onboard --verify-reclaim
 ```
 
 It runs only for **Podman on the WSL backend**, with memory reclaim
-**enabled**, once the runtime memory step has **completed**, and with an
+**on**, once the runtime memory step has **completed**, and with an
 **idle** runtime — with containers running it declines rather than measuring
 your workload instead of your machine. Anything else (Docker, a Hyper-V
 backend, reclaim switched off, a WSL version it can't read) is refused with the
@@ -188,12 +188,14 @@ different one.
   **all** of your WSL distributions, not only the one Podman uses. Save work
   in other WSL sessions before confirming the change.
 
-  In the same write, `onboard` also sets
-  `[experimental] autoMemoryReclaim=gradual`, so the VM hands memory back to
-  Windows instead of holding everything it has touched. On a machine whose
-  allocation is already correct, `onboard` offers that entry on its own — and
-  because `.wslconfig` is only read when the VM starts, even a reclaim-only
-  change restarts every WSL distribution just the same.
+  Where memory reclaim is off (`disabled`, or unset on WSL older than 2.5.10),
+  `onboard` also sets `[experimental] autoMemoryReclaim=gradual` in the same
+  write, so the VM hands memory back to Windows instead of holding everything
+  it has touched. It leaves the key alone where reclaim is already on,
+  including WSL's own default from 2.5.10. On a machine whose allocation is
+  already correct, `onboard` offers that entry on its own — and because
+  `.wslconfig` is only read when the VM starts, even a reclaim-only change
+  restarts every WSL distribution just the same.
 </Aside>
 
 <Aside type="note" title="Windows + Docker: onboard doesn't apply this for you">
@@ -202,9 +204,10 @@ different one.
   Docker Desktop's WSL2 backend, that's `[wsl2] memory=` in
   `%UserProfile%\.wslconfig`, the same file described above; on its Hyper-V
   backend, it's Docker Desktop's own Resources settings. Either way, set it
-  yourself. On the WSL2 backend you can add
-  `[experimental] autoMemoryReclaim=gradual` by hand too, which `onboard`
-  likewise won't write for you — but the CLI can't verify it for Docker, so
+  yourself. On the WSL2 backend you can set
+  `[experimental] autoMemoryReclaim` by hand too (from WSL 2.5.10 reclaim is on
+  unless it says `disabled`), which `onboard` likewise won't write for you —
+  but the CLI can't verify it for Docker, so
   size Docker's memory as if reclaim does not work.
 </Aside>
 

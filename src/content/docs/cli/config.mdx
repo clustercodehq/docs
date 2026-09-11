@@ -84,9 +84,9 @@ clustercode config set RUNTIME_RECLAIM_VERIFIED yes
 Accepts `yes` or `no`; anything else is rejected with
 `Reclaim verification must be yes or no (or run clustercode onboard --verify-reclaim to measure it)`.
 
-On Windows, the WSL2 VM only returns memory to the host when
-`[experimental] autoMemoryReclaim` is set — and even then, only if the build
-honours it. The setting is a request, and it has been observed accepted and
+On Windows, the WSL2 VM only returns memory to the host while memory reclaim
+(`[experimental] autoMemoryReclaim`) is on — and even then, only if the build
+honours it. Reclaim is a request, and it has been observed accepted and
 completely inert. So the CLI sizes the runtime optimistically for exactly one
 state: reclaim **measured** working on this machine. This key is that
 measurement.
@@ -100,7 +100,8 @@ instead.
 A verdict is only meaningful next to the WSL build and the reclaim mode it
 describes, so it's stored alongside two companion stamps:
 `RUNTIME_RECLAIM_VERIFIED_WSL` (the WSL version, such as `2.7.13.0`) and
-`RUNTIME_RECLAIM_VERIFIED_MODE` (`gradual` or `dropcache`). `clustercode config
+`RUNTIME_RECLAIM_VERIFIED_MODE` (the reclaim mode in effect, `gradual` or
+`dropcache` — `dropcache` where `.wslconfig` doesn't set one). `clustercode config
 list` shows both, and `config set` accepts neither — the CLI writes them for
 you, whichever way the verdict was recorded, and confirms what it stamped:
 
@@ -113,7 +114,7 @@ when there's nothing for a verdict to describe:
 
 - off Windows: `Memory reclaim verification only applies to Windows with WSL. Nothing was recorded.`
 - when the WSL version can't be read: ``Could not read the WSL version (`wsl --version`), so the verdict cannot be tied to a WSL build. Nothing was recorded.``
-- when reclaim isn't enabled: `Memory reclaim is not enabled ([experimental] autoMemoryReclaim in .wslconfig), so there is nothing for a verdict to describe. Nothing was recorded.`
+- when reclaim is off, or `.wslconfig` can't be read: `Memory reclaim is off ([experimental] autoMemoryReclaim is disabled, or unset on WSL older than 2.5.10), or .wslconfig could not be read, so there is nothing for a verdict to describe. Nothing was recorded.`
 
 When the running WSL version or the reclaim mode stops matching the stamps, the
 verdict is treated as unanswered rather than carried forward: the status goes
@@ -127,7 +128,7 @@ runtime the CLI can measure. With Docker, or a backend the CLI can't identify,
 a stored verdict is ignored and the runtime is sized as if reclaim does not
 work.
 
-Clearing the key (or losing a stamp) is safe in the same direction: with no
+Removing the key from `config.json` (or losing a stamp) is safe in the same direction: with no
 usable verdict, the runtime is sized as though reclaim does nothing.
 
 ## Configuration File
