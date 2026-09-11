@@ -154,11 +154,15 @@ for when it acts and what it never does.
 
 Two optional overrides for the worker's
 [disk hygiene](/self-hosting/worker-agent#disk-hygiene) inside the Podman
-machine on Windows. Leave them unset unless you have a reason to change the defaults. Set
-them in the environment you run `clustercode worker` from — the CLI passes its
-environment on to the agent.
+machine on Windows. Leave them unset unless you have a reason to change the
+defaults. The worker reads them at startup, so set them in the environment you
+start `clustercode worker` from (the CLI passes its environment on to the
+agent), then restart the worker.
 
-| Variable | Default | Effect |
-|----------|---------|--------|
-| `WORKER_GUEST_CLEAN` | on | Set to `off` to stop the agent capping the machine's journal and removing leftover build scratch |
-| `WORKER_GUEST_CLEAN_SCRATCH_AGE_HOURS` | `3` | Minimum age, in hours (1–168), before leftover build scratch is removed |
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `WORKER_GUEST_CLEAN` | on | Unset, empty, `on`, `true`, `1`, `yes` or `enabled` keeps the in-machine cleanup on. Set to `off`, `false`, `0`, `no` or `disabled` to stop the agent capping the machine's journal and removing leftover build scratch. Any other value also turns it off, with a warning in the worker log. It does **not** affect the cleanup of images a failed build or a rebuild left behind. |
+| `WORKER_GUEST_CLEAN_SCRATCH_AGE_HOURS` | `3` | Minimum age, in whole hours, before leftover build scratch is removed. Accepts 1 to 168; anything else is ignored with a warning, and the default applies. |
+
+Like the host memory variables, these are read by the worker on your machine;
+setting them in **Settings → Environment Variables** has no effect.
