@@ -1,0 +1,173 @@
+---
+title: clustercode machine
+description: Maintain the container runtime's machine — on Windows, give disk space the runtime no longer uses back to your drive.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## Usage
+
+```bash
+clustercode machine compact
+```
+
+## `compact`
+
+Returns disk space that the container runtime's machine is holding on your
+Windows drive but no longer uses.
+
+It applies to **Windows with a Podman machine running on WSL2** — the setup
+[`clustercode onboard`](/cli/onboard) creates on Windows. Anywhere else
+(macOS, Linux, Docker Desktop, a Hyper-V Podman machine) it exits with an error
+and changes nothing.
+
+### Why the drive fills up
+
+On Windows, everything inside the Podman machine — images, DevBoxes, build
+caches, logs — lives in a single virtual disk file on your drive. That file
+**grows** whenever the machine needs more room and **never shrinks** when
+files are deleted inside it. The biggest image build you have ever run sets a
+floor your drive never gets back, and a worker that builds a few large images
+slowly eats `C:` without anything telling you why.
+
+Deleting images, pruning, or removing DevBoxes frees space *inside* the
+machine, but hands nothing back to Windows. Running `fstrim` inside the machine
+doesn't either: it only marks the freed space as reusable. The space comes
+back to your drive only when the virtual disk is **compacted** while nothing
+has it open — which is what this command does, safely.
+
+[`clustercode doctor`](/cli/doctor#runtime-disk-windows) tells you when it is
+worth running: its **Runtime disk** line compares the file's size with what is
+really used inside the machine.
+
+### Before you run it
+
+- **Nothing may be running.** The command **refuses** while any DevBox or
+  other container is running in the machine, rather than stopping it under
+  you. Stop them first and run it again. It also refuses when it can't tell —
+  for example when the runtime reports running but doesn't answer.
+- **Stop the worker.** The container runtime is unavailable for the few
+  minutes the compact takes, so stop `clustercode worker` first; a DevBox
+  launch routed to this worker in that window would fail.
+- **Free space inside the machine first.** Compacting can only return space
+  that is already free inside the machine. Stopped DevBoxes still hold their
+  disk — remove the ones you no longer need in the console's
+  [Fleet Cleaner](https://console.clustercode.io/fleet/cleaner) before you
+  compact.
+- **Administrator rights.** Compacting a virtual disk needs elevation, so
+  Windows shows one **UAC prompt** part-way through.
+
+### What it does
+
+The command shows you the whole plan and asks for confirmation **before**
+anything is stopped. Then:
+
+1. **Measures.** It compares the virtual disk's size on your drive with the
+   space actually used inside the machine; the difference is roughly what it
+   can give back.
+2. **Trims** free space inside the machine while it is still running. This is
+   a required preparation step — on its own it returns nothing to Windows.
+3. **Stops the Podman machine**, then terminates **only** the machine's own
+   WSL distribution. Every other WSL distribution keeps running.
+4. **Waits for WSL to let go of the disk.** WSL's lightweight VM stays alive
+   for a while after its last distribution stops (about a minute by default)
+   and keeps the disk file open until it exits. Compacting before then fails,
+   so the command waits until the file is really released, up to a timeout.
+5. **Compacts** the disk with Windows' built-in `diskpart`, in an elevated
+   window (this is the UAC prompt). The disk is always detached again
+   afterwards — even if the compact itself fails — so it is never left
+   attached. `diskpart` is used because it is available on every Windows
+   edition, including Home.
+6. **Starts the machine again.** This happens on **every** path — success,
+   declined prompt, timeout, or failure — so you are never left with a stopped
+   runtime.
+7. **Reports** the disk file's size and your drive's free space, before and
+   after.
+
+Your images, containers, and volumes are not touched. The command changes the
+size of the file that holds them, not what is inside it.
+
+### Options
+
+{/* confirm-cli-flags */}
+
+| Flag | Description |
+|------|-------------|
+| `--yes` | Skip the confirmation prompt |
+
+In a script or scheduled task (no terminal), the command won't run without
+`--yes` — it prints how to re-run it instead. The UAC prompt still appears
+either way; `--yes` can't answer it for you.
+
+### Output
+
+A successful run ends with a before/after summary along these lines:
+
+{/* confirm-cli-output */}
+
+```
+Runtime disk: 70.8 GB on host, 43.0 GB used inside — ~27.8 GB reclaimable (C: 32.0 GB free)
+...
+Virtual disk: 70.8 GB → 31.6 GB
+C: free:      32.0 GB → 69.8 GB
+```
+
+How much comes back depends on how much was free inside the machine — a
+machine whose disk is genuinely full has nothing to give back.
+
+Exit code is 0 when the compact completed, and 1 when it was refused,
+declined, timed out, or failed.
+
+### When it doesn't finish
+
+In every case below, the machine is started again before the command exits.
+
+#### You declined the UAC prompt
+
+Nothing was compacted and the disk file is unchanged. Run the command again
+and accept the prompt when you're ready.
+
+#### It timed out waiting for the disk to be released
+
+The most common cause is **another WSL distribution** — Ubuntu, or Docker
+Desktop's own distributions — still running. While any distribution runs,
+WSL's VM stays up and keeps the disk file busy. The message names the
+distributions it found running. Stop just those, then run the command again:
+
+```powershell
+wsl --list --running
+wsl --terminate <name>
+```
+
+<Aside type="caution" title="Don't use wsl --shutdown">
+  `wsl --shutdown` stops **every** WSL distribution on the computer, not only
+  the Podman one — anything running in them is killed. This command never
+  uses it, and you don't need it: `wsl --terminate <name>` stops one
+  distribution at a time.
+</Aside>
+
+#### It refused because something is running
+
+Stop the running DevBoxes (or other containers) and run it again. Nothing was
+stopped or changed.
+
+#### The compact failed
+
+The command shows the tail of the `diskpart` log. The disk was detached and
+the machine restarted, so the runtime is in the same state as before; the disk
+file just didn't shrink. Run it again, and include that output if you
+[report a problem](/self-hosting/troubleshooting#still-stuck).
+
+### Don't enable sparse VHDX
+
+WSL has an option that makes a distribution's virtual disk "sparse", which
+sounds like a fix for exactly this problem. Don't turn it on for the Podman
+machine: WSL itself gates it behind an unsafe-operation flag over a risk of
+data corruption, the change can't be undone, and a sparse disk can no longer
+be compacted by this command. `clustercode` never proposes it.
+
+## See also
+
+- [`clustercode doctor`](/cli/doctor#runtime-disk-windows) — the Runtime disk check
+- [Troubleshooting: C: keeps filling up](/self-hosting/troubleshooting#c-keeps-filling-up-windows)
+- [Worker agent: Disk hygiene](/self-hosting/worker-agent#disk-hygiene) — what the worker cleans up inside the machine on its own

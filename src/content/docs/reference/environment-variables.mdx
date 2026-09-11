@@ -115,7 +115,7 @@ across DevBox recreation via shared config volumes,
 
 ## Worker
 
-You don't configure the worker through environment variables. The
+You don't need to configure the worker through environment variables. The
 `clustercode` CLI sets it up for you — run `clustercode worker` to select a
 tenant and start it, or `clustercode onboard` for guided setup.
 
@@ -130,3 +130,18 @@ clustercode config set RUNTIME_MEMORY_MB 24576
 
 See [CLI: config](/cli/config) and
 [Sizing container runtime memory](/self-hosting/runtime-memory) for details.
+
+### Worker disk hygiene
+
+Two optional overrides for the worker's
+[disk hygiene](/self-hosting/worker-agent#disk-hygiene) inside a Podman
+machine. Leave them unset unless you have a reason to change the defaults. Set
+them in the environment you run `clustercode worker` from — the CLI passes its
+environment on to the agent.
+
+{/* confirm-env-names */}
+
+| Variable | Default | Effect |
+|----------|---------|--------|
+| `WORKER_GUEST_CLEAN` | on | Set to `off` to stop the agent reaping orphaned build scratch and capping the machine's journal |
+| `WORKER_GUEST_CLEAN_SCRATCH_AGE_HOURS` | `3` | Minimum age, in hours, before orphaned build scratch is removed |

@@ -59,16 +59,79 @@ Build the image from the orchestrator dashboard or ask Nucleus:
 **Cause:** DevBox images and layers consume significant disk.
 
 **Fix:**
+
+**On Windows, check the Runtime disk line first.** Run `clustercode doctor`.
+If it reports reclaimable space, much of what's missing from your drive is
+space the Podman machine no longer uses but hasn't given back — run
+[`clustercode machine compact`](/cli/machine) before deleting anything. See
+[C: keeps filling up](#c-keeps-filling-up-windows).
+
+Remove stopped DevBoxes you no longer need in the console's
+[Fleet Cleaner](https://console.clustercode.io/fleet/cleaner) — it lists them
+with their last activity so you can choose.
+
+To see what's using space in the container runtime, and to remove images:
+
 ```bash
-# Remove unused images
-podman image prune -a
-
-# Remove stopped DevBoxes
-podman container prune
-
 # Check current usage
 podman system df
+
+# Remove unused images
+podman image prune -a
 ```
+
+`podman image prune -a` removes **every** image that no running or stopped
+container uses — including images you built yourself and DevBox images the
+worker will have to build or pull again. Check `podman images` before running
+it.
+
+On Windows, pruning frees space inside the machine only; follow it with
+[`clustercode machine compact`](/cli/machine) to get that space back on your
+drive.
+
+### C: keeps filling up (Windows)
+
+**Symptom:** Free space on `C:` (or whichever drive holds WSL's data) drops
+week after week while the worker builds images, and deleting images or
+DevBoxes doesn't bring it back. `podman system df` reports far less than your
+drive has lost.
+
+**Cause:** The Podman machine stores everything in one virtual disk file that
+grows when it needs room and **never shrinks** on its own. The peak usage of
+your largest image build becomes a permanent floor on your drive. Deleting
+files inside the machine — and even running `fstrim` in it — frees space for
+the machine to reuse, but returns nothing to Windows.
+
+**Fix:**
+
+1. Run `clustercode doctor`. The **Runtime disk** line shows how much space
+   can be given back ([details](/cli/doctor#runtime-disk-windows)).
+2. Stop `clustercode worker`, and make sure no DevBox is running — the next
+   step refuses while anything is.
+3. Remove stopped DevBoxes you no longer need in the console's
+   [Fleet Cleaner](https://console.clustercode.io/fleet/cleaner), so their
+   space is free before you compact.
+4. Run [`clustercode machine compact`](/cli/machine) and accept the UAC
+   prompt. It restarts the machine when it's done, and reports your drive's
+   free space before and after.
+5. Start the worker again.
+
+If the command times out waiting for the disk to be released, another WSL
+distribution (Ubuntu, Docker Desktop's) is keeping WSL's VM alive. Run
+`wsl --list --running`, stop the others with `wsl --terminate <name>`, and try
+again.
+
+Two things **not** to do:
+
+- **Don't run `wsl --shutdown`** to speed it up. It stops every WSL
+  distribution on the computer, not just the Podman one.
+- **Don't enable sparse VHDX** for the Podman machine. WSL flags the option as
+  unsafe over data-corruption risk, it can't be undone, and a sparse disk can
+  no longer be compacted.
+
+The worker slows the regrowth by cleaning up its own leftovers inside the
+machine — see [Disk hygiene](/self-hosting/worker-agent#disk-hygiene) — but
+only a compact returns space to Windows. Run it again whenever `doctor` warns.
 
 ### Worker shows as disconnected
 

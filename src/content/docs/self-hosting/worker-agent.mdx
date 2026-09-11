@@ -3,6 +3,8 @@ title: Worker Agent
 description: The worker that runs on each machine and executes DevBoxes.
 ---
 
+import { Aside } from '@astrojs/starlight/components';
+
 The worker agent is a lightweight, standalone binary that runs on each machine and executes DevBoxes on behalf of the orchestrator. It has no runtime dependencies — the `clustercode` CLI downloads and runs it for you.
 
 ## How it connects
@@ -31,6 +33,61 @@ Once connected, the agent runs DevBox operations locally (create, start, stop, t
 ## Live terminals
 
 Terminal and display output from a DevBox streams back through the agent to your browser, giving you a live web terminal for each DevBox.
+
+## Disk hygiene
+
+On Windows and macOS, Podman runs inside a machine (a small Linux VM), and
+image builds leave things behind in it that no Podman command shows or
+cleans up. When the container runtime is a Podman machine, the agent tidies
+up after itself inside the machine:
+
+- **Orphaned build scratch.** A build that is interrupted can leave a large
+  temporary directory behind in the machine — invisible to `podman system df`
+  and untouched by `podman system prune`. The agent removes only directories
+  that match a build's scratch naming, are **at least 3 hours old**, and only
+  while **no image build is running**, so a build in progress is never
+  disturbed.
+- **Log size.** The machine's system journal has no size limit by default and
+  can grow to gigabytes. The agent caps it at **256 MB**.
+  {/* confirm-worker-behaviour: an existing SystemMaxUse you set yourself is left alone */}
+  If you've already set your own limit, it's left alone.
+- **Its own leftovers.** After a build or a
+  [snapshot of a DevBox](/guides/build-image-from-container), the agent
+  reclaims what that operation left behind — for example the older image a
+  rebuild replaced — but only when it can prove it created it.
+
+What it will **never** do:
+
+- Run a machine-wide prune, or remove any image, container, or volume it
+  can't prove belongs to its own work. On a machine you also use yourself,
+  your own images and containers are safe.
+- Remove stopped DevBoxes. A stopped DevBox keeps its disk until you remove
+  it — review and remove the ones you no longer need in the console's
+  [Fleet Cleaner](https://console.clustercode.io/fleet/cleaner).
+
+{/* confirm-env-names */}
+
+To turn the in-machine cleanup off, or change the scratch age, set these in
+the environment you start `clustercode worker` from (the CLI passes its
+environment on to the agent):
+
+| Variable | Default | Effect |
+|----------|---------|--------|
+| `WORKER_GUEST_CLEAN` | on | Set to `off` to stop reaping build scratch and capping the journal |
+| `WORKER_GUEST_CLEAN_SCRATCH_AGE_HOURS` | `3` | How old, in hours, orphaned build scratch must be before it's removed |
+
+```powershell
+$env:WORKER_GUEST_CLEAN = "off"
+clustercode worker
+```
+
+<Aside type="note" title="This doesn't shrink the disk file on Windows">
+  Cleanup frees space *inside* the machine, which slows how fast its virtual
+  disk grows. On Windows that disk file never shrinks by itself, so space it
+  has already taken stays taken until you run
+  [`clustercode machine compact`](/cli/machine). `clustercode doctor` tells
+  you when that's worth doing.
+</Aside>
 
 ## Running it
 

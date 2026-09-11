@@ -21,6 +21,7 @@ Runs a comprehensive health check on this machine's ClusterCode setup. Checks:
 - **container runtime** — Podman or Docker installed and running
 - **Runtime memory** — memory the container runtime can actually see, against host RAM and how many DevBoxes that fits (see below)
 - **Disk space** — free space on the drive that holds `~/.clustercode`; warns below 20 GB
+- **Runtime disk** — (Windows, Podman on WSL2) disk space the container runtime holds on your drive but no longer uses (see below)
 - **Memory** — installed RAM (total, not free); warns below 8 GB
 
 ## Options
@@ -40,10 +41,13 @@ Each check shows a pass/fail/warn status:
   ✓ podman v5.3.1
   ✓ Runtime memory: 25.0 GiB of 31.6 GiB host — fits ~5 default (4 GiB) DevBoxes
   ✓ Disk: 42.0GB free on C:
+  ⚠ Runtime disk: 70.8 GB on host, 43.0 GB used inside — ~27.8 GB reclaimable (C: 42.0 GB free); run clustercode machine compact
   ✓ RAM: 31.6GB total
 ```
 
-Icons: **✓** pass, **✗** fail, **⚠** warning. Disk and memory use warnings (⚠) instead of failures — they won't block you but indicate potential issues.
+{/* confirm-cli-output: the Runtime disk line above is provisional */}
+
+Icons: **✓** pass, **✗** fail, **⚠** warning. Disk space, runtime disk and memory use warnings (⚠) instead of failures — they won't block you but indicate potential issues.
 
 ### Runtime memory
 
@@ -95,6 +99,51 @@ change it.
 ## Interactive Fix
 
 When failures are found, `doctor` prompts you to run `clustercode onboard` to fix them automatically. If only warnings remain, it reports them without prompting.
+
+## Runtime disk (Windows)
+
+On Windows, the Podman machine keeps everything — images, DevBoxes, build
+caches, logs — in one virtual disk file on your drive. That file grows when
+the machine needs room and **never shrinks** when files are deleted inside
+it, so space freed inside the machine stays taken on your drive. This check
+compares the file's size on your drive with the space actually used inside
+the machine; the difference is what
+[`clustercode machine compact`](/cli/machine) can give back.
+
+It only appears on Windows with a WSL2-backed Podman machine. On macOS, Linux,
+Docker Desktop, or a Hyper-V machine there is no Runtime disk line at all.
+
+Severity is relative to how much free space you have, because the same amount
+of dead space matters on a nearly full drive and not on a roomy one. The check
+**warns** when the reclaimable space is **at least 5 GB and at least 25% of the
+free space** on the drive that holds the disk file, and passes otherwise.
+Twenty gigabytes of dead space with 30 GB free warns; the same 20 GB with
+500 GB free passes.
+
+{/* confirm-cli-output */}
+
+```
+Runtime disk: 31.6 GB on host, 29.0 GB used inside — ~2.6 GB reclaimable (C: 69.8 GB free)
+```
+
+When it warns, the line names the command to run:
+
+```
+Runtime disk: 70.8 GB on host, 43.0 GB used inside — ~27.8 GB reclaimable (C: 32.0 GB free); run clustercode machine compact
+```
+
+The size used inside can only be measured while the machine is running. If
+it's stopped, the check warns and asks you to start the container runtime
+rather than guessing.
+
+This check **never fails**: dead space is wasteful, not broken, and `doctor`'s
+exit code gates scripted setup. It is read-only — it never stops, trims, or
+compacts anything. In `doctor --json` it appears in `checks` with the name
+`runtime-disk`; its `detail` contains sizes and a drive letter, never the disk
+file's path or your user name.
+
+If the line keeps coming back, see
+[C: keeps filling up](/self-hosting/troubleshooting#c-keeps-filling-up-windows).
 
 ## CI Usage
 
