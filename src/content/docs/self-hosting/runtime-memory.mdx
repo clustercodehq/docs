@@ -342,8 +342,14 @@ Memory reclaim is in dropcache mode, and on this WSL version (older than 2.9.8) 
 
 A `no` that an earlier version of the CLI recorded for `dropcache` on such a
 build is no longer used, so that machine reads as *unverifiable* rather than
-*inert*. Recording one by hand is refused too. `gradual` is measured on any WSL
-that has it.
+*inert*. Recording one by hand is refused too. `gradual` on such a build is
+measured only if the Podman machine can write `/sys/fs/cgroup/memory.reclaim`,
+because otherwise WSL runs it as `dropCache`. So `--verify-reclaim` asks the
+machine first, and refuses when it can't write the file or can't be asked:
+
+```
+Memory reclaim is in gradual mode, but the runtime VM cannot write /sys/fs/cgroup/memory.reclaim, so on this WSL version (older than 2.9.8) WSL falls back to dropping the cache only after about 10 idle minutes, and only once per idle period, which this CLI cannot measure reliably. Nothing was measured or recorded, and the runtime stays sized as if reclaim does not work.
+```
 
 `onboard` also offers the same measurement, unprompted, at the one moment the
 answer matters most — right after it has turned reclaim on:

@@ -154,7 +154,9 @@ minutes, and only once per idle period, so a run couldn't tell "not yet" from
 Memory reclaim is in dropcache mode, and on this WSL version (older than 2.9.8) WSL drops the cache only after about 10 idle minutes, and only once per idle period, so this CLI cannot measure it reliably. Nothing was measured or recorded, and the runtime stays sized as if reclaim does not work.
 ```
 
-See
+`--verify-reclaim` also refuses `gradual` there when the Podman machine can't
+write `/sys/fs/cgroup/memory.reclaim` (WSL then falls back to `dropCache`), or
+can't be asked. See
 [dropCache before WSL 2.9.8](/self-hosting/runtime-memory#dropcache-before-wsl-298).
 
 Allow 10 minutes or more, as the prompt below says: loading the cache comes
