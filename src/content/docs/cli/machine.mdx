@@ -81,7 +81,13 @@ really used inside the machine.
 Before anything is stopped, the command measures the disk, checks that nothing
 is running, checks that `diskpart` can read the disk file's path (see
 [It refused before stopping anything](#it-refused-before-stopping-anything)),
-and shows you the whole plan and asks for confirmation. Then:
+and shows you the whole plan and asks for confirmation. The measurement is the
+same **Runtime disk** reading as
+[`clustercode doctor`'s](/cli/doctor#runtime-disk-windows), so its reclaimable
+figure is an estimate. If the machine doesn't report its usage, the command
+says
+`Could not measure usage inside the machine; the space returned is unknown until the compact finishes.`
+and carries on. Then:
 
 1. **Trims** free space inside the machine (`fstrim`) while it is still
    running. This is a required preparation step — on its own it returns

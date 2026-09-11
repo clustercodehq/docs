@@ -307,11 +307,7 @@ setup. The reading is also instantaneous — it can dip during a build or an
 image pull and recover a moment later. Act on it when it persists, not on a
 single sample.
 
-## Interactive Fix
-
-When failures are found, `doctor` prompts you to run `clustercode onboard` to fix them automatically. If only warnings remain, it reports them without prompting.
-
-## Runtime disk (Windows)
+### Runtime disk (Windows)
 
 On Windows, the Podman machine keeps everything — images, DevBoxes, build
 caches, logs — in one virtual disk file on your drive. That file grows when
@@ -353,6 +349,20 @@ warning adds
 Sizes are labelled GB but computed in 1024-based units, the same as the Disk
 space line.
 
+"Used inside" is more than the size of the machine's files. The machine's ext4
+filesystem also keeps space for itself — its journal, and the inode-table
+entries of the files in use — and that space is written to the disk file, so no
+compact returns it. The check reads the filesystem's size information
+read-only (with `sudo -n`, which never asks for a password) and adds it to the
+files' size. If it can't read that, "used inside" counts the files alone, and
+the reclaimable figure comes out somewhat higher than what a compact can give
+back.
+
+The reclaimable figure is an estimate either way. The disk file grows and
+shrinks in 1 MiB blocks, and a block that is only partly used stays in the file
+after a compact, so a freshly compacted disk can still show a GB or two
+reclaimable. The figure never goes below zero.
+
 The size used inside can only be measured while the machine is running. If
 it's stopped, the check warns and asks you to start the container runtime
 rather than guessing; if it's running but doesn't answer within 30 seconds,
@@ -368,6 +378,10 @@ file's path or your user name.
 
 If the line keeps coming back, see
 [C: keeps filling up](/self-hosting/troubleshooting#c-keeps-filling-up-windows).
+
+## Interactive Fix
+
+When failures are found, `doctor` prompts you to run `clustercode onboard` to fix them automatically. If only warnings remain, it reports them without prompting.
 
 ## CI Usage
 
