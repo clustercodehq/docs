@@ -21,6 +21,12 @@ It applies to **Windows with a Podman machine running on WSL2** — the setup
 (macOS, Linux, Docker Desktop, a Hyper-V Podman machine) it exits with an error
 and changes nothing.
 
+It acts on one machine: the default Podman machine, or the first one listed
+when none is set as the default. It names that machine before anything else,
+and when you have several it says why that one, for example
+`Podman machine: dev (the default of 3 machines)` or
+`Podman machine: dev (the first of 2 machines; none is set as the default)`.
+
 ### Why the drive fills up
 
 On Windows, everything inside the Podman machine — images, DevBoxes, build
@@ -48,20 +54,25 @@ really used inside the machine.
   `podman machine start <machine>`.
 - **Nothing may be running.** The command **refuses** while any DevBox or
   other container is running in the machine, rather than stopping it under
-  you. Stop them first and run it again. It also refuses when it can't tell —
-  when Podman doesn't answer the question of what is running. It asks again
-  right before it stops the machine, so a DevBox started while the command
-  was trimming isn't stopped either.
+  you. Stop them first and run it again. It asks inside the machine itself,
+  both as the machine's user (`podman ps`) and as root (`sudo -n podman ps`),
+  and it also refuses when it can't confirm that nothing is running — when
+  either list fails or the machine doesn't answer. It asks again right before
+  it stops the machine, so a DevBox started while the command was trimming
+  isn't stopped either.
+- **`sudo` must work inside the machine without a password.** Listing root's
+  containers and trimming free space both use `sudo -n`, which fails rather
+  than asking for a password.
 - **Stop the worker.** The machine, and anything that uses it, is unavailable
   until it has been started again — compacting a large disk can take several
   minutes — so stop `clustercode worker` first; a DevBox launch routed to this
   worker in that window would fail.
 - **Free space inside the machine first.** Compacting can only return space
   that is already free inside the machine. Stopped DevBoxes still hold their
-  disk — the command tells you how many stopped containers it found — so
-  remove the ones you no longer need in the console's
-  [Fleet Cleaner](https://console.clustercode.io/fleet/cleaner) before you
-  compact.
+  disk — the command tells you how many stopped containers it found in the
+  machine, its user's and root's — so remove the ones you no longer need in
+  the console's [Fleet Cleaner](https://console.clustercode.io/fleet/cleaner)
+  before you compact.
 - **Administrator approval.** Compacting a virtual disk needs elevation, so
   Windows shows one **UAC prompt** part-way through.
 
@@ -89,7 +100,8 @@ and shows you the whole plan and asks for confirmation. Then:
    released.
 5. **Compacts** the disk with Windows' built-in `diskpart`, in an elevated
    process (this is the UAC prompt). The disk is attached read-only, compacted,
-   and detached again — the detach is repeated even if the compact fails, so
+   and detached again — the detach is repeated even if the compact fails,
+   after the 15-second pause Microsoft recommends between `diskpart` runs, so
    the disk is never left attached. `diskpart` is used because it is available
    on every Windows edition, including Home. This step has a 2-hour limit,
    which includes the time the UAC prompt waits for you.
@@ -125,6 +137,7 @@ A successful run looks along these lines (the machine and distribution names
 are your own):
 
 ```
+Podman machine: podman-machine-default
 Runtime disk: 70.8 GB on host, 43.0 GB used inside — ~27.8 GB reclaimable (C: 32.0 GB free)
 Will run:
   1. Trim free space inside the machine (sudo -n fstrim -av)
@@ -146,16 +159,29 @@ Sizes are printed as GB but computed in 1024-based units, the same as
 `clustercode doctor`'s disk lines. How much comes back depends on how much was
 free inside the machine — the disk can't shrink below what is used inside it,
 so a machine whose disk is genuinely full has nothing to give back. When the
-file didn't get any smaller, the report says so instead:
+file didn't get any smaller, the report is a warning instead of a success,
+followed by the last lines of `diskpart`'s output:
 
 ```
-Compacted, but no space was returned: the disk is still 70.8 GB.
+Compacting returned no space: the disk is still 70.8 GB.
+That is expected when there was nothing to reclaim. diskpart reported no error, but its messages are only recognised in English; if Windows uses another display language, check diskpart's output:
+...
+C: free: 32.0 GB → 32.0 GB
+The machine was started again.
+Compacted, but no space was returned.
 ```
+
+`clustercode` recognises `diskpart`'s error messages only in English. On
+another Windows display language, read that output to tell a disk that was
+already compact from a compact that failed. If the disk's size can't be read
+afterwards, the report is the same kind of warning: `Disk: 70.8 GB → unknown`,
+`Could not measure the disk afterwards, so the space returned is unknown.`,
+the same note and output, and `Compacted, but the space returned is unknown.`
 
 Exit code is **0** when the disk was compacted and the machine started again
-(including when no space was returned), and when you answer no at the
-confirmation prompt — nothing is changed then. It is **1** when the command
-refused, when there was no terminal to confirm and no `--yes`, when
+(including both warnings above), and when you answer no at the confirmation
+prompt, which prints `Cancelled — nothing was changed.` It is **1** when the
+command refused, when there was no terminal to confirm and no `--yes`, when
 administrator approval was declined or unavailable, when the disk wasn't
 released in time, when the compact failed, when the machine didn't start
 again, and on any setup other than a WSL2-backed Podman machine on Windows.
@@ -166,11 +192,27 @@ again, and on any setup other than a WSL2-backed Podman machine on Windows.
 
 In these cases nothing was stopped, so there is nothing to restart.
 
-- **Something is running**, or Podman couldn't say what is. The message names
-  up to five running containers. Stop them (or, if Podman didn't answer, make
-  sure the machine is running) and run the command again. If they started
-  while the command was trimming, the message adds that free space was trimmed
-  but the machine was never stopped.
+- **Something is running.** The message lists the IDs of up to five running
+  containers (and how many more), marking root's with `(rootful)`:
+  `Containers are running in the Podman machine <machine>: <IDs>. Compacting stops the machine, which would stop them too.`
+  Stop them and run the command again. If they started while the command was
+  trimming, it begins
+  `Containers started in the Podman machine <machine> while free space was being trimmed:`
+  and adds
+  `Free space was trimmed, but the machine was never stopped, so nothing needs restarting.`
+- **It couldn't confirm that nothing is running.** The message starts
+  `Could not confirm that no containers are running:`, says which check
+  failed, and names the command to try:
+  - the machine didn't answer — make sure it is running
+    (`podman machine start <machine>`);
+  - `podman ps` failed inside the machine — check that
+    `podman machine ssh <machine> podman ps` works;
+  - listing root's containers with `sudo -n podman ps` failed — `sudo` must
+    work there without a password; check that
+    `podman machine ssh <machine> sudo -n podman ps` works.
+
+  If this happens on the second check, after the trim, the message adds that
+  free space was trimmed but the machine was never stopped.
 - **`diskpart` can't read the disk's path.** `diskpart` reads the path in the
   system's OEM code page. If the path has characters outside it — for example
   a Windows user name in another script — the command gives `diskpart` the
@@ -229,7 +271,8 @@ The command prints why, followed by the last lines of the `diskpart` log:
 - `diskpart reported an error, so the disk was not compacted.` — `diskpart`
   exited 0, but its log contains an error. Only `diskpart`'s English error
   messages are recognised; on another Windows display language, a failure like
-  this shows up as a compact that returned no space instead.
+  this ends in the no-space warning instead, with `diskpart`'s output to check
+  (see [Output](#output)).
 - `The disk was not compacted.` — followed by the reason, for example that the
   UAC prompt wasn't answered, or `diskpart` didn't finish, within 120 minutes.
 
@@ -244,9 +287,10 @@ the compact again, and include that output if you
 
 WSL has an option that makes a distribution's virtual disk "sparse", which
 sounds like a fix for exactly this problem. Don't turn it on for the Podman
-machine: WSL itself gates it behind an unsafe-operation flag over a risk of
-data corruption, the change can't be undone, and a sparse disk can no longer
-be compacted by this command. `clustercode` never proposes it.
+machine: Windows can't compact a sparse disk the way this command does, and
+some WSL releases have disabled sparse mode because of a data-corruption risk.
+`clustercode` never proposes it. If it's already on, you can turn it off again
+with `wsl --manage <distribution> --set-sparse false`.
 
 ## See also
 

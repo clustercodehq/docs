@@ -122,16 +122,23 @@ distribution (Ubuntu, Docker Desktop's) is usually keeping WSL's VM alive; the
 message names the ones it found. Run `wsl --list --running`, stop the others
 with `wsl --terminate <name>`, and try again.
 
+If it refuses with `Could not confirm that no containers are running`, run the
+check the message names (such as `podman machine ssh <machine> podman ps`). It
+lists root's containers with `sudo -n podman ps`, so `sudo` must work inside
+the machine without a password. With more than one Podman machine, it compacts
+the default one (or the first listed) and names it first — see
+[which machine](/cli/machine#compact).
+
 Two things **not** to do:
 
 - **Don't run `wsl --shutdown`** to get a compact through. It stops every WSL
   distribution on the computer, not just the Podman one, and kills whatever is
   running in them.
-- **Don't enable sparse VHDX** for the Podman machine. WSL flags the option as
-  unsafe over data-corruption risk, it can't be undone, and a sparse disk can
-  no longer be compacted.
+- **Don't enable sparse VHDX** for the Podman machine. Windows can't compact a
+  sparse disk this way, and some WSL releases have disabled sparse mode because
+  of a data-corruption risk ([details](/cli/machine#dont-enable-sparse-vhdx)).
 
-The worker slows the regrowth by cleaning up its own leftovers inside the
+The worker slows the regrowth by cleaning up build leftovers inside the
 machine — see [Disk hygiene](/self-hosting/worker-agent#disk-hygiene) — but
 only a compact returns space to Windows. Run it again whenever `doctor` warns.
 

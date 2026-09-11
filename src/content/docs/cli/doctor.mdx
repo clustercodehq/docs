@@ -111,6 +111,10 @@ the machine; the difference is what
 It only appears on Windows with a WSL2-backed Podman machine. On macOS, Linux,
 Docker Desktop, or a Hyper-V machine there is no Runtime disk line at all.
 
+It measures the default Podman machine, or the first one listed when none is
+set as the default. When you have several machines, the line names the one it
+measured: `Runtime disk (machine dev): …`.
+
 Severity is relative to how much free space you have, because the same amount
 of dead space matters on a nearly full drive and not on a roomy one. The check
 **warns** when the reclaimable space is **at least 5 GB and at least 25% of the
@@ -128,7 +132,8 @@ When it warns, the line names the command to run:
 Runtime disk: 70.8 GB on host, 43.0 GB used inside — ~27.8 GB reclaimable (C: 32.0 GB free); run `clustercode machine compact`
 ```
 
-If the machine also holds stopped containers, the warning adds
+If the machine also holds stopped containers (its user's or root's), the
+warning adds
 `; stopped containers also hold space; stopped DevBoxes can be cleaned up in the console`
 — compacting doesn't return their space.
 
