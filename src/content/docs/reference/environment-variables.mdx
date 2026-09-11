@@ -135,13 +135,13 @@ See [CLI: config](/cli/config) and
 ### Host memory protection (Windows)
 
 On Windows with a local Podman machine on the WSL backend, the worker frees the
-machine's page cache when Windows runs low on memory. Two environment variables
+WSL VM's page cache when Windows runs low on memory. Two environment variables
 control that. The worker reads them at startup, so set them in the environment
 you start `clustercode worker` from, then restart the worker.
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `WORKER_HOST_RECLAIM` | on | Set to `off` (or `false`, `0`, `no`, `disabled`) to turn the automatic cache drop off. Any value other than those or `on` also turns it off, with a warning in the worker log. |
+| `WORKER_HOST_RECLAIM` | on | Unset, empty, `on`, `true`, `1`, `yes` or `enabled` keeps the automatic cache drop on. Set to `off`, `false`, `0`, `no` or `disabled` to turn it off. Any other value also turns it off, with a warning in the worker log. |
 | `WORKER_HOST_RECLAIM_FLOOR_MB` | `4096` | Windows available memory, in MiB, below which the worker drops the cache. Accepts a whole number from 1 to 1048576; anything else is ignored with a warning, and the default applies. |
 
 These are read by the worker on your machine; they are not DevBox environment

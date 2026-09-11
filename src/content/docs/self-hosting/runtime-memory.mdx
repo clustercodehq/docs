@@ -409,7 +409,7 @@ Memory reclaim is WSL's mechanism, and on some builds it does nothing. The
 worker doesn't rely on it. When the container engine is a local Podman machine
 on the WSL backend — and the worker has verified that it is — it watches how
 much memory Windows has available. When that falls below a floor, 4 GiB by
-default, it frees the Podman machine's page cache from inside the VM:
+default, it frees the page cache from inside the Podman machine:
 
 ```bash
 sync && echo 1 > /proc/sys/vm/drop_caches
@@ -417,9 +417,12 @@ sync && echo 1 > /proc/sys/vm/drop_caches
 
 `sync` first, so recently written data becomes droppable; then `1`, which frees
 the page cache and nothing else. That is where the memory held by image pulls
-and builds lives. It never touches memory a program is using, and never
-touches images, containers or volumes: a running DevBox loses cache warmth,
-not data. Windows typically reflects the freed memory within about 20 seconds.
+and builds lives. All WSL2 distributions run in one VM on one kernel, so this
+frees the page cache of the whole WSL VM — your other distributions' as well
+as the Podman machine's. It never touches memory a program is using, and never
+touches images, containers or volumes: dropping the cache never loses data, it
+only makes the next reads slower. Windows typically reflects the freed memory
+within about 20 seconds.
 
 It is deliberately careful about when it does this:
 
@@ -428,27 +431,33 @@ It is deliberately careful about when it does this:
   memory for some other reason and dropping the cache wouldn't help, so the
   worker leaves it alone and looks again about a minute later.
 - **Not often.** At most one drop every 5 minutes, and never two at once.
-- **Never during a build or a commit.** An image build or DevBox commit that
-  the worker is running both creates that cache and is slowest without it, so
-  the drop waits until it has finished; the worker checks again immediately
-  before dropping. It can't see image pulls or builds you run yourself on the
-  same Podman machine.
+- **Never starts one during a build or a commit.** An image build or DevBox
+  commit that the worker is running both creates that cache and is slowest
+  without it, so a drop waits until it has finished; the worker checks again
+  immediately before dropping. A build that starts while a drop is already
+  under way loses nothing either: its next reads are just slower. The worker
+  can't see image pulls or builds you run yourself on the same Podman machine.
 - **Checked afterwards.** After each drop it waits up to a minute for Windows'
   available memory to rise by at least 256 MiB. If it doesn't, or the drop
-  command itself fails, the worker logs **one** warning and waits longer
-  before trying again: 10 minutes, then 20, then 40, then at most an hour
-  between attempts. It never gives up entirely, and a drop that works resets
-  the wait.
+  command itself fails, the worker waits longer before trying again: 15
+  minutes, then 25, then 45, then 65. It logs up to two warnings for this —
+  one for a drop that didn't raise available memory, one for a drop command
+  that failed — rather than one per attempt. It never gives up entirely, and a
+  drop that works resets the wait.
 
 The drop runs as root inside the Podman machine through `sudo`, and never waits
 for a password. A standard Podman machine allows that; if yours asks for a
-password, the drop fails and you get the warning above.
+password, the drop fails and you get the failed-drop warning above.
 
-It is inactive everywhere a drop can't return memory to the host or can't be
-run safely: Docker, a Hyper-V backend, macOS, Linux, a remote engine, and any
-setup where the worker can't tell whether the engine is a local WSL machine.
-The worker logs at startup whether it's `host memory reclaim active` or
-`host memory reclaim inactive`, with the reason.
+It never drops anything where a drop can't return memory to the host or can't
+be run safely: Docker, a Hyper-V backend, macOS, Linux, a remote engine, and
+any setup where the worker can't tell whether the engine is a local WSL
+machine. The startup line `host memory reclaim active` doesn't settle that on
+its own: it appears whenever `WORKER_HOST_RECLAIM` and the platform allow the
+cache drop, before the engine is taken into account. To see whether the engine
+qualifies, look at the `engine host locality` startup line
+(`hostBacked=… provider=…`): the worker only drops the cache for an engine that
+line reports as host-backed on the WSL provider.
 
 This is a safety net for the host, not a sizing input. The CLI still sizes the
 runtime as if reclaim does not work until reclaim is
@@ -461,7 +470,7 @@ worker:
 
 | Variable | Effect |
 |---|---|
-| `WORKER_HOST_RECLAIM` | `off` turns the automatic cache drop off; `false`, `0`, `no` and `disabled` do the same. Unset, or `on`, leaves it on. Any other value also turns it off, with a warning in the log. |
+| `WORKER_HOST_RECLAIM` | Unset, empty, `on`, `true`, `1`, `yes` or `enabled` leaves the automatic cache drop on. `off`, `false`, `0`, `no` or `disabled` turns it off. Any other value also turns it off, with a warning in the log. |
 | `WORKER_HOST_RECLAIM_FLOOR_MB` | The floor, in MiB, below which Windows counts as short of memory. Default `4096`. Accepts a whole number from 1 to 1048576; anything else is ignored with a warning, and the default applies. |
 
 A higher floor makes the worker act earlier, at the cost of dropping cache that

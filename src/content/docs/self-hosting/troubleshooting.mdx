@@ -153,19 +153,20 @@ the other side.
    runs while the VM is idle, and on some older Windows builds it may not
    trigger at all. The worker already covers this: with Podman on the WSL
    backend it drops the cache itself whenever Windows falls below 4 GiB
-   available, at most once every 5 minutes and never during a build or
-   commit — see
+   available, at most once every 5 minutes and never starting one during a
+   build or commit — see
    [The worker drops the cache itself](/self-hosting/runtime-memory#the-worker-drops-the-cache-itself).
-   Check the worker's log: a warning that dropping the cache did not raise
+   Check the worker's log: a warning that a drop did not raise
    Windows' available memory means this step can't help on your machine, so
    go to step 3. To free the cache by hand — when the worker isn't running, or
-   you want the memory back before Windows gets that low — run the same
-   command the worker uses, from inside the machine:
+   you want the memory back before Windows gets that low — make the same drop
+   the worker makes, interactively from inside the machine:
    ```bash
    podman machine ssh
    sudo sh -c 'sync && echo 1 > /proc/sys/vm/drop_caches'
    ```
-   `echo 1` frees the page cache, which is where this memory is. Don't use
+   `echo 1` frees the page cache, which is where this memory is — for the
+   whole WSL VM, which every WSL2 distribution shares. Don't use
    `echo 3`: it also discards the kernel's directory and inode caches,
    which buys nothing here. This returns the freed pages to Windows within
    seconds and does **not** stop your DevBoxes or any WSL distribution. It's a
