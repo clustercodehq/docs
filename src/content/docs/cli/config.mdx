@@ -41,6 +41,7 @@ clustercode config list
 |-----|-------------|
 | `WORKER_NAME` | Display name for this worker (max 64 characters) |
 | `RUNTIME_MEMORY_MB` | Memory, in MiB (1024-based), to give the container runtime. `8192` is 8 GiB. The `MB` in the key name is historical. |
+| `RUNTIME_RECLAIM_VERIFIED` | `yes` or `no` — whether the WSL2 VM has been measured actually returning memory to Windows on this machine. |
 
 Only the keys listed above are accepted. Attempting to set an unknown key returns an error.
 
@@ -59,6 +60,13 @@ in the key name is historical; the CLI displays GiB throughout.
 default 4 GiB DevBox once the host reserve is subtracted. Hosting one needs
 roughly 6 GiB.
 
+`onboard` writes this key itself after a successful apply, recording the value
+it applied. That stored value is what makes `doctor` stop suggesting a
+different size: a measured runtime within about 7% of it counts as "the size
+you asked for" — the guest kernel keeps some of what's allocated, so an exact
+match never happens — and is left alone instead of being re-litigated on every
+run.
+
 Setting this key by itself doesn't move any memory around — it takes effect
 the next time a container-runtime machine is created, or the next time you
 run [`clustercode onboard`](/cli/onboard), which is also where the interactive
@@ -67,6 +75,69 @@ sizing prompts and the platform-specific apply steps (including the Windows
 [Sizing container runtime memory](/self-hosting/runtime-memory) for the full
 guide.
 
+### `RUNTIME_RECLAIM_VERIFIED`
+
+```bash
+clustercode config set RUNTIME_RECLAIM_VERIFIED yes
+```
+
+Accepts `yes` or `no`; anything else is rejected with
+`Reclaim verification must be yes or no (or run clustercode onboard --verify-reclaim to measure it)`.
+
+On Windows, the WSL2 VM only returns memory to the host while memory reclaim
+(`[experimental] autoMemoryReclaim`) is on — and even then, only if the build
+honours it. Reclaim is a request, and it has been observed accepted and
+completely inert. So the CLI sizes the runtime optimistically for exactly one
+state: reclaim **measured** working on this machine. This key is that
+measurement.
+
+Normally you don't set it by hand:
+[`clustercode onboard --verify-reclaim`](/cli/onboard#verifying-that-memory-reclaim-works)
+runs the experiment and records the answer. Set it yourself when you've
+[measured it manually](/self-hosting/runtime-memory#measuring-it-by-hand)
+instead.
+
+A verdict is only meaningful next to the WSL build and the reclaim mode it
+describes, so it's stored alongside two companion stamps:
+`RUNTIME_RECLAIM_VERIFIED_WSL` (the WSL version, such as `2.7.13.0`) and
+`RUNTIME_RECLAIM_VERIFIED_MODE` (the reclaim mode in effect, `gradual` or
+`dropcache` — `dropcache` where `.wslconfig` doesn't set one, on WSL 2.1.3 and
+later). `clustercode config
+list` shows both, and `config set` accepts neither — the CLI writes them for
+you, whichever way the verdict was recorded, and confirms what it stamped:
+
+```
+Set RUNTIME_RECLAIM_VERIFIED = yes (WSL 2.7.13.0, reclaim mode gradual)
+```
+
+Setting the key by hand is refused, with nothing recorded and a non-zero exit,
+when there's nothing for a verdict to describe:
+
+- off Windows: `Memory reclaim verification only applies to Windows with WSL. Nothing was recorded.`
+- when the WSL version can't be read: ``Could not read the WSL version (`wsl --version`), so the verdict cannot be tied to a WSL build. Nothing was recorded.``
+- when reclaim is not in effect, or `.wslconfig` can't be read: `Memory reclaim is not in effect ([experimental] autoMemoryReclaim is disabled, is unset or unrecognised on WSL older than 2.1.3, or WSL is older than 2.0), or .wslconfig could not be read, so there is nothing for a verdict to describe. Nothing was recorded.`
+- for `no` in `dropcache` mode on WSL older than 2.9.8, which the CLI [can't measure](/self-hosting/runtime-memory#dropcache-before-wsl-298) either: `On this WSL version (older than 2.9.8), dropcache mode drops the cache only after about 10 idle minutes, and only once per idle period, so a "no" cannot be told apart from a drop that had not come round yet. Nothing was recorded.`
+
+When the running WSL version or the reclaim mode stops matching the stamps, the
+verdict is treated as unanswered rather than carried forward: the status goes
+back to *configured*, and the runtime is sized as if reclaim doesn't work. The
+CLI doesn't re-measure on its own; `clustercode doctor` suggests
+`clustercode onboard --verify-reclaim`. That's deliberate — this behaviour is a
+property of the WSL build, and an upgrade can fix it or break it.
+
+A `no` stamped `dropcache` on WSL older than 2.9.8, which earlier versions of
+the CLI could record, is ignored as well. That machine's status is
+*unverifiable*, so it's sized as if reclaim doesn't work and nothing suggests
+measuring again.
+
+A verdict only ever applies to a Podman machine on the WSL backend, the one
+runtime the CLI can measure. With Docker, or a backend the CLI can't identify,
+a stored verdict is ignored and the runtime is sized as if reclaim does not
+work.
+
+Removing the key from `config.json` (or losing a stamp) is safe in the same direction: with no
+usable verdict, the runtime is sized as though reclaim does nothing.
+
 ## Configuration File
 
 Location: `~/.clustercode/config.json`
@@ -74,6 +145,9 @@ Location: `~/.clustercode/config.json`
 ```json
 {
   "WORKER_NAME": "my-dev-machine",
-  "RUNTIME_MEMORY_MB": "24576"
+  "RUNTIME_MEMORY_MB": "24576",
+  "RUNTIME_RECLAIM_VERIFIED": "no",
+  "RUNTIME_RECLAIM_VERIFIED_WSL": "2.7.13.0",
+  "RUNTIME_RECLAIM_VERIFIED_MODE": "gradual"
 }
 ```

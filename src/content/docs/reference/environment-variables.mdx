@@ -115,21 +115,40 @@ across DevBox recreation via shared config volumes,
 
 ## Worker
 
-You don't need to configure the worker through environment variables. The
-`clustercode` CLI sets it up for you — run `clustercode worker` to select a
-tenant and start it, or `clustercode onboard` for guided setup.
+The `clustercode` CLI sets the worker up for you — run `clustercode worker` to
+select a tenant and start it, or `clustercode onboard` for guided setup.
 
-Two preferences are adjustable — not through environment variables, but with
-`clustercode config`: the worker's display name, and how much memory the
-container runtime is allowed to use.
+Its preferences are set with `clustercode config`, not environment variables:
+the worker's display name, how much memory the container runtime is allowed to
+use, and — on Windows — whether memory reclaim has been measured working on
+this machine.
 
 ```bash
 clustercode config set WORKER_NAME my-worker
 clustercode config set RUNTIME_MEMORY_MB 24576
+clustercode config set RUNTIME_RECLAIM_VERIFIED yes
 ```
 
 See [CLI: config](/cli/config) and
 [Sizing container runtime memory](/self-hosting/runtime-memory) for details.
+
+### Host memory protection (Windows)
+
+On Windows with a local Podman machine on the WSL backend, the worker frees the
+WSL VM's page cache when Windows runs low on memory. Two environment variables
+control that. The worker reads them at startup, so set them in the environment
+you start `clustercode worker` from, then restart the worker.
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `WORKER_HOST_RECLAIM` | on | Unset, empty, `on`, `true`, `1`, `yes` or `enabled` keeps the automatic cache drop on. Set to `off`, `false`, `0`, `no` or `disabled` to turn it off. Any other value also turns it off, with a warning in the worker log. |
+| `WORKER_HOST_RECLAIM_FLOOR_MB` | `4096` | Windows available memory, in MiB, below which the worker drops the cache. Accepts a whole number from 1 to 1048576; anything else is ignored with a warning, and the default applies. |
+
+These are read by the worker on your machine; they are not DevBox environment
+variables, and setting them in **Settings → Environment Variables** has no
+effect. See
+[The worker drops the cache itself](/self-hosting/runtime-memory#the-worker-drops-the-cache-itself)
+for when it acts and what it never does.
 
 ### Worker disk hygiene
 
