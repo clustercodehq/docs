@@ -102,18 +102,21 @@ clustercode onboard --memory 24576
 The allocation is a **ceiling, not a reservation** — it caps what the runtime
 *can* take rather than setting it aside up front. That is not the same as the
 memory coming back, though, and `onboard` says which case you're in before it
-asks you to pick a number. On Windows that note is one of five:
+asks you to pick a number. On Windows that note is one of seven:
 
 ```
 This is a ceiling, not a reservation — memory is used while DevBoxes run and returned to Windows while the runtime is idle.
 Memory reclaim is configured but has not been verified on this machine — this number is sized as if it does not work; run `clustercode onboard --verify-reclaim` to check.
+Memory reclaim is in dropcache mode, which cannot be verified on this WSL version — this number is sized as if it does not work.
 Memory reclaim does not return memory on this Windows build, so treat this number as fully used.
 The Podman machine runs on Hyper-V, not WSL, and holds the whole amount while it runs, so treat this number as fully used.
+Could not read the WSL version, so memory reclaim cannot be counted on — treat this number as fully used.
 Without memory reclaim (WSL 2.0+), the runtime keeps everything it has touched until `wsl --shutdown`, so treat this number as fully used.
 ```
 
 Only the first — reclaim measured and working — is a ceiling the VM hovers
-below. The fourth is for a Podman machine on Hyper-V, which has no reclaim
+below. The third is for `dropCache` mode on WSL older than 2.9.8, which can't
+be measured (see below). The fifth is for a Podman machine on Hyper-V, which has no reclaim
 setting and holds its whole allocation. On macOS the VM doesn't release memory until it restarts, so treat the
 ceiling as fully used there too. See
 [It's a ceiling, not a reservation](/self-hosting/runtime-memory#its-a-ceiling-not-a-reservation).
@@ -140,6 +143,19 @@ backend, reclaim switched off, a WSL version it can't read) is refused with the
 reason, and nothing is recorded. Docker in particular is never measured: the
 CLI can't see into its VM, so Docker is always sized as if reclaim does not
 work.
+
+Nor is `dropCache` on WSL older than 2.9.8, which includes a `.wslconfig` that
+doesn't set the key. There WSL drops the cache only after about 10 idle
+minutes, and only once per idle period, so a run couldn't tell "not yet" from
+"never". `onboard` doesn't offer the measurement in that case, and
+`--verify-reclaim` refuses:
+
+```
+Memory reclaim is in dropcache mode, and on this WSL version (older than 2.9.8) WSL drops the cache only after about 10 idle minutes, and only once per idle period, so this CLI cannot measure it reliably. Nothing was measured or recorded, and the runtime stays sized as if reclaim does not work.
+```
+
+See
+[dropCache before WSL 2.9.8](/self-hosting/runtime-memory#dropcache-before-wsl-298).
 
 Allow 10 minutes or more, as the prompt below says: loading the cache comes
 first, so a run can take well over twelve minutes.

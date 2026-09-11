@@ -144,7 +144,8 @@ WSL accepts three values, in any letter case:
 - **`dropCache`** — drops the guest's page cache once the VM goes idle. This is
   WSL's default: from WSL 2.1.3, a `.wslconfig` without the key — or with it
   commented out, in another section, or set to a value WSL doesn't recognise —
-  gets `dropCache`.
+  gets `dropCache`. Before WSL 2.9.8, WSL waits for about 10 idle minutes
+  before it drops the cache, and drops it only once per idle period.
 - **`gradual`** — returns memory a little at a time while the VM is idle, and
   Microsoft's recommended setting.
 - **`disabled`** — the only value that turns reclaim off.
@@ -184,7 +185,7 @@ Reclaim that is on — `gradual` or `dropCache`, set by you or by default —
 counts as *configured*. That is not treated as reclaim that works: see the next
 section for why.
 
-### Five states, not two
+### Seven states, not two
 
 Whether the VM gives memory back is a property of your Windows build, not of
 your config file, so the CLI keeps configuration and behaviour apart:
@@ -192,8 +193,10 @@ your config file, so the CLI keeps configuration and behaviour apart:
 | State | What it means | What the runtime is sized for |
 |---|---|---|
 | **Off** | `autoMemoryReclaim=disabled`; or, on WSL 2.0 up to 2.1.3, no value WSL recognises; or a `.wslconfig` the CLI can't read as UTF-8 | A VM that never gives memory back |
-| **Unsupported** | Your WSL predates 2.0, or its version can't be read | A VM that never gives memory back |
+| **Unsupported** | Your WSL predates 2.0 | A VM that never gives memory back |
+| **Version unknown** | `wsl --version` can't be read, so neither whether your WSL has the setting nor what its default is can be told | A VM that never gives memory back |
 | **Configured** | Reclaim is on, set by you or by WSL's default; nobody has measured it | A VM that never gives memory back |
+| **Unverifiable** | Podman on the WSL backend in `dropCache` mode, set by you or by default, on WSL older than 2.9.8, which the CLI [can't measure](#dropcache-before-wsl-298) | A VM that never gives memory back |
 | **Verified** | Measured, on this machine, against this WSL build and reclaim mode: memory comes back | The 6 GiB *Dedicated* reserve |
 | **Inert** | Measured, and this build returns nothing | A VM that never gives memory back |
 
@@ -260,6 +263,20 @@ memory reclaim is configured but unverified, and the runtime is sized as if it w
 With Docker, which can't be verified, the same two cases read
 `(memory reclaim configured but not verifiable for Docker)` and
 `memory reclaim is configured but cannot be verified for Docker, so size as if it does not work; lower [wsl2] memory= to 23552MB`.
+For Podman in `dropCache` mode on WSL older than 2.9.8, which can't be
+verified either, neither case offers `--verify-reclaim`:
+
+```
+(memory reclaim configured but not verifiable on this WSL version)
+memory reclaim is configured but cannot be verified on this WSL version, so size as if it does not work; lower to `clustercode onboard --memory 23552`
+```
+
+If `wsl --version` can't be read, the check warns and says so, adding the
+size to lower to when the runtime is above the ceiling:
+
+```
+could not read the WSL version (`wsl --version`), so memory reclaim cannot be counted on
+```
 
 The [host-memory check](/cli/doctor#host-memory) on the next line tells you what
 Windows actually has left. Running `clustercode onboard` on a machine whose size
@@ -295,6 +312,8 @@ It runs only when:
   from the CLI, and a Hyper-V backend has no reclaim setting;
 - memory reclaim is **on** (not `disabled`, and `.wslconfig` can be read), and
   the WSL version can be read so the result can be tied to it;
+- the mode is `gradual`, or the WSL version is **2.9.8 or newer** (see
+  [dropCache before WSL 2.9.8](#dropcache-before-wsl-298));
 - no **ClusterCode worker** is running on this machine (see below);
 - the runtime memory step of `onboard` **completed**, so there is a settled
   runtime to measure;
@@ -305,6 +324,26 @@ It runs only when:
 Otherwise it says why and records nothing. Budget for 10 minutes or more, as
 the prompt says: loading the cache comes before the idle watch, so on a slow
 disk a run can take well over twelve minutes.
+
+#### dropCache before WSL 2.9.8
+
+Before WSL 2.9.8, WSL drops the cache in `dropCache` mode only after the guest
+has been idle for about 10 minutes, and then only once until the guest gets
+busy again. A measurement there can't tell a drop that hasn't happened yet from
+one that never will. WSL 2.9.8 is the first release with WSL's reworked reclaim
+loop, which decides the guest is idle after about 2 minutes. So on an older
+build, a Podman machine in `dropCache` mode, including a `.wslconfig` that
+doesn't set the key, is never measured. `onboard` doesn't offer the
+measurement, `doctor` doesn't suggest it, and `--verify-reclaim` refuses:
+
+```
+Memory reclaim is in dropcache mode, and on this WSL version (older than 2.9.8) WSL drops the cache only after about 10 idle minutes, and only once per idle period, so this CLI cannot measure it reliably. Nothing was measured or recorded, and the runtime stays sized as if reclaim does not work.
+```
+
+A `no` that an earlier version of the CLI recorded for `dropcache` on such a
+build is no longer used, so that machine reads as *unverifiable* rather than
+*inert*. Recording one by hand is refused too. `gradual` is measured on any WSL
+that has it.
 
 `onboard` also offers the same measurement, unprompted, at the one moment the
 answer matters most — right after it has turned reclaim on:
@@ -402,7 +441,9 @@ Set RUNTIME_RECLAIM_VERIFIED = yes (WSL 2.7.13.0, reclaim mode gradual)
 
 It refuses, records nothing and exits with an error when there is nothing
 the verdict could describe: off Windows, when `wsl --version` can't be read,
-when memory reclaim is off, or when `.wslconfig` can't be read.
+when memory reclaim is off, or when `.wslconfig` can't be read. It also
+refuses a `no` for `dropcache` on WSL older than 2.9.8, for
+[the same reason the measurement does](#dropcache-before-wsl-298).
 
 Don't assume the answer. On a Windows 10 21H1 machine with WSL 2.7.13, neither
 mode returned any of ~9 GB of cache in 16 minutes idle, while dropping the

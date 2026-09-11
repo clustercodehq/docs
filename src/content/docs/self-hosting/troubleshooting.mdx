@@ -144,6 +144,11 @@ the other side.
    ```bash
    clustercode onboard --verify-reclaim
    ```
+   On WSL older than 2.9.8 in `dropCache` mode, which is also what a
+   `.wslconfig` without the key gets, the measurement refuses to run:
+   WSL drops the cache there only after about 10 idle minutes, once per idle
+   period, which a run can't measure reliably. Go on to steps 2 and 3. See
+   [dropCache before WSL 2.9.8](/self-hosting/runtime-memory#dropcache-before-wsl-298).
    If the answer is no, that's the end of this step — a configured-but-inert
    setting is graded as no reclaim at all, the ceiling for this machine drops
    accordingly, and step 3 is your real fix. If it's yes, `onboard` offers to

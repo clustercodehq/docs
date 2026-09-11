@@ -130,6 +130,23 @@ A verdict applies only to the WSL build and reclaim mode it was measured under,
 so after a WSL upgrade or a switch between `gradual` and `dropcache` you're
 back to one of these two lines until you measure again.
 
+The exception is Podman in `dropcache` mode on WSL older than 2.9.8, including
+a `.wslconfig` that doesn't set the key. The CLI
+[can't measure that](/self-hosting/runtime-memory#dropcache-before-wsl-298), so
+neither line offers the measurement:
+
+```
+Runtime memory: 25.0 GiB of 31.6 GiB host — fits ~5 default (4 GiB) DevBoxes — memory reclaim is configured but cannot be verified on this WSL version, so size as if it does not work; lower to `clustercode onboard --memory 23552`
+Runtime memory: 16.0 GiB of 31.6 GiB host — fits ~3 default (4 GiB) DevBoxes (memory reclaim configured but not verifiable on this WSL version)
+```
+
+If `wsl --version` can't be read, the check warns that it couldn't tell, and
+names the size to lower to when the runtime is above the no-reclaim ceiling:
+
+```
+Runtime memory: 26.0 GiB of 31.6 GiB host — fits ~6 default (4 GiB) DevBoxes — could not read the WSL version (`wsl --version`), so memory reclaim cannot be counted on; lower to `clustercode onboard --memory 23552`
+```
+
 Docker never gets past *configured*: the CLI can't measure Docker's VM, so it
 offers no measurement and sizes Docker as if reclaim does not work. Above the
 no-reclaim ceiling that's a warning naming Docker's own setting:
@@ -166,7 +183,7 @@ Runtime memory: 16.0 GiB of 31.6 GiB host — fits ~3 default (4 GiB) DevBoxes (
 ```
 
 The rule underneath all of these: **only a verified status changes the
-sizing.** Off, unsupported, configured-but-unverified and inert are all graded
+sizing.** Off, unsupported, version unknown, configured-but-unverified, unverifiable and inert are all graded
 the same way — as a VM that keeps what it takes. None of these lines is ever
 shown for a Hyper-V backend, which doesn't read `.wslconfig`, or on macOS and
 Linux, which have no such setting.
@@ -266,8 +283,10 @@ different diagnoses with different next steps:
 | Tail | What it means |
 |---|---|
 | `memory reclaim is off — see the docs` | `autoMemoryReclaim=disabled`, or unset or unrecognised on WSL older than 2.1.3, or a `.wslconfig` the CLI can't read as UTF-8 |
-| `memory reclaim needs WSL 2.0 or newer — see the docs` | This WSL build predates the setting, or its version can't be read |
+| `memory reclaim needs WSL 2.0 or newer — see the docs` | This WSL build predates the setting |
+| `memory reclaim cannot be checked, because the WSL version could not be read — see the docs` | `wsl --version` can't be read |
 | `memory reclaim is configured but unverified — see the docs` | Reclaim is on (set by hand, or WSL's default); nobody has measured it (as far as Docker ever gets) |
+| `memory reclaim is configured but cannot be verified on this WSL version — see the docs` | Podman in `dropcache` mode on WSL older than 2.9.8, which the CLI can't measure |
 | `memory reclaim is on but inert on this build — see the docs` | Measured, and it returns nothing here |
 | `memory reclaim is on but not keeping up — see the docs` | Measured and working, simply outpaced |
 
