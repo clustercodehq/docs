@@ -126,6 +126,24 @@ wrong — the check passes and just notes the open question:
 Runtime memory: 16.0 GiB of 31.6 GiB host — fits ~3 default (4 GiB) DevBoxes (memory reclaim configured but unverified — `clustercode onboard --verify-reclaim`)
 ```
 
+A verdict applies only to the WSL build and reclaim mode it was measured under,
+so after a WSL upgrade or a switch between `gradual` and `dropcache` you're
+back to one of these two lines until you measure again.
+
+Docker never gets past *configured*: the CLI can't measure Docker's VM, so it
+offers no measurement and sizes Docker as if reclaim does not work. Above the
+no-reclaim ceiling that's a warning naming Docker's own setting:
+
+```
+Docker memory: 25.0 GiB of 31.6 GiB host — fits ~5 default (4 GiB) DevBoxes — memory reclaim is configured but cannot be verified for Docker, so size as if it does not work; lower [wsl2] memory= to 23552MB
+```
+
+and at or below it, a passing note:
+
+```
+Docker memory: 16.0 GiB of 31.6 GiB host — fits ~3 default (4 GiB) DevBoxes (memory reclaim configured but not verifiable for Docker)
+```
+
 Once it *has* been measured and found to do nothing on this build, no amount of
 configuration will change that, so the only lever left is the size:
 
@@ -180,8 +198,11 @@ On Windows with Docker, this check only reports the number — `doctor` (and
 `[wsl2] memory=` in `.wslconfig` (Docker Desktop's WSL2 backend) or in Docker
 Desktop's own settings (its Hyper-V backend). The
 `[experimental] autoMemoryReclaim` entry is likewise yours to set by hand on
-the WSL2 backend — `doctor` reports whether it's in effect, but `onboard`
-won't write it. See
+the WSL2 backend — `doctor` reports whether it's set, but `onboard` won't
+write it, and nothing can verify it for Docker, so Docker is always sized as if
+reclaim does not work. The lever that protects the host is a smaller
+`[wsl2] memory=` (WSL2 backend) or a smaller memory setting in Docker Desktop
+(Hyper-V backend). See
 [Sizing container runtime memory](/self-hosting/runtime-memory) for how to
 change either.
 
@@ -219,6 +240,19 @@ names the value to shrink to:
 Host memory: 2.0 GiB available of 31.6 GiB — below the 4.0 GiB the host needs; the container runtime is holding memory the host cannot spare — lower it with `clustercode onboard --memory 23552`
 ```
 
+The action at the end names whatever actually sets that runtime's size, the
+same way the runtime-memory line above it does:
+
+| Runtime | Action |
+|---|---|
+| Podman that `onboard` can resize | ``lower it with `clustercode onboard --memory 23552` `` |
+| Podman whose machine type couldn't be determined | `lower the Podman machine's memory to 23552MB` |
+| Docker on the WSL2 backend | `lower [wsl2] memory= to 23552MB` |
+| Docker on the Hyper-V backend, or on macOS | `lower it to 23552MB in Docker Desktop settings` |
+| Docker on Windows, backend unknown | `lower [wsl2] memory= to 23552MB (WSL2 backend), or lower it to 23552MB in Docker Desktop settings (Hyper-V backend)` |
+
+`onboard` never resizes Docker, so Docker is never sent there.
+
 When the runtime is already at or below that ceiling, there's nothing to
 shrink, so the line reports the reclaim state instead:
 
@@ -226,15 +260,20 @@ shrink, so the line reports the reclaim state instead:
 Host memory: 3.1 GiB available of 31.6 GiB — below the 4.0 GiB the host needs; memory reclaim is off — see the docs
 ```
 
-The tail of that line names which of the four reclaim states you're in, because
-they're different diagnoses with different next steps:
+The tail of that line names which reclaim state you're in, because they're
+different diagnoses with different next steps:
 
 | Tail | What it means |
 |---|---|
-| `memory reclaim is off — see the docs` | Nothing is set (or WSL is older than 2.0) |
-| `memory reclaim is configured but unverified — see the docs` | The entry is written; nobody has measured it |
+| `memory reclaim is off — see the docs` | Nothing is set |
+| `memory reclaim needs WSL 2.0 or newer — see the docs` | This WSL build predates the setting |
+| `memory reclaim is configured but unverified — see the docs` | The entry is written; nobody has measured it (as far as Docker ever gets) |
 | `memory reclaim is on but inert on this build — see the docs` | Measured, and it returns nothing here |
 | `memory reclaim is on but not keeping up — see the docs` | Measured and working, simply outpaced |
+
+Where there is no reclaim setting at all — macOS, or a Hyper-V backend — the
+line leaves the reclaim clause out entirely and just reports the shortfall,
+rather than pointing you at a setting that doesn't exist.
 
 If the container runtime isn't
 running, it isn't the cause of the pressure, so no runtime advice is offered at

@@ -147,27 +147,41 @@ the other side.
    [Memory reclaim on Windows](/self-hosting/runtime-memory#memory-reclaim-on-windows).
 2. **Drop the guest's page cache, for memory you need back now.** Reclaim only
    runs while the VM is idle, and on some older Windows builds it may not
-   trigger at all; if `vmmem` stays high through a long idle window, free the
-   cache by hand from inside the machine:
+   trigger at all. The worker already covers this: with Podman on the WSL
+   backend it drops the cache itself whenever Windows falls below 4 GiB
+   available, at most once every 5 minutes and never during a build or
+   commit — see
+   [The worker drops the cache itself](/self-hosting/runtime-memory#the-worker-drops-the-cache-itself).
+   Check the worker's log: a warning that dropping the cache did not raise
+   Windows' available memory means this step can't help on your machine, so
+   go to step 3. To free the cache by hand — when the worker isn't running, or
+   you want the memory back before Windows gets that low — run the same
+   command the worker uses, from inside the machine:
    ```bash
    podman machine ssh
-   sudo sh -c 'sync; echo 3 > /proc/sys/vm/drop_caches'
+   sudo sh -c 'sync && echo 1 > /proc/sys/vm/drop_caches'
    ```
-   This returns the freed pages to Windows within seconds and does **not** stop
-   your DevBoxes or any WSL distribution — on a 32 GiB host it moved `vmmem`
-   from 16.7 GB to 6.8 GB and gave Windows back roughly 10 GB with a DevBox
-   still running. It's a stopgap, not a fix: the cache refills as work
-   continues.
+   `echo 1` frees the page cache, which is where this memory is. Don't use
+   `echo 3`: it also discards the kernel's directory and inode caches,
+   which buys nothing here. This returns the freed pages to Windows within
+   seconds and does **not** stop your DevBoxes or any WSL distribution. It's a
+   stopgap, not a fix: the cache refills as work continues.
 3. **Lower the ceiling.** If reclaim is unavailable, unverified, or measured
    inert on your build, size the runtime for a VM you assume stays fully
    inflated. `doctor` names the value in its own warning — use exactly that:
    ```bash
    clustercode onboard --memory 23552
    ```
-   (23552 is the figure for a 31.6 GiB host; yours will differ.)
+   (23552 is the figure for a 31.6 GiB host; yours will differ.) With Docker,
+   `onboard` doesn't resize anything: lower `[wsl2] memory=` in `.wslconfig`
+   (WSL2 backend) or the memory in Docker Desktop's settings (Hyper-V backend)
+   to the figure `doctor` names. Docker is always sized as if reclaim does not
+   work, because the CLI can't measure its VM.
 4. **`wsl --shutdown`** releases everything immediately. It's the blunt option
    — it stops your DevBoxes and every other WSL distribution on the machine —
-   so reach for it only when steps 2 and 3 aren't enough.
+   so reach for it only when steps 2 and 3 aren't enough. Stopping only the
+   Podman distribution may not return the memory: WSL 2 distributions share
+   one VM, which can keep holding it while any of them is still running.
 
 ### `.wslconfig` change didn't take effect
 
@@ -176,8 +190,9 @@ result of Notepad's legacy "ANSI" save, or PowerShell's `Set-Content`), so the
 CLI refuses to rewrite it rather than risk corrupting your other settings.
 
 **Fix:** Open `%UserProfile%\.wslconfig`, re-save it as UTF-8, and re-run
-`clustercode onboard --memory <mb>`. Or set the keys by hand and run
-`wsl --shutdown` yourself:
+`clustercode onboard --memory <mb>`. Or set the keys by hand and apply them
+with `wsl --shutdown` yourself, which stops every WSL distribution on the
+machine:
 
 ```ini
 [wsl2]

@@ -97,16 +97,37 @@ runs the experiment and records the answer. Set it yourself when you've
 [measured it manually](/self-hosting/runtime-memory#measuring-it-by-hand)
 instead.
 
-A verdict is only meaningful next to the WSL build it describes, so it's stored
-alongside a companion `RUNTIME_RECLAIM_VERIFIED_WSL` stamp, which
-`clustercode config list` shows and `config set` does **not** accept — the CLI
-writes it for you, whichever way the verdict was recorded. When the running WSL
-version stops matching the stamp, the verdict is treated as unanswered rather
-than carried forward: the CLI goes back to sizing as if reclaim doesn't work,
-and asks again. That's deliberate — this behaviour is a property of the WSL
-build, and an upgrade can fix it or break it.
+A verdict is only meaningful next to the WSL build and the reclaim mode it
+describes, so it's stored alongside two companion stamps:
+`RUNTIME_RECLAIM_VERIFIED_WSL` (the WSL version, such as `2.7.13.0`) and
+`RUNTIME_RECLAIM_VERIFIED_MODE` (`gradual` or `dropcache`). `clustercode config
+list` shows both, and `config set` accepts neither — the CLI writes them for
+you, whichever way the verdict was recorded, and confirms what it stamped:
 
-Clearing the key (or losing the stamp) is safe in the same direction: with no
+```
+Set RUNTIME_RECLAIM_VERIFIED = yes (WSL 2.7.13.0, autoMemoryReclaim=gradual)
+```
+
+Setting the key by hand is refused, with nothing recorded and a non-zero exit,
+when there's nothing for a verdict to describe:
+
+- off Windows: `Memory reclaim verification only applies to Windows with WSL. Nothing was recorded.`
+- when the WSL version can't be read: ``Could not read the WSL version (`wsl --version`), so the verdict cannot be tied to a WSL build. Nothing was recorded.``
+- when reclaim isn't enabled: `Memory reclaim is not enabled ([experimental] autoMemoryReclaim in .wslconfig), so there is nothing for a verdict to describe. Nothing was recorded.`
+
+When the running WSL version or the reclaim mode stops matching the stamps, the
+verdict is treated as unanswered rather than carried forward: the status goes
+back to *configured*, and the runtime is sized as if reclaim doesn't work. The
+CLI doesn't re-measure on its own; `clustercode doctor` suggests
+`clustercode onboard --verify-reclaim`. That's deliberate — this behaviour is a
+property of the WSL build, and an upgrade can fix it or break it.
+
+A verdict only ever applies to a Podman machine on the WSL backend, the one
+runtime the CLI can measure. With Docker, or a backend the CLI can't identify,
+a stored verdict is ignored and the runtime is sized as if reclaim does not
+work.
+
+Clearing the key (or losing a stamp) is safe in the same direction: with no
 usable verdict, the runtime is sized as though reclaim does nothing.
 
 ## Configuration File
@@ -118,6 +139,7 @@ Location: `~/.clustercode/config.json`
   "WORKER_NAME": "my-dev-machine",
   "RUNTIME_MEMORY_MB": "24576",
   "RUNTIME_RECLAIM_VERIFIED": "no",
-  "RUNTIME_RECLAIM_VERIFIED_WSL": "2.7.13.0"
+  "RUNTIME_RECLAIM_VERIFIED_WSL": "2.7.13.0",
+  "RUNTIME_RECLAIM_VERIFIED_MODE": "gradual"
 }
 ```
