@@ -350,7 +350,9 @@ goes idle, and it can
 [drop the VM's cache itself](#the-worker-drops-the-cache-itself) — which from
 Windows looks just like reclaim at work. So the run won't start while a
 ClusterCode worker process is running on this machine, which it checks with
-`tasklist`:
+`tasklist`. It looks for the worker executable under the file name
+`clustercode worker` runs it as, so it only recognises a worker that
+`clustercode worker` started on Windows:
 
 ```
 A ClusterCode worker is running on this machine. It keeps the runtime busy and drops the VM's cache when Windows runs low on memory, either of which would skew the result. Stop the worker and try again.
@@ -469,11 +471,16 @@ It never drops anything where a drop can't return memory to the host or can't
 be run safely: Docker, a Hyper-V backend, macOS, Linux, a remote engine, and
 any setup where the worker can't tell whether the engine is a local WSL
 machine. The startup line `host memory reclaim active` doesn't settle that on
-its own: it appears whenever `WORKER_HOST_RECLAIM` and the platform allow the
-cache drop, before the engine is taken into account. To see whether the engine
-qualifies, look at the `engine host locality` startup line
-(`hostBacked=… provider=…`): the worker only drops the cache for an engine that
-line reports as host-backed on the WSL provider.
+its own. The worker logs it when `WORKER_HOST_RECLAIM` allows the cache drop,
+the platform is Windows and the engine is Podman, but before it knows which
+machine that Podman engine runs on. Otherwise it logs
+`host memory reclaim inactive` with the reason. Which machine the engine runs
+on is in the `engine host locality` line, which the worker logs the first time
+it reads the engine's capacity successfully, and again whenever the answer
+changes. Its `hostBacked` and `provider` fields (alongside `machine` and
+`reason`) say what it found, and the worker only drops the cache for an engine
+with `hostBacked` true and provider `wsl`. No such line appears while the
+engine can't be queried.
 
 This is a safety net for the host, not a sizing input. The CLI still sizes the
 runtime as if reclaim does not work until reclaim is
