@@ -383,6 +383,16 @@ If the line keeps coming back, see
 
 When failures are found, `doctor` prompts you to run `clustercode onboard` to fix them automatically. If only warnings remain, it reports them without prompting.
 
+## Run doctor, then connect
+
+To check, fix and bring the worker online in one step, run doctor through the worker command:
+
+```bash
+clustercode connect --doctor
+```
+
+Doctor runs first, exactly as above; once it finishes, the worker connects. Issues that are still unresolved are shown as a warning rather than stopping the connection. See [`clustercode worker`](/cli/worker#check-and-fix-then-connect) for details.
+
 ## CI Usage
 
 ```bash

@@ -30,6 +30,8 @@ clustercode worker
 
 On first run, the CLI walks you through tenant selection and then starts the worker. The worker connects outbound to the orchestrator — no inbound ports, no firewall rules.
 
+`clustercode connect` does the same thing. Add `--doctor` (`clustercode connect --doctor`) to run the health checks and fix any issues before the worker connects.
+
 Or run the guided wizard that handles everything (login, tenant selection, runtime checks):
 
 ```bash
