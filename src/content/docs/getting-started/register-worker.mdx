@@ -38,6 +38,14 @@ On subsequent runs, it reuses your saved selection and starts immediately.
 
 To pick a container engine explicitly, pass `--podman` or `--docker`. Otherwise the worker uses whichever supported engine it finds.
 
+`clustercode connect` is an alias of `clustercode worker`. To check your setup and fix any issues on the way in, add `--doctor`:
+
+```bash
+clustercode connect --doctor
+```
+
+Doctor runs first (offering to fix failures), then the worker connects. See [`clustercode worker`](/cli/worker#check-and-fix-then-connect).
+
 ### Verify
 
 ```bash
@@ -58,7 +66,7 @@ The worker also appears in the orchestrator dashboard under the Workers panel.
 
 ## Health check
 
-Run `clustercode doctor` at any time to verify the worker's health:
+Run `clustercode doctor` at any time to verify the worker's health (or `clustercode connect --doctor` to check and then connect):
 
 ```bash
 clustercode doctor

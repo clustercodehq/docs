@@ -242,6 +242,30 @@ a placeholder before it lets you arm.
 | **Hit a performance budget** | Measures, changes one thing, measures again — until a benchmark script you supply comes in under the threshold. |
 | **Raise coverage honestly** | Takes one module's coverage past a threshold with tests that would actually catch a regression, not tests that just execute lines. |
 
+## Export and import
+
+Every loop page has a **More actions** menu (**…**) in its header, and it's
+how you back a loop up or copy it somewhere else.
+
+- **Export**, on a loop's own page, downloads it as a `.ccbackup` file named
+  after the loop: `Keep CI green` becomes `keep-ci-green.ccbackup`.
+- **Import**, on the Loops page or any loop's page, opens a file picker that
+  only accepts `.ccbackup` files. A valid backup opens the create panel already
+  filled in, just like **Use this loop** in the library. You still review it
+  and arm it yourself, and the usual cap on active loops applies.
+
+A backup carries what a library template carries (the name, goal, gates and
+budget), plus the engines, models and repository you chose. The host stays
+blank, the same as with a template: worker, DevBox and image belong to your
+account and not to the file. The verifier gate isn't stored either, because
+every loop gets one automatically when it's armed.
+
+If the file isn't a valid backup (a different kind of file, a damaged file, or
+one edited into the wrong shape), a dialog tells you so and nothing is opened.
+A **workflow** backup imported here opens the workflow editor instead.
+
+On a phone, the header's other actions fold into the same **…** menu.
+
 ## Availability
 
 <BetaAside feature="loops">Loops is in beta — the mechanics below are

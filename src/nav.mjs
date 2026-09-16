@@ -185,7 +185,7 @@ export const nav = [
     items: [
       { label: 'Overview', slug: 'cli/overview', desc: 'All commands at a glance' },
       { label: 'login', slug: 'cli/login', desc: 'Authenticate with ClusterCode' },
-      { label: 'worker', slug: 'cli/worker', desc: 'Manage worker registration' },
+      { label: 'worker', slug: 'cli/worker', desc: 'Start and connect the worker (alias: connect)' },
       { label: 'doctor', slug: 'cli/doctor', desc: 'Diagnose setup issues' },
       { label: 'onboard', slug: 'cli/onboard', desc: 'First-time setup wizard' },
       { label: 'config', slug: 'cli/config', desc: 'View and set configuration' },

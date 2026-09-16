@@ -202,6 +202,32 @@ template — so you always fill those in before you can save and fire it.
 | **The SDLC, drawn as a graph** | The whole lifecycle as ten explicit nodes, using every node kind, with both its review and monitoring cycles drawn and capped. |
 | **Issue in, merge-ready PR out** | Sixteen nodes, two capped loops, exactly one human gate — the graph translation of ClusterCode's own autonomous delivery skill. |
 
+## Export and import
+
+Every workflow page has a **More actions** menu (**…**) in its header, and
+it's how you back a workflow up or copy it somewhere else.
+
+- **Export**, on a workflow's own page, downloads it as a `.ccbackup` file
+  named after the workflow: `Nightly triage` becomes `nightly-triage.ccbackup`.
+- **Import**, on the Workflows page or any workflow's page, opens a file picker
+  that only accepts `.ccbackup` files. A valid backup opens the graph editor
+  already filled in, just like picking a template from the library. Nothing is
+  saved until you save it, and it's saved as a **new** workflow.
+
+A backup carries what a library template carries: the name, description,
+timeout, repository and the whole graph. The host stays blank, the same as with
+a template, because worker, DevBox and image belong to your account and not to
+the file. You pick those before saving, which also makes a backup the way to
+copy a workflow into another account. Import is offered to anyone who can
+create workflows.
+
+If the file isn't a valid backup (a different kind of file, a damaged file, or
+one edited into the wrong shape), a dialog tells you so and nothing is opened.
+A **loop** backup imported here opens the Loops create panel instead, so you
+don't need to find the right page first.
+
+On a phone, the header's other actions fold into the same **…** menu.
+
 ## Availability
 
 Workflows is available on **every plan**, including Free.
