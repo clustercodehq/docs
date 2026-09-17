@@ -1,0 +1,458 @@
+---
+title: Corporate Networks
+description: How a worker behind a TLS-inspecting proxy such as Zscaler or Netskope carries the corporate root CA into builds and DevBoxes, what it shows you, and what to do when it refuses a root.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+Many companies send their traffic through a **TLS-inspecting proxy**, such as
+Zscaler, Netskope, Palo Alto or Blue Coat. The proxy decrypts each HTTPS
+connection and re-signs it with a **corporate root CA** that IT installs in
+the trust store of every managed machine. Native tools on that machine keep
+working, because they trust that root.
+
+A worker does its work in places that don't read the machine's trust store:
+the Podman machine, the build containers, the DevBoxes, and the runtimes
+inside them that keep their own certificate lists. Without help, each of
+those rejects the proxy's certificates. This page explains what the worker
+does about that automatically, what you'll see, and what to do when it can't
+help.
+
+Nothing here grants new trust. The worker only carries a root that your
+machine **already trusts** into the places that would otherwise ignore it.
+
+<Aside type="note" title="Needs a current worker agent">
+  Everything on this page needs a worker agent recent enough to report trust
+  anchors. A worker on an older agent shows no **Trust** section on its card.
+</Aside>
+
+## What a TLS-inspecting proxy breaks
+
+Proxies such as Zscaler Client Connector often run **transparently**: they set
+no proxy variables and need no configuration, so the only symptom is a
+certificate error. Where you see it depends on which trust store the failing
+tool reads:
+
+| Where it fails | Typical error | Whose trust store |
+|---|---|---|
+| Pulling the base image (Windows, macOS) | `x509: certificate signed by unknown authority` | the Podman machine's own OS |
+| Build steps that download packages | TLS errors from `curl`, `apt` or `git` | the build container's `/etc/ssl/certs` |
+| Python, Azure CLI, Node.js, Java | `CERTIFICATE_VERIFY_FAILED` and similar | each runtime's own list |
+| Chromium inside a DevBox | `ERR_CERT_AUTHORITY_INVALID` on every browser sign-in page | Chromium's own store |
+
+## What the worker does automatically
+
+With Podman, a worker takes these steps on its own. It needs no setting in
+the console and no change to your images.
+
+1. **It checks for interception.** When the worker starts, and every hour
+   after that, it opens a TLS connection to each host that DevBox builds
+   download from, such as Docker Hub, GitHub, NodeSource, Microsoft and
+   Adoptium. The list also covers the hosts builds reach without naming
+   them: the npm and PyPI registries, and the hosts that installers
+   redirect to. Each host has one of three outcomes:
+   - **Clean.** The certificate chain ends at a public root: the one that
+     host normally presents, or one that another checked host presents. CDNs
+     move hosts between public certificate authorities, so a host that
+     switches to another well-known public root is still clean.
+   - **Intercepted.** The chain ends at a different root that your machine
+     trusts. The worker harvests that root.
+   - **Undetermined.** There was no handshake, because of a DNS failure, a
+     refused connection, a timeout, or a certificate your machine does not
+     trust. An undetermined host is never counted as clean: it is listed on
+     the worker card and in the build log, and the worker's log records why
+     (`trust anchors: could not determine interception for a probed host`,
+     with the host and the reason). If the host was intercepted the last time
+     it answered, the worker keeps using that root until the host answers
+     clean, also after the worker restarts.
+2. **It reads the roots you add yourself** from `~/.clustercode/anchors/`
+   (see [Add the root yourself](#add-the-root-yourself)).
+3. **It validates every root** and refuses one that strict verifiers would
+   reject (see [When a root is refused](#when-a-root-is-refused)). A refused
+   root is shown to you but never used.
+4. **It keeps one copy of each root.** When two certificates share the same
+   subject and key, only one is used: a compliant copy, and among compliant
+   copies the one that expires last.
+5. **It installs the roots into the Podman machine** on Windows and macOS, so
+   base images can be pulled. On a Fedora-based machine that is
+   `/etc/pki/ca-trust/source/anchors/` plus `update-ca-trust extract`. On a
+   Debian-based machine it is `/usr/local/share/ca-certificates/` plus
+   `update-ca-certificates`. The worker then checks that each root made it
+   into the machine's resulting bundle. This runs when the worker starts, when
+   the container engine comes back after being unreachable, and whenever the
+   set of roots changes. The files are named `clustercode-<fp8>.crt`, and they
+   are the only files the worker ever removes there. `podman machine reset`
+   wipes them; the next worker start puts them back. On Linux there is no
+   machine, so this step doesn't run: Podman pulls with the host's own trust
+   store.
+6. **It mounts the roots into every image build.** Each root is mounted
+   read-only as its own file,
+   `/usr/local/share/ca-certificates/clustercode-<fp8>.crt`, along with a
+   Chromium policy file at
+   `/etc/chromium/policies/managed/zz-clustercode-trust.json`. The DevBox
+   image build runs `update-ca-certificates`, which merges the roots into
+   `/etc/ssl/certs/ca-certificates.crt`. It runs that step even when you
+   replace the Ubuntu base with your own base image. After the build, the
+   worker reads that bundle from the finished image. If a root is missing, it
+   rebuilds once with `--no-cache`, because layers cached before the root
+   appeared don't pick it up. Those layers can also make the build fail
+   first, because every download after them runs without the root: when a
+   build fails, the worker reads the bundle of the last layer it reused from
+   the cache, and if a root is missing there it spends the same one
+   `--no-cache` rebuild. If the root is still missing, the build fails
+   and the image is not kept under its tag. So an image that keeps its tag
+   has had its bundle verified, and it carries the label
+   `io.clustercode.trust-anchors=<fp8>,…`.
+
+   The cache works the other way too. When you remove a root, layers cached
+   while it was mounted still carry it. So the worker keeps a record of every
+   root it has injected, in `trust-anchors/injected.json` under its data
+   directory. After each build it also checks the bundle for any root it no
+   longer injects. If it finds one, it rebuilds once with `--no-cache`. If
+   the root is still there after that, it came from your base image, not
+   from the cache: the image is kept and the build log says so. Deleting the
+   worker's data directory deletes this record, and the check stops until the
+   worker injects a root again.
+7. **It carries the roots into every DevBox it launches.** For a Linux
+   DevBox, it mounts the same files, sets the five variables below, and runs
+   `update-ca-certificates` as root as soon as the DevBox is created. That
+   last step is what makes a DevBox trust the root even when its image was
+   built before the root was known, or built elsewhere. The DevBox is
+   labelled `clustercode.trust-anchors=<fp8>,…`. On a worker that once
+   injected a root and no longer does, the same step runs without the mount,
+   which drops that root from the DevBox's bundle. A DevBox created while a
+   root was injected keeps that root in its CA bundle until you recreate the
+   DevBox. The worker keeps that root's file on disk, because the DevBox still
+   mounts it and couldn't start without it. Chromium follows the set of roots
+   the DevBox was created with: a root added later reaches only DevBoxes
+   created after it, and a withdrawn root leaves the Chromium policy of every
+   DevBox, at the latest the next time the DevBox starts.
+
+The worker never edits `containers.conf`, `mounts.conf` or any other Podman
+configuration file. The roots reach builds and DevBoxes as `-v` mounts and
+`-e` variables on the commands the worker runs.
+
+`<fp8>` is a root's **short fingerprint**: the first 8 hex characters of the
+SHA-256 of the certificate. The worker card and the file names use the same
+value, and you can compute it from a PEM file with:
+
+```bash
+openssl x509 -in root.pem -outform DER | sha256sum | cut -c1-8
+```
+
+### What reaches each runtime
+
+On a worker that has roots, every Linux DevBox gets these five variables,
+each set to `/etc/ssl/certs/ca-certificates.crt`:
+
+`REQUESTS_CA_BUNDLE` · `SSL_CERT_FILE` · `CURL_CA_BUNDLE` · `NODE_EXTRA_CA_CERTS` · `GIT_SSL_CAINFO`
+
+Each runtime still has its own trust store, and each one is reached a
+different way:
+
+| Runtime | Reads the system bundle? | What reaches it |
+|---|---|---|
+| curl, wget, apt, git, Go | yes | the regenerated system bundle |
+| Python `requests`, Azure CLI | no, it bundles `certifi` | `REQUESTS_CA_BUNDLE` |
+| Node.js | no, it bundles its own roots | `NODE_EXTRA_CA_CERTS` |
+| Java (Temurin) | no, it has its own `cacerts` | nothing extra: Temurin rebuilds its `cacerts` from the system store every time `update-ca-certificates` runs. JDKs installed another way (sdkman, vendor tarballs) keep a private `cacerts` and aren't covered. |
+| Chromium | no, it has its own store | the `CACertificates` enterprise policy file |
+
+The worker never runs `keytool`, and you shouldn't add a `keytool` import to
+your own image either. An alias imported that way is wiped the next time the
+Java keystore is rebuilt, and importing an alias that already exists fails the
+build.
+
+## What you'll see
+
+### On the worker card
+
+Open a worker's page, or expand its row in the **Workers** table. The
+**Trust** section sits below the worker's details. A short chip also appears
+next to the worker's name on its card and in the Workers table.
+
+| Trust section says | Chip | What it means |
+|---|---|---|
+| _(no Trust section)_ | none | The worker runs an agent from before this feature. |
+| `TLS interception: could not probe — <reason>` | `TLS ?` | The check itself failed. |
+| `TLS interception: none detected · <N> hosts probed` | none | No interception was found. |
+| `TLS interception: none detected on <K> of <N> hosts probed`, plus `<M> hosts unreachable: <hosts>` | `TLS: <M> unreachable` | No interception was found on the hosts that answered. The rest gave no answer, so for those hosts the worker can't tell. |
+| `TLS interception: unknown · none of <N> probed hosts could be reached`, plus `<N> hosts unreachable: <hosts>` | `TLS: <N> unreachable` | No host could be checked. Behind an explicit proxy whose root this machine does not trust, every host looks like this; the worker's log names each host's reason. Roots the hosts showed the last time they answered stay in use. |
+| `TLS interception: detected on <K> of <N> hosts probed`, then one row per root: subject · `<fp8>` · expires `<date>` · source · state | `TLS intercepted` | Interception was found. |
+| `TLS interception: none detected · <N> hosts probed`, then one row per root with the source `local anchors directory` | `TLS: local root` or `TLS: local roots` | No interception was found, and the worker uses the roots you placed in `~/.clustercode/anchors/`. |
+
+Each root's source is `detected by probe` or `local anchors directory`. When
+you place a root the probe also found, it is listed as `local anchors directory`.
+
+Each root's **state** is one of:
+
+- **installed**: the root is in use.
+- **refused**: the section names the defects, followed by the remedy:
+  `Ask IT for a reissued root with critical basicConstraints and keyUsage, or drop the compliant PEM into ~/.clustercode/anchors/ on the worker and restart the agent.`
+- **superseded by `<fp8>`**: another copy of the same root, with the same
+  subject and key, is used instead.
+
+When the worker can't use its roots at all, the section says so:
+`builds refused: Docker` (see [Docker workers](#docker-workers)) or
+`not injected: fleet worker`. The chip is teal when every root in use is
+installed, red when a root is refused, and a warning colour when the roots are
+blocked or some hosts were unreachable.
+
+On Windows and macOS the section also shows the Podman machine's own trust
+store, which the machine uses to pull base images:
+`podman machine trust store: installed`. If it reads
+`install failed; image pulls may fail (see the agent log)` or
+`not installed; the machine's distribution is not recognised`, the first step
+of a build can fail with a certificate error. A failed install is tried again
+at the worker's next check for interception, which runs every hour, so a
+passing problem clears without a restart.
+
+### In the build log
+
+An anchored build that goes through cleanly shows:
+
+```text
+▸ Trust anchors: mounting 1 corporate root(s) into the build: <root> (<fp8>)
+…
+▸ Trust anchors: verifying the built image's CA bundle…
+✓ Trust anchors: 1 of 1 present in /etc/ssl/certs/ca-certificates.crt; label io.clustercode.trust-anchors applied
+```
+
+Other lines you may see:
+
+| Line | Meaning |
+|---|---|
+| `⚠ Trust anchors: could not determine interception for <m> of <n> probed hosts (<hosts>)` | Some hosts gave no answer during the check (see [What the worker does automatically](#what-the-worker-does-automatically)). |
+| `⚠ Trust anchors: refused <root> (<fp8>): <defects> — drop a compliant PEM into ~/.clustercode/anchors/ on this worker and restart the agent` | A root failed validation and is not mounted. |
+| `⚠ Trust anchors: <fp8> missing from the built image's bundle (cached layers predate the anchor); rebuilding once with --no-cache` | Cached layers came from before the root existed. Expect this once per image, the first time you build it after a new root appears. |
+| `⚠ Trust anchors: the build failed after reusing cached layers whose CA bundle lacks <fp8> (they predate the anchor, so every later download ran without it); rebuilding once with --no-cache` | The same cause, but a download failed before the build could finish. The rebuild runs every step again with the root. |
+| `✗ Trust anchors: <fp8> still missing from the bundle after a --no-cache build; the image was not kept under <tag>` | The image can't be trusted, so the build failed. |
+| `⚠ Trust anchors: the built image's bundle carries <fp8>, a corporate root this worker no longer injects (cached layers were built while it was mounted); rebuilding once with --no-cache` | You removed a root, and the cache still held layers built while it was mounted. Expect this once per cached image after the change. |
+| `✓ Trust anchors: none of the <n> root(s) this worker no longer injects (<fp8>, …) is in the built image's bundle` | The check for removed roots passed. |
+| `✗ Trust anchors: could not read the built image's CA bundle, so the <n> corporate root(s) mounted into the build could not be verified; the image was not kept under <tag>` | The worker tried twice to read the built image's CA bundle, for example because the engine failed to start the throwaway container that reads it. It can't confirm the roots are there, so the build fails and nothing is rebuilt. Try the build again. |
+| `⚠ Trust anchors: could not read the built image's CA bundle, so whether it still carries any of the <n> root(s) this worker no longer injects (<fp8>, …) is unknown; the image is kept` | The check for removed roots could not run, for example because the engine failed to start the throwaway container that reads the bundle. The image is kept. Rebuild it if you need to be sure a removed root is gone. |
+| `⚠ Trust anchors: <fp8> is still in the bundle after a --no-cache build, so it comes from the base image, not from this worker's cache; the image is kept — rebuild the base image to drop it` | The root is baked into the image you build from. Rebuild that base on a network or worker without the root. |
+| `⚠ Trust anchors: <fp8> is in the base image's own bundle, so it comes from the base image, not from this worker's cache; the image is kept and not rebuilt — rebuild the base image to drop it` | Same cause as the line above, found before any rebuild: the worker read the base image's own CA bundle and the root is in it, so a `--no-cache` rebuild couldn't drop it and doesn't run. |
+| `⚠ Trust anchors: the built image's bundle also carries a NON-COMPLIANT certificate with the same subject and key as <root> (<fp8>: <defects>); strict verifiers (Python, Azure CLI) may reject chains — it was baked by the base image, not mounted by this worker` | Your base image ships the non-compliant copy of the root. The build still succeeds; remove that copy from the base image. |
+| `▸ Trust anchors: waiting for the podman machine's trust store to take the corporate root(s) before the base image is pulled…` | The worker has just started or found a new root, and is still installing it into the Podman machine. The build waits for that, up to two minutes, so its first step doesn't fail. If the roots change while it waits, the build uses the new ones and writes a new `mounting` line. |
+| `✗ Trust anchors: the engine could not pull the base image; on an intercepted network that is the podman machine's own trust store (state: <state>) — see the agent log for the engine's reason` | The build failed at its first step on a worker that has roots, and the worker log has the engine's reason. |
+| `⚠ Trust anchors: the podman machine's trust store holds the corporate root(s), but its engine service was already running with its older roots; pulled <image> with a fresh engine process and retrying the build once` | The Podman engine service keeps the roots it loaded when it started, and an open DevBox terminal keeps it running. The worker pulled the base image another way and retries the build. Nothing is restarted, so open terminals are not interrupted. |
+| `✗ Trust anchors: pulling <image> with a fresh engine process in the podman machine failed too: <reason>` | The retry above could not run. The reason is the pull's own error. |
+| `✗ Trust anchors: TLS verification failed during the build: <reason> — a TLS-inspecting proxy is re-signing this connection with a root the failing step does not trust; see https://docs.clustercode.io/self-hosting/corporate-networks/` | A step, or the engine pulling the base image, rejected a certificate. The reason is that client's own line, such as `curl: (60) SSL certificate problem` or pip's `CERTIFICATE_VERIFY_FAILED`. |
+| `` ✗ Trust anchors: this worker runs Docker, and `docker build` accepts no bind mounts, so the <n> detected corporate root(s) cannot reach the build; switch this worker to podman — https://docs.clustercode.io/self-hosting/corporate-networks/ `` | See [Docker workers](#docker-workers). |
+| `⚠ Trust anchors: <n> corporate root(s) detected but NOT injected: this is a fleet worker (FLEET_WORKER_API_SECRET)` | ClusterCode-managed workers never inject roots. |
+| `⚠ Trust anchors: the podman machine's trust store has not been populated yet; this commit build runs without them` | A Windows DevBox snapshot on a Windows worker ran before the Podman machine had the roots. |
+
+### When you snapshot a DevBox
+
+When you [build an image from a DevBox](/guides/build-image-from-container)
+that has roots, the **From DevBox** form tells you before you submit:
+
+```text
+This snapshot will carry 1 corporate trust anchor (<fp8>) in its CA bundle. Anyone who runs it will trust that root, except in Chromium, which trusts it only on a worker that adds it.
+```
+
+The snapshot keeps the DevBox's CA bundle, so tools that read it trust the
+root wherever the image runs. Chromium does not read that bundle. It takes the
+root from a policy file the worker mounts, and a snapshot does not keep mounted
+files, so Chromium trusts the root only in DevBoxes on a worker that adds it.
+
+The resulting image carries the label `io.clustercode.trust-anchors`. The form
+and the label count every root the DevBox's CA bundle holds: the roots its
+worker mounts into it, and the roots its image was built with. When the worker
+creates a DevBox, it rebuilds the bundle if it adds roots, or if it has stopped
+adding a root it used to add. The rebuilt bundle holds only the roots the
+worker adds now. So a DevBox from an image built with a root keeps that root
+when its worker never added it, when the worker's data directory was deleted,
+or when a read-only profile stops the rebuild, and its snapshot says so.
+
+## When a root is refused
+
+The worker checks each root against the strictest verifier that will use it.
+A root must:
+
+- have a **`basicConstraints`** extension that is marked **critical** and
+  says it is a CA,
+- have a **`keyUsage`** extension that includes **`keyCertSign`**, and
+- be within its validity dates.
+
+A root that fails any of these is **refused**: it is listed on the card and
+in the build log with its defects, and it is never mounted or installed.
+
+| Defect | What it means |
+|---|---|
+| `basicConstraints-missing` | The certificate has no `basicConstraints` extension, or doesn't declare itself a CA. |
+| `basicConstraints-not-critical` | `basicConstraints` is present but not marked critical. |
+| `keyUsage-missing` | The certificate has no `keyUsage` extension. |
+| `keyUsage-no-keyCertSign` | `keyUsage` doesn't allow signing certificates. |
+| `expired` | Past its expiry date. |
+| `not-yet-valid` | Before its start date. |
+
+**Why refuse instead of trying it:** recent Python releases, and the Python
+that Azure CLI ships with, reject a chain that ends at such a root, with
+errors like `Basic Constraints of CA cert not marked critical`. `curl`, `apt`
+and `git` accept it. Injecting it anyway would let a build get dozens of
+steps in and then fail inside an unrelated tool, such as `az extension add`.
+
+Some organisations have **two certificates for the same root**, with the
+same subject and the same key: an older one issued without these extensions,
+and a reissued one that has them. If your machine's trust store hands the
+worker the older one, it is refused.
+
+### Add the root yourself
+
+1. Ask IT for the **compliant, reissued root** as a PEM file, the text form
+   that starts with `-----BEGIN CERTIFICATE-----`.
+2. Save it in `~/.clustercode/anchors/` on the worker machine
+   (`%USERPROFILE%\.clustercode\anchors\` on Windows):
+   - **one certificate per file**,
+   - with a `.pem` or `.crt` extension,
+   - directly in that folder, because subfolders aren't read.
+3. Restart the worker (`clustercode worker`).
+
+Roots in that folder go through exactly the same validation, twin handling
+and injection as harvested ones. If the compliant copy shares its subject and
+key with a refused copy in the machine's store, only the compliant copy is
+used. You don't need to remove the old certificate from the machine.
+
+The same folder is also how you add a root that the check can't see, such as
+a private CA for an internal package registry or Git server.
+
+## Docker workers
+
+`docker build` accepts no bind mounts, so a root can't reach a Docker build
+the way it reaches a Podman build. A worker that runs Docker and has roots to
+carry therefore **refuses image builds up front** with the line shown in
+[the build log table](#in-the-build-log), instead of failing many steps
+later. Its card says `builds refused: Docker`. Builds on a Docker worker that
+has no roots are unaffected.
+
+If your network inspects TLS, run the worker on
+[Podman](/self-hosting/requirements/#podman-recommended).
+
+## Explicit proxies (`HTTPS_PROXY`)
+
+A transparent proxy needs nothing from you. If your network requires an
+explicit proxy instead:
+
+- **The interception check** uses `HTTPS_PROXY` (or `https_proxy`) and
+  `NO_PROXY` from the environment you start `clustercode worker` from, when
+  the proxy URL starts with `http://`. With any other scheme (`https://`,
+  `socks5://`) the check can't see what the proxy does to TLS, so every host
+  it would send through that proxy reads as unknown, and the worker log says
+  why. If that proxy intercepts TLS, place its root in
+  `~/.clustercode/anchors/`.
+- **Builds and DevBoxes** get proxy variables from the environment of the
+  Podman service, not from your shell
+  ([`podman build --http-proxy`](https://docs.podman.io/en/latest/markdown/podman-build.1.html#http-proxy)).
+  On Windows and macOS that service runs inside the Podman machine, so a
+  variable set in the shell you start the worker from does **not** reach
+  them. Set the proxy in the Podman machine's own environment.
+- **Node.js 22 inside a DevBox** ignores `HTTPS_PROXY` unless
+  `NODE_USE_ENV_PROXY=1` is also set. npm honours `HTTPS_PROXY` directly.
+
+## Sign in to Claude Code from your own browser
+
+If Chromium inside a DevBox still shows `ERR_CERT_AUTHORITY_INVALID` (for
+example, because the worker's agent hasn't been updated yet, or because its
+root was refused), you can still sign Claude Code in, with no change to the
+DevBox:
+
+1. Start the sign-in in the DevBox terminal, for example from the
+   [Agent sign-in](/guides/agent-sign-in) wizard. Claude Code prints a sign-in
+   URL and waits at a `Paste code here if prompted >` prompt.
+2. Open that URL in a browser on your own machine, which already trusts the
+   corporate root.
+3. Finish signing in, copy the code the page shows, and paste it at the
+   prompt.
+
+## Check it yourself
+
+In a DevBox terminal on a worker that has roots:
+
+```bash
+ls /usr/local/share/ca-certificates/    # clustercode-<fp8>.crt, one per root
+printenv NODE_EXTRA_CA_CERTS            # /etc/ssl/certs/ca-certificates.crt
+python3 -c "import ssl, urllib.request; c = ssl.create_default_context(); c.verify_flags |= ssl.VERIFY_X509_STRICT; print(urllib.request.urlopen('https://github.com', context=c).status)"
+```
+
+The last command prints `200`. It turns on strict verification explicitly,
+because Ubuntu 24.04's `python3` does not do so by default. Without the flag,
+a fetch passes even when a non-compliant root is in the bundle, so it can't
+tell you whether a strict verifier such as Azure CLI will accept the chain.
+
+In a DevBox with a desktop, this prints nothing when Chromium trusts the
+proxy:
+
+```bash
+chromium --headless --no-sandbox --dump-dom https://github.com/ 2>/dev/null | grep -oE 'ERR_CERT[A-Z_]*'
+```
+
+On the worker machine:
+
+```bash
+# Which roots an image was built and verified with
+podman image inspect --format '{{ index .Config.Labels "io.clustercode.trust-anchors" }}' <image>
+
+# Which roots a DevBox was launched with
+podman inspect --format '{{ index .Config.Labels "clustercode.trust-anchors" }}' <devbox>
+```
+
+## Known limits
+
+- **An image trusts the root only while it runs on a worker that has it.**
+  The root lives in `/etc/ssl/certs/ca-certificates.crt`, which is a
+  generated file. Wherever the root isn't mounted, the next run of
+  `update-ca-certificates` removes it from that bundle and from the Java
+  keystore. That includes a worker without the root, a Docker worker, and any
+  machine the image reaches after you publish it. Upgrading the
+  `ca-certificates` package, for example, runs `update-ca-certificates`.
+- **Only the hosts ClusterCode builds download from are checked.** A root
+  that only intercepts other hosts isn't harvested. Add it to
+  `~/.clustercode/anchors/` instead.
+- **One folder per worker machine.** An organisation-wide upload of trusted
+  roots in the console is planned. Until then, each worker machine that needs
+  a hand-added root needs its own copy.
+- **Windows DevBoxes are not covered.** Windows inside the DevBox keeps its
+  own certificate store, and nothing on this page reaches it. A Windows
+  DevBox and its snapshots carry no `clustercode.trust-anchors` label.
+- **Read-only profiles.** A DevBox whose
+  [security profile](/concepts/security-profiles) makes the root filesystem
+  read-only can't regenerate its bundle. Before the launch, the worker reads
+  the image's own CA bundle. The launch goes ahead only if that bundle
+  already holds every root, for example because the image was built on this
+  worker with the same roots. Otherwise it is refused:
+  `trust anchors could not be applied: the security profile mounts the root filesystem read-only, and the image <image> was built without them; rebuild the image on this worker or launch without readonlyFs`
+- **Other image pulls right after a root arrives.** On Windows and macOS,
+  the Podman engine service keeps the roots it loaded when it started, and
+  an open DevBox terminal keeps the service running. A
+  build recovers from this on its own (see the build log line above). A
+  launch that has to pull an image the worker doesn't have yet can still
+  fail with `x509: certificate signed by unknown authority` until the
+  service restarts. Close open DevBox terminals on that worker and try
+  again, or restart the Podman machine (`podman machine stop`, then
+  `podman machine start`).
+- **The AI CLI update is best-effort.** When a DevBox is created or
+  started, the worker updates Claude Code, Codex and Copilot inside it. If
+  that download fails TLS verification (for example because the worker
+  doesn't have the root), the DevBox still starts with the version it has,
+  and the worker log records a warning naming the engine and the host:
+  `engine update failed TLS verification: a TLS-inspecting proxy is re-signing this connection with a root the container does not trust (non-fatal)`.
+- **A failed bundle update stops the launch.** If `update-ca-certificates`
+  fails inside a new DevBox, the DevBox is removed and the launch fails with
+  an error starting `trust anchors could not be applied:`. The same happens
+  when the image has no `update-ca-certificates` at all: the roots can't reach
+  its bundle, so the DevBox would claim roots it doesn't trust. Every image the
+  worker builds has it; build the image on the worker to fix this. A worker
+  that has no roots now and only drops ones it used to have keeps such a
+  DevBox and records a warning. If the DevBox stopped on its own right after
+  it started, before the update could run, the error says so instead and
+  includes the DevBox's last output, because the DevBox is removed.
+- **On Windows, a few dozen roots can't be installed into the Podman machine at
+  once.** The worker installs them with one command, and Windows limits how
+  long a command can be. Past that, the Podman machine's trust store reads
+  `failed` and the worker log says the command is too long. Keep only the roots
+  you need in `~/.clustercode/anchors/`: the root certificates, not their
+  intermediates.
+- **`clustercode doctor`.** TLS-interception diagnosis is coming in a CLI
+  release.

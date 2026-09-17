@@ -58,7 +58,7 @@ dedicated-vs-shared presets, the platform ceilings, and the DevBox fit table.
 | **Protocol** | WebSocket (WSS on port 443) |
 | **Firewall** | Must allow outbound HTTPS/WSS |
 | **NAT** | Works behind NAT routers |
-| **Proxy** | HTTP proxies supported via standard env vars |
+| **Proxy** | HTTP proxies via standard env vars (`HTTPS_PROXY`). **TLS-inspecting proxies** (Zscaler, Netskope, …) set no proxy variables and re-sign every connection — see [Corporate Networks](/self-hosting/corporate-networks/). |
 
 Workers connect outbound to the orchestrator. No port forwarding, no static IP, no DNS required on the worker side.
 
