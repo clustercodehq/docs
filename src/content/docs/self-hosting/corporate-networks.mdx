@@ -87,7 +87,11 @@ the console and no change to your images.
    replace the Ubuntu base with your own base image. After the build, the
    worker reads that bundle from the finished image. If a root is missing, it
    rebuilds once with `--no-cache`, because layers cached before the root
-   appeared don't pick it up. If the root is still missing, the build fails
+   appeared don't pick it up. Those layers can also make the build fail
+   first, because every download after them runs without the root: when a
+   build fails, the worker reads the bundle of the last layer it reused from
+   the cache, and if a root is missing there it spends the same one
+   `--no-cache` rebuild. If the root is still missing, the build fails
    and the image is not kept under its tag. So an image that keeps its tag
    has had its bundle verified, and it carries the label
    `io.clustercode.trust-anchors=<fp8>,…`.
@@ -137,9 +141,9 @@ build.
 
 ### On the worker card
 
-Open **Workers** and expand a worker. The **Trust** section sits below
-**Capabilities**. A short chip also appears next to the worker's name in the
-Workers table, and next to the status badge on its dashboard card.
+Open a worker's page, or expand its row in the **Workers** table. The
+**Trust** section sits below the worker's details. A short chip also appears
+next to the worker's name on its card and in the Workers table.
 
 | Trust section says | Chip | What it means |
 |---|---|---|
@@ -147,7 +151,11 @@ Workers table, and next to the status badge on its dashboard card.
 | `TLS interception: could not probe — <reason>` | `TLS ?` | The check itself failed. |
 | `TLS interception: none detected · <N> hosts probed` | none | No interception was found. |
 | …plus `<M> hosts unreachable: <hosts>` | `TLS: <M> unreachable` | Some hosts gave no answer, so for those hosts the worker can't tell. |
-| One row per root: subject · `<fp8>` · expires `<date>` · state | `TLS intercepted` | Interception was found. |
+| `TLS interception: detected on <K> of <N> hosts probed`, then one row per root: subject · `<fp8>` · expires `<date>` · source · state | `TLS intercepted` | Interception was found. |
+| `TLS interception: none detected · <N> hosts probed`, then one row per root with the source `local anchors directory` | `TLS: local root` or `TLS: local roots` | No interception was found, and the worker uses the roots you placed in `~/.clustercode/anchors/`. |
+
+Each root's source is `detected by probe` or `local anchors directory`. When
+you place a root the probe also found, it is listed as `local anchors directory`.
 
 Each root's **state** is one of:
 
@@ -159,9 +167,16 @@ Each root's **state** is one of:
 
 When the worker can't use its roots at all, the section says so:
 `builds refused: Docker` (see [Docker workers](#docker-workers)) or
-`not injected: fleet worker`. The `TLS intercepted` chip is teal when every
-root in use is installed, red when a root is refused, and a warning colour
-when the roots are blocked or some hosts were unreachable.
+`not injected: fleet worker`. The chip is teal when every root in use is
+installed, red when a root is refused, and a warning colour when the roots are
+blocked or some hosts were unreachable.
+
+On Windows and macOS the section also shows the Podman machine's own trust
+store, which the machine uses to pull base images:
+`podman machine trust store: installed`. If it reads
+`install failed; image pulls may fail (see the agent log)` or
+`not installed; the machine's distribution is not recognised`, the first step
+of a build can fail with a certificate error.
 
 ### In the build log
 
@@ -181,10 +196,11 @@ Other lines you may see:
 | `⚠ Trust anchors: could not determine interception for <m> of <n> probed hosts (<hosts>)` | Some hosts gave no answer during the check (see [What the worker does automatically](#what-the-worker-does-automatically)). |
 | `⚠ Trust anchors: refused <root> (<fp8>): <defects> — drop a compliant PEM into ~/.clustercode/anchors/ on this worker and restart the agent` | A root failed validation and is not mounted. |
 | `⚠ Trust anchors: <fp8> missing from the built image's bundle (cached layers predate the anchor); rebuilding once with --no-cache` | Cached layers came from before the root existed. Expect this once per image, the first time you build it after a new root appears. |
-| `✗ Trust anchors: <fp8> still missing from the bundle after a --no-cache rebuild; the image was not kept under <tag>` | The image can't be trusted, so the build failed. |
+| `⚠ Trust anchors: the build failed after reusing cached layers whose CA bundle lacks <fp8> (they predate the anchor, so every later download ran without it); rebuilding once with --no-cache` | The same cause, but a download failed before the build could finish. The rebuild runs every step again with the root. |
+| `✗ Trust anchors: <fp8> still missing from the bundle after a --no-cache build; the image was not kept under <tag>` | The image can't be trusted, so the build failed. |
 | `⚠ Trust anchors: the built image's bundle also carries a NON-COMPLIANT certificate with the same subject and key as <root> (<fp8>: <defects>); strict verifiers (Python, Azure CLI) may reject chains — it was baked by the base image, not mounted by this worker` | Your base image ships the non-compliant copy of the root. The build still succeeds; remove that copy from the base image. |
 | `✗ Trust anchors: the engine could not pull the base image; on an intercepted network that is the podman machine's own trust store (state: <state>) — see the agent log for the engine's reason` | The build failed at its first step on a worker that has roots, and the worker log has the engine's reason. |
-| `✗ Trust anchors: the engine reported a TLS verification failure: <reason>` | The build output contained a certificate error. |
+| `✗ Trust anchors: TLS verification failed during the build: <reason> — a TLS-inspecting proxy is re-signing this connection with a root the failing step does not trust; see https://docs.clustercode.io/self-hosting/corporate-networks/` | A step, or the engine pulling the base image, rejected a certificate. The reason is that client's own line, such as `curl: (60) SSL certificate problem` or pip's `CERTIFICATE_VERIFY_FAILED`. |
 | `` ✗ Trust anchors: this worker runs Docker, and `docker build` accepts no bind mounts, so the <n> detected corporate root(s) cannot reach the build; switch this worker to podman — https://docs.clustercode.io/self-hosting/corporate-networks/ `` | See [Docker workers](#docker-workers). |
 | `⚠ Trust anchors: <n> corporate root(s) detected but NOT injected: this is a fleet worker (FLEET_WORKER_API_SECRET)` | ClusterCode-managed workers never inject roots. |
 | `⚠ Trust anchors: the podman machine's trust store has not been populated yet; this commit build runs without them` | A Windows DevBox snapshot on a Windows worker ran before the Podman machine had the roots. |
