@@ -51,8 +51,10 @@ the console and no change to your images.
    Adoptium. The list also covers the hosts builds reach without naming
    them: the npm and PyPI registries, and the hosts that installers
    redirect to. Each host has one of three outcomes:
-   - **Clean.** The certificate chain ends at the public root that host
-     normally presents.
+   - **Clean.** The certificate chain ends at a public root: the one that
+     host normally presents, or one that another checked host presents. CDNs
+     move hosts between public certificate authorities, so a host that
+     switches to another well-known public root is still clean.
    - **Intercepted.** The chain ends at a different root that your machine
      trusts. The worker harvests that root.
    - **Undetermined.** There was no handshake, because of a DNS failure, a
@@ -62,7 +64,7 @@ the console and no change to your images.
      (`trust anchors: could not determine interception for a probed host`,
      with the host and the reason). If the host was intercepted the last time
      it answered, the worker keeps using that root until the host answers
-     clean.
+     clean, also after the worker restarts.
 2. **It reads the roots you add yourself** from `~/.clustercode/anchors/`
    (see [Add the root yourself](#add-the-root-yourself)).
 3. **It validates every root** and refuses one that strict verifiers would
@@ -121,7 +123,10 @@ the console and no change to your images.
    which drops that root from the DevBox's bundle. A DevBox created while a
    root was injected keeps that root in its CA bundle until you recreate the
    DevBox. The worker keeps that root's file on disk, because the DevBox still
-   mounts it and couldn't start without it.
+   mounts it and couldn't start without it. Chromium follows the set of roots
+   the DevBox was created with: a root added later reaches only DevBoxes
+   created after it, and a withdrawn root leaves the Chromium policy of every
+   DevBox, at the latest the next time the DevBox starts.
 
 The worker never edits `containers.conf`, `mounts.conf` or any other Podman
 configuration file. The roots reach builds and DevBoxes as `-v` mounts and
@@ -224,9 +229,12 @@ Other lines you may see:
 | `✗ Trust anchors: <fp8> still missing from the bundle after a --no-cache build; the image was not kept under <tag>` | The image can't be trusted, so the build failed. |
 | `⚠ Trust anchors: the built image's bundle carries <fp8>, a corporate root this worker no longer injects (cached layers were built while it was mounted); rebuilding once with --no-cache` | You removed a root, and the cache still held layers built while it was mounted. Expect this once per cached image after the change. |
 | `✓ Trust anchors: none of the <n> root(s) this worker no longer injects (<fp8>, …) is in the built image's bundle` | The check for removed roots passed. |
+| `✗ Trust anchors: could not read the built image's CA bundle, so the <n> corporate root(s) mounted into the build could not be verified; the image was not kept under <tag>` | The worker tried twice to read the built image's CA bundle, for example because the engine failed to start the throwaway container that reads it. It can't confirm the roots are there, so the build fails and nothing is rebuilt. Try the build again. |
+| `⚠ Trust anchors: could not read the built image's CA bundle, so whether it still carries any of the <n> root(s) this worker no longer injects (<fp8>, …) is unknown; the image is kept` | The check for removed roots could not run, for example because the engine failed to start the throwaway container that reads the bundle. The image is kept. Rebuild it if you need to be sure a removed root is gone. |
 | `⚠ Trust anchors: <fp8> is still in the bundle after a --no-cache build, so it comes from the base image, not from this worker's cache; the image is kept — rebuild the base image to drop it` | The root is baked into the image you build from. Rebuild that base on a network or worker without the root. |
+| `⚠ Trust anchors: <fp8> is in the base image's own bundle, so it comes from the base image, not from this worker's cache; the image is kept and not rebuilt — rebuild the base image to drop it` | Same cause as the line above, found before any rebuild: the worker read the base image's own CA bundle and the root is in it, so a `--no-cache` rebuild couldn't drop it and doesn't run. |
 | `⚠ Trust anchors: the built image's bundle also carries a NON-COMPLIANT certificate with the same subject and key as <root> (<fp8>: <defects>); strict verifiers (Python, Azure CLI) may reject chains — it was baked by the base image, not mounted by this worker` | Your base image ships the non-compliant copy of the root. The build still succeeds; remove that copy from the base image. |
-| `▸ Trust anchors: waiting for the podman machine's trust store to take the corporate root(s) before the base image is pulled…` | The worker has just started or found a new root, and is still installing it into the Podman machine. The build waits for that, up to two minutes, so its first step doesn't fail. |
+| `▸ Trust anchors: waiting for the podman machine's trust store to take the corporate root(s) before the base image is pulled…` | The worker has just started or found a new root, and is still installing it into the Podman machine. The build waits for that, up to two minutes, so its first step doesn't fail. If the roots change while it waits, the build uses the new ones and writes a new `mounting` line. |
 | `✗ Trust anchors: the engine could not pull the base image; on an intercepted network that is the podman machine's own trust store (state: <state>) — see the agent log for the engine's reason` | The build failed at its first step on a worker that has roots, and the worker log has the engine's reason. |
 | `⚠ Trust anchors: the podman machine's trust store holds the corporate root(s), but its engine service was already running with its older roots; pulled <image> with a fresh engine process and retrying the build once` | The Podman engine service keeps the roots it loaded when it started, and an open DevBox terminal keeps it running. The worker pulled the base image another way and retries the build. Nothing is restarted, so open terminals are not interrupted. |
 | `✗ Trust anchors: pulling <image> with a fresh engine process in the podman machine failed too: <reason>` | The retry above could not run. The reason is the pull's own error. |
@@ -249,11 +257,14 @@ root wherever the image runs. Chromium does not read that bundle. It takes the
 root from a policy file the worker mounts, and a snapshot does not keep mounted
 files, so Chromium trusts the root only in DevBoxes on a worker that adds it.
 
-The resulting image carries the label `io.clustercode.trust-anchors`. The
-label follows the DevBox, not the image it was launched from. A DevBox from an
-older image still has the root in its bundle, so its snapshot is labelled too.
-A DevBox you later launch from the snapshot records only the roots its own
-worker mounts into it, so on a worker without the root it claims none.
+The resulting image carries the label `io.clustercode.trust-anchors`. The form
+and the label count every root the DevBox's CA bundle holds: the roots its
+worker mounts into it, and the roots its image was built with. When the worker
+creates a DevBox, it rebuilds the bundle if it adds roots, or if it has stopped
+adding a root it used to add. The rebuilt bundle holds only the roots the
+worker adds now. So a DevBox from an image built with a root keeps that root
+when its worker never added it, when the worker's data directory was deleted,
+or when a read-only profile stops the rebuild, and its snapshot says so.
 
 ## When a root is refused
 
@@ -429,10 +440,19 @@ podman inspect --format '{{ index .Config.Labels "clustercode.trust-anchors" }}'
   `engine update failed TLS verification: a TLS-inspecting proxy is re-signing this connection with a root the container does not trust (non-fatal)`.
 - **A failed bundle update stops the launch.** If `update-ca-certificates`
   fails inside a new DevBox, the DevBox is removed and the launch fails with
-  an error starting `trust anchors could not be applied:`. If the image has
-  no `update-ca-certificates` at all, the launch continues and the worker log
-  records a warning. That DevBox is still labelled as carrying the roots, so
-  publishing a snapshot of it shows the trust warning although its bundle
-  doesn't hold them.
+  an error starting `trust anchors could not be applied:`. The same happens
+  when the image has no `update-ca-certificates` at all: the roots can't reach
+  its bundle, so the DevBox would claim roots it doesn't trust. Every image the
+  worker builds has it; build the image on the worker to fix this. A worker
+  that has no roots now and only drops ones it used to have keeps such a
+  DevBox and records a warning. If the DevBox stopped on its own right after
+  it started, before the update could run, the error says so instead and
+  includes the DevBox's last output, because the DevBox is removed.
+- **On Windows, a few dozen roots can't be installed into the Podman machine at
+  once.** The worker installs them with one command, and Windows limits how
+  long a command can be. Past that, the Podman machine's trust store reads
+  `failed` and the worker log says the command is too long. Keep only the roots
+  you need in `~/.clustercode/anchors/`: the root certificates, not their
+  intermediates.
 - **`clustercode doctor`.** TLS-interception diagnosis is coming in a CLI
   release.
