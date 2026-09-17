@@ -141,7 +141,9 @@ can see at a glance which parts of the graph the run went around more than once.
 
 Firing a workflow **snapshots** its definition. Editing the workflow afterwards
 never changes a run that is already in flight, and never rewrites the history of
-one that has finished — a run is a record of what was actually executed.
+one that has finished — a run is a record of what was actually executed. To
+change a single run instead, edit its steps from the run page (see
+[Changing a run after it starts](#changing-a-run-after-it-starts)).
 
 The run page shows the graph with each node coloured by status alongside an
 **execution order** timeline: one row per node attempt, with its kind, duration
@@ -165,6 +167,83 @@ If the graph carries a **Human Approval** node, the run stops there and waits
 resumes down whichever branch the answer selects.
 
 {/* SCREENSHOT: workflow-run-trace — an in-flight workflow run with the graph coloured by node status and the execution-order timeline alongside it */}
+
+## Changing a run after it starts
+
+A run works from the snapshot taken when it was fired, but that snapshot is
+not frozen for good. From the run page you can change a step the run has not
+reached yet, or send the run back to a step and start again from there. Both
+change **this run only**: the saved workflow definition is never touched, so
+the next firing still uses the graph you saved.
+
+Click a node on the run page to open its panel. The buttons at the bottom of
+that panel depend on where the node sits relative to the run. You only see
+them if you can manage workflows.
+
+### Edit a step before the run reaches it
+
+On an active run, a step that is still ahead of the run shows **Edit step**.
+"Ahead" means reachable from the step the run is on now by following the
+graph, which includes a step that a review loop-back can send the run back to.
+
+**Edit step** opens a dialog titled `Edit "<step>"` holding only that step's
+own settings: its prompt, engine and model, timeout, a decision's command, an
+approval's question, and so on. Click **Save edit**. Nothing is stopped; the
+run carries on with its current step, and the edited step runs with the new
+settings when the run gets to it. A toast confirms this, and the run's
+timeline records a marker:
+
+```
+✎ Edited "<step>" by <you> · applies when the run reaches it
+```
+
+If the run reaches that step before you save, the edit is refused and the
+dialog tells you to restart from the step instead. Edits apply one step at a
+time. A step the run has already passed can't be edited this way, because the
+run will not reach it again unless you restart from it.
+
+### Restart from a step
+
+Every node also shows a restart button, worded for where it sits:
+
+| Button | Shown on |
+|---|---|
+| **Stop, edit & restart** | the step the run is on now |
+| **Stop, edit & restart from here** | any other step of an active run, including a run waiting at a Human Approval |
+| **Edit & restart from here** | any step of a finished run: completed, failed or cancelled |
+
+The dialog lets you change the step's settings before it runs again, and the
+run's inputs as well. The one exception is a run started by a schedule's
+fan-out: its input values are what identify it, so the dialog shows them but
+won't let you change them. Leave the fields as they are to restart with the
+same settings.
+
+When you confirm, the run goes back to that step and continues through the
+graph from there. Before you do, the dialog spells out what that means:
+
+- **On an active run, the step running now is stopped.**
+- **Git is not rewound.** The run has one branch that every step shares, so
+  commits made by later steps stay on it. The restarted step continues on top
+  of them, not from the state it originally saw.
+- **Loop limits downstream are reset.** Any capped loop-back reachable from
+  the step gets its full `⟲ max N` budget again, and the dialog says how many
+  edges that affects.
+- **Re-opening a finished run uses one of your concurrent workflow-run
+  slots**, the same as firing a new one. If the run's DevBox has been stopped
+  it is started again. If that isn't possible, the step starts on a fresh
+  DevBox from the branch as it was last pushed, and any uncommitted work is
+  lost.
+
+Earlier attempts are not deleted. They stay in the run's timeline, marked as
+superseded, and what they cost still counts toward the run total. The
+timeline also records the restart:
+
+```
+⟲ Restarted from "<step>" (was on "<other step>") by <you> · loop limits reset
+```
+
+Because a finished run can be re-opened this way, **cancelling a run is not
+final**: a cancelled run can be picked up again from any of its steps.
 
 ## Scheduling a workflow
 

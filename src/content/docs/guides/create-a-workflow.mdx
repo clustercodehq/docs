@@ -108,6 +108,18 @@ fix it if it didn't, and ask a human before shipping.
    workflow doesn't hide what it did; it's the same pages you'd get if you had
    started each piece by hand.
 
+10. **Change course without starting over.**
+
+    While a run is in flight, click a node it hasn't reached yet, say `ship`,
+    and use **Edit step** to adjust its prompt. The run keeps going and uses
+    your new prompt when it gets there. If a step that already ran needs another go, click it and use
+    **Stop, edit & restart from here** (or **Edit & restart from here** once
+    the run has finished). The run picks up from that step on the same branch,
+    and the earlier attempt stays in the timeline. Either way, only this run
+    changes; the saved workflow stays as it is. See
+    [Changing a run after it starts](/concepts/workflows#changing-a-run-after-it-starts)
+    for exactly what a restart does and doesn't undo.
+
 </Steps>
 
 ## What you get
