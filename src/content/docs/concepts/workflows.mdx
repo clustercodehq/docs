@@ -88,8 +88,8 @@ A Decision node picks its branch using one of three **evaluators**:
   agent, no cost.
 - **Command** — runs a command inside the run's shared DevBox. Exit code `0`
   takes the `pass` branch; anything else takes `fail`. This is how you route on
-  "do the tests actually pass", not on what an agent claims. It runs from the
-  checkout of the project's **main repository** — see
+  "do the tests actually pass", not on what an agent claims. It runs from one
+  specific repository's checkout — see
   [Where a Command decision runs](#where-a-command-decision-runs).
 - **Agent** — asks an agent to judge, and offers your branch labels as the only
   answers it may give.
@@ -106,34 +106,52 @@ before it, or pin the workflow to an existing DevBox.
 
 A Command decision is a bare command — `npm test`, `pytest`, `make check` — and
 what it means depends entirely on the directory it runs in. It runs from the
-checkout of your project's **main repository**: the first repository in the
-project's list, the one the DevBox is launched for.
+checkout of **the repository the run's DevBox was launched for**:
 
-That matters as soon as a project has more than one repository. Every repository
-in the project is cloned into the DevBox side by side, in the home directory:
+1. the workflow's own **Repository** setting, if you set one;
+2. otherwise the `repoUrl` the run was started with, if any;
+3. otherwise the **first** repository in the project's list.
+
+That repository always takes its own short name as its folder. Every other
+repository in the project is cloned beside it, and a name already taken is
+qualified with its owner:
 
 ```
 /home/developer/
-  core/               # the main repository — a Command decision runs here
-  connectors/
-  docs/
-  clustercodehq-core/ # a second repo whose name was already taken
+  core/               # acme/core — launched for, so a Command decision runs here
+  connectors/         # acme/connectors
+  docs/               # acme/docs
+  other-org-core/     # other-org/core — "core" was taken
 ```
 
-A repository keeps its own short name unless an earlier one in the list already
-claimed it. `github.com/acme/core` and `github.com/other-org/core` cannot both
-be `core`, so the second becomes `other-org-core`.
+Which repository is "launched for" therefore decides the folder names as well.
+In a project holding `acme/core` and `other-org/core`, a workflow whose
+Repository is set to `other-org/core` gets the layout above **reversed**:
+`other-org/core` becomes `core/`, and `acme/core` becomes `acme-core/`.
+
+<Aside type="caution" title="Two cases with no siblings">
+If the workflow's Repository is a repo that is **not** in the project's list,
+the workspace is dropped and that repository is cloned on its own — there are no
+sibling folders to reach. The same is true when the workflow is **pinned to an
+existing DevBox**: the layout is whatever that DevBox was launched with, which
+need not match the project at all.
+</Aside>
 
 **To check a different repository, say so in the command.** Change the directory
 as part of it:
 
 ```sh
-sh -c "cd ../connectors && npm test"
+sh -c "cd ../other-org-core && npm test"
 ```
 
-Use `sh -c "..."` so that the `cd` and the command run together as one shell
-command. The paths are relative to the main repository's checkout, so a sibling
-repository is `../<folder>`.
+Two things to get right:
+
+- **Double quotes only.** The command field understands `"..."` and nothing
+  else. `sh -c 'cd ../other-org-core && npm test'` is split on the spaces, the
+  shell receives an unterminated quote, and the decision routes `fail` — which
+  reads exactly like failing tests.
+- **Paths are relative to the launched-for repository's checkout**, so a sibling
+  is `../<folder>`.
 
 <Aside type="tip" title="Check where it ran">
 Every Command decision records the directory it used. Open the run, expand the
