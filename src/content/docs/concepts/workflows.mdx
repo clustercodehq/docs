@@ -88,7 +88,9 @@ A Decision node picks its branch using one of three **evaluators**:
   agent, no cost.
 - **Command** — runs a command inside the run's shared DevBox. Exit code `0`
   takes the `pass` branch; anything else takes `fail`. This is how you route on
-  "do the tests actually pass", not on what an agent claims.
+  "do the tests actually pass", not on what an agent claims. It runs from the
+  checkout of the project's **main repository** — see
+  [Where a Command decision runs](#where-a-command-decision-runs).
 - **Agent** — asks an agent to judge, and offers your branch labels as the only
   answers it may give.
 
@@ -98,6 +100,46 @@ or a Loop node hands one over — a Prototype's variants each keep their own. If
 you draw a Command or Agent decision that could be reached before any run or loop
 has gone first, the workflow refuses to save and tells you so. Put a run or loop
 before it, or pin the workflow to an existing DevBox.
+</Aside>
+
+### Where a Command decision runs
+
+A Command decision is a bare command — `npm test`, `pytest`, `make check` — and
+what it means depends entirely on the directory it runs in. It runs from the
+checkout of your project's **main repository**: the first repository in the
+project's list, the one the DevBox is launched for.
+
+That matters as soon as a project has more than one repository. Every repository
+in the project is cloned into the DevBox side by side, in the home directory:
+
+```
+/home/developer/
+  core/               # the main repository — a Command decision runs here
+  connectors/
+  docs/
+  clustercodehq-core/ # a second repo whose name was already taken
+```
+
+A repository keeps its own short name unless an earlier one in the list already
+claimed it. `github.com/acme/core` and `github.com/other-org/core` cannot both
+be `core`, so the second becomes `other-org-core`.
+
+**To check a different repository, say so in the command.** Change the directory
+as part of it:
+
+```sh
+sh -c "cd ../connectors && npm test"
+```
+
+Use `sh -c "..."` so that the `cd` and the command run together as one shell
+command. The paths are relative to the main repository's checkout, so a sibling
+repository is `../<folder>`.
+
+<Aside type="tip" title="Check where it ran">
+Every Command decision records the directory it used. Open the run, expand the
+decision on the timeline, and read the **Ran in** line. If a command that passes
+by hand fails here, that line is the first thing to check — it is usually
+pointing at a repository you did not mean.
 </Aside>
 
 ## Routing vocabularies
