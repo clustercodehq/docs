@@ -1,6 +1,6 @@
 ---
 title: Settings
-description: Your per-user ClusterCode preferences — environment variables, service tokens and agent secrets, the NUCLEUS.md and NOVA.md assistant files, appearance, DevBox display, notifications, and version info.
+description: Your per-user ClusterCode preferences — Experience (Advanced mode), environment variables, service tokens and agent secrets, the NUCLEUS.md and NOVA.md assistant files, appearance, DevBox display, notifications, and version info.
 ---
 
 import { Aside } from '@astrojs/starlight/components';
@@ -10,6 +10,23 @@ sidebar. Most of it is **per-user** (your tokens and variables, your NUCLEUS.md
 and NOVA.md, theme); the **DevBox Security** profiles are **tenant-level** —
 shared across your team. The page is organised into the sections below (the
 right-hand nav jumps between them).
+
+## Experience
+
+The first section. One switch, **Advanced mode**, decides what your home page
+is:
+
+- **Off** (the default): your home page is **Dispatch**, a chat with
+  [Nucleus](/concepts/nucleus). Say what you want in plain words; it finds the
+  project, asks for what it needs, and runs the work.
+- **On**: your home page is the full dashboard, with live DevBoxes, runs,
+  projects and workers.
+
+Every page stays in the sidebar either way. Here the switch saves straight
+away, with no confirmation. The same switch sits on Dispatch's top line and in
+the header, where turning it on asks you to confirm. The choice is stored
+against your account, so it follows you to any browser. See
+[Talk to Nucleus](/getting-started/talk-to-nucleus#prefer-the-dashboard-switch-to-advanced-mode).
 
 ## Environment Variables
 

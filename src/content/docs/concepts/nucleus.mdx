@@ -1,6 +1,6 @@
 ---
 title: Nucleus
-description: The in-platform AI assistant that manages your farm.
+description: The in-platform AI assistant. It is your home page (Dispatch), sets up and starts work from plain words, shows live cards, and asks before anything destructive or costly.
 ---
 
 import PlanLimitsTable from '../../../components/PlanLimitsTable.astro';
@@ -10,7 +10,12 @@ import nucleusLight from '../../../assets/screenshots/nucleus-assistant-light-20
 
 import { Aside } from '@astrojs/starlight/components';
 
-**Nucleus** is ClusterCode's built-in AI assistant. It lives in the orchestrator dashboard and helps you manage workers, launch DevBoxes, execute commands, and monitor your cluster — all through natural conversation.
+**Nucleus** is ClusterCode's built-in AI assistant. It is your home page
+([Dispatch](#guided-home-dispatch)) unless you switch to Advanced mode, and a
+chat panel on every other page. Tell
+it what you want in plain words and it sets up the work, starts it, and shows
+you the result: workers, DevBoxes, runs, schedules, loops, workflows and
+projects, all through conversation.
 
 <Aside type="caution" title="Nucleus runs on Anthropic models">
   Nucleus is powered internally by **Anthropic (Claude)** models. Each plan
@@ -24,28 +29,113 @@ import { Aside } from '@astrojs/starlight/components';
   routes requests through your personal Claude Code subscription.
 </Aside>
 
+## Guided home (Dispatch)
+
+**Dispatch** is the home page (`/`) you land on when you sign in. It is a
+full-page chat with Nucleus, named **Dispatch** in the sidebar, the breadcrumb
+and the phone's bottom bar.
+
+- **The question.** "What are we working on?" with the message box in the
+  middle of the page.
+- **Preview cards** under it: **Start work**, **Anything for me?**, **Run a
+  workflow** and **My DevBoxes**. Each sends a ready-made request. **Run a
+  workflow** and **My DevBoxes** appear once you have an active workflow or a
+  DevBox.
+- **Quick links**: **Start from a ticket**, **What's running?**, **My
+  projects**, **Help me get set up** and **What can you do?**, plus a **Learn
+  the basics** row of short explainers.
+- **Setup chips** in the message box, only while a step is missing: **Connect a
+  worker**, **Connect a repository** and **Sign the agent in**.
+- **A one-line stats bar** at the bottom, each figure linking to its page.
+
+On the first message the box moves to the bottom and the page becomes the
+conversation. **New chat** and **History** live in the message box's button
+row.
+
+Prefer the full dashboard? Turn on **Advanced mode** from Dispatch's top line,
+the header, or [Settings → Experience](/concepts/settings#experience). The choice
+is saved to your account. With it on, `/` is the dashboard and Nucleus is the
+**Nucleus Assistant** entry in the sidebar. See
+[Talk to Nucleus](/getting-started/talk-to-nucleus#prefer-the-dashboard-switch-to-advanced-mode)
+for the details.
+
 ## What Nucleus Can Do
 
-- **Launch DevBoxes from tickets** — "Launch a DevBox for github.com/org/repo/issues/42"
-- **Execute commands** — "Run npm start in DevBox X" or start long-running processes in the background
-- **Open terminals and displays** — "Open a terminal on DevBox X" or open a VNC display for GUI interaction
-- **Build images** — "Build the claude-code-terminal image" with composable capabilities
-- **Monitor status** — "What's running on worker-1?" or get details on a specific DevBox
-- **Fetch tickets** — Pull details from GitHub Issues or Azure DevOps work items
-- **Navigate the UI** — Nucleus can direct you to any page in the dashboard
-- **Read docs** — Nucleus can look up ClusterCode documentation to answer your questions
+- **Get you set up**: a place to run (a [Cloud worker](/concepts/cloud-workers) or your own machine), agent sign-in, an optional image, and a repository, one step at a time, skipping what is already done
+- **Start work from a sentence**: "I want to work on something" or "In my-app, fix the typo in the README" becomes a [run](/concepts/runs), a DevBox with a terminal for hands-on work, or a [workflow](/concepts/workflows) run
+- **Launch DevBoxes from tickets**: "Launch a DevBox for github.com/org/repo/issues/42"
+- **Run workflows**: list them, start one with its inputs, check how a workflow run is doing, and cancel it. Editing a workflow's steps stays in the workflow editor
+- **Manage automation**: create and manage [runs](/concepts/runs), [schedules](/concepts/schedules), [loops](/concepts/loops) and [prototype races](/concepts/prototyping), and answer a run that paused on a question
+- **Manage projects**: create them, and set or remove their environment variables (a secret's value is never echoed back)
+- **Execute commands**: "Run npm start in DevBox X" or start long-running processes in the background
+- **Open terminals and displays**: "Open a terminal on DevBox X" or open a VNC display for GUI interaction
+- **Build images**: "Build an image with Claude and Node" from composable capabilities
+- **Show live cards**: DevBoxes, projects, runs and notifications, rendered right in the chat (see [Cards in the chat](#cards-in-the-chat))
+- **Work your inbox**: "Anything waiting on me?", mark notifications read, clear them
+- **Manage cloud workers**: list, create and delete them
+- **Fetch tickets**: pull details from GitHub Issues or Azure DevOps work items
+- **Navigate the UI**: take you to any page in the dashboard
+- **Read docs**: look up this documentation to answer "how does X work?"
+
+Nucleus only acts on DevBoxes ClusterCode manages. A container you started
+yourself on a worker is never stopped, removed or used by it.
+
+## Cards in the chat
+
+When you ask to *see* something ("show my DevBoxes", "what runs do I have?",
+"anything waiting on me?"), Nucleus shows the app's own cards in the
+conversation instead of a text list. Four kinds:
+
+| Cards | What you get |
+|---|---|
+| **DevBoxes** | The same DevBox cards as the DevBoxes page, running and stopped |
+| **Projects** | Project cards, including one named project |
+| **Runs** | Run rows with live status, scoped to a project or a status ("what's running right now?") when you ask |
+| **Notifications** | Your inbox rows |
+
+Cards are live: a run row moves from queued to running to completed on its own,
+and clicking it opens the run. Each group has **Refresh** and **View all**, and
+you can point at what is on screen ("stop the first running one"). After it
+starts a run or a workflow, Nucleus shows its row and asks **Open the run now?**
+before navigating anywhere.
+
+## What Nucleus asks before doing
+
+Anything that cannot be undone, or that spends your budget, waits for your
+answer. For the actions below this is enforced by the platform, not left to the
+assistant: the action refuses to run until you have replied **in a later
+message**, so Nucleus can never approve its own request. An unanswered request
+expires after 30 minutes. Say no and nothing changes.
+
+| Area | Asks before |
+|---|---|
+| **DevBoxes** | Stopping one; removing one permanently |
+| **Runs** | Cancelling a run (pausing one does not ask) |
+| **Workflow runs** | Cancelling one |
+| **Schedules** | Disabling, deleting, or running one now |
+| **Loops** | Creating one (**Start** / **Cancel**), reopening a stopped one, cancelling, deleting |
+| **Prototype races** | Launching one, promoting a winner, cancelling the race or one engine's branch, archiving, deleting |
+| **Projects** | Deleting a project; removing any of its environment variables |
+| **Cloud workers** | Deleting one |
+| **Inbox** | Marking every notification read; clearing the whole inbox |
+
+Starting new work also comes with a summary first. A run shows its prompt,
+project and host with an optional name and **Launch** / **Cancel**. A DevBox
+launch shows its plan and waits for your go-ahead, unless you turn that off with
+the `auto-launch` directive in [NUCLEUS.md](/guides/nucleus-config).
 
 ## How It Works
 
 When you ask Nucleus to do something, it:
 
-1. Interprets your request
-2. Takes the action on your cluster
-3. Confirms with you before executing destructive operations
-4. Reports the result
+1. Interprets your request, looking up your projects, workers and workflows
+   before asking you anything it can find out itself
+2. Asks only for what is missing, in one set of questions
+3. Waits for your answer before anything on the list above
+4. Takes the action and shows the result, often as cards
 
-Ask it anything from its chat panel, open from anywhere in the orchestrator
-dashboard, and follow along as it works through the steps live.
+Chat with it on Dispatch, or from the docked panel on any other page, and follow
+along as it works through the steps live.
 
 <ThemedImage
   dark={nucleusDark}
@@ -84,7 +174,8 @@ still there for an unattended 3 a.m. Schedule with nobody watching.
 
 ## Tips
 
+- Start with "I want to work on something" when you are not sure how to phrase it
+- Ask "What can you do?" to bring back the Learn the basics explainers
 - Ask Nucleus to launch a DevBox from a GitHub issue or Azure DevOps ticket
 - Enable host networking when launching to test from your phone at host-ip:port
 - Try: "Open a terminal on DevBox X" to get a live shell
-- Nucleus will confirm launch details with you before creating a DevBox
