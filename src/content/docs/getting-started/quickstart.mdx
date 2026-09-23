@@ -1,9 +1,16 @@
 ---
 title: Quickstart
-description: Get your cluster running in under 5 minutes.
+description: The manual path, from the terminal. Install the CLI, register a worker, sign your agents in, and launch your first DevBox.
 ---
 
-Everything you need to go from zero to running AI DevBoxes on your own hardware.
+The manual path: from zero to running AI DevBoxes on your own hardware, from the
+terminal.
+
+The quickest start is to sign in and [talk to Nucleus](/getting-started/talk-to-nucleus):
+it walks you through the same steps (a worker, agent sign-in, a repository) from
+the chat and then starts your first job. Follow this page when you would rather
+set up a worker yourself, or when Nucleus hands you the CLI commands for your
+own machine.
 
 ## 1. Install the CLI
 
@@ -49,9 +56,13 @@ fails on auth. See [Agent sign-in](/guides/agent-sign-in).
 
 ## 5. Launch your first DevBox
 
-1. Open the dashboard at your orchestrator URL
+1. Open **Workers** in the console and click the ⚡ **Quick Launch** button on
+   your online worker
 2. Paste a GitHub issue link into the launch modal
-3. Pick a worker and click **Launch**
+3. Click **Launch**
+
+Or skip the modal and ask Nucleus on your home page: "Launch a DevBox for
+github.com/org/repo/issues/42".
 
 Within 30 seconds the DevBox is running and the web terminal is live, with your
 repo cloned and the ticket context in place.
@@ -68,6 +79,7 @@ coordinator launches the DevBox *and* runs the agent for you. See
 
 ## What's next?
 
+- [Talk to Nucleus](/getting-started/talk-to-nucleus): drive all of this from chat instead
 - [Run an agent on demand](/guides/run-on-demand) — hand a ticket over and get a PR back
 - [Launch from a ticket](/guides/launch-from-ticket) — full walkthrough of the hands-on flow
 - [Workers concept](/concepts/workers) — understand self-hosted vs managed

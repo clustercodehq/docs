@@ -5,7 +5,9 @@ description: A self-hosted platform for orchestrating agentic AI development acr
 
 import ThemedVideoCycle from '../../../components/ThemedVideoCycle.astro';
 
-ClusterCode is a **self-hosted platform** for orchestrating agentic development across machines you own. It gives you a centralized dashboard to launch, monitor, and steer AI coding agents running inside isolated **DevBoxes** on your worker machines — on demand, on a schedule, or by chatting with an in-app assistant.
+ClusterCode is a **self-hosted platform** for orchestrating agentic development across machines you own. It lets you launch, monitor, and steer AI coding agents running inside isolated **DevBoxes** on your worker machines, on demand or on a schedule.
+
+When you sign in, your home page is **Dispatch**: a chat with [Nucleus](/concepts/nucleus), the in-app assistant. Tell it what you want and it sets up the worker, the repository and the run for you. Prefer to see everything at once? Switch to **Advanced mode** for the full dashboard shown below. See [Talk to Nucleus](/getting-started/talk-to-nucleus).
 
 <ThemedVideoCycle
   intervalMs={8000}
@@ -67,7 +69,7 @@ You provide the machines. ClusterCode orchestrates the work.
 - **[Schedule recurring work](/concepts/schedules)** — autonomous cron jobs that wake up to draft PRs, sweep flaky tests, or audit dependencies, then tear down on their own
 - **[Launch from tickets](/guides/launch-from-ticket)** *(the hands-on path)* — paste a GitHub issue or Azure DevOps work item and a DevBox spins up with the repo, the ticket context, and the **agent CLI ready** — then you start the agent, or hand the ticket to a Run
 - **[Pick your engine](/concepts/subagents)** — Claude Code, Codex, or Copilot do the in-DevBox coding, coordinated by [Nova](/concepts/nova)
-- **[Drive it by chat](/concepts/nucleus)** — Nucleus, the in-app assistant, launches DevBoxes, starts runs, and creates schedules from a conversation
+- **[Drive it by chat](/getting-started/talk-to-nucleus)**: Nucleus, your home page, sets you up, launches DevBoxes, starts runs and workflows, and asks before anything destructive or costly
 - **[See the whole fleet](/concepts/observatory)** — the Observatory renders workers, DevBoxes, runs, and schedules as celestial bodies on one living map
 - **[Build images from a DevBox](/guides/build-image-from-container)** — snapshot a tuned DevBox into a reusable golden image so every future launch starts from that exact state
 - **Manage multiple workers** — connect any number of machines; they phone home to the orchestrator over WebSocket
@@ -92,7 +94,8 @@ Each worker connects to the orchestrator over an authenticated, **outbound WebSo
 
 ## Next Steps
 
-- [Quickstart](/getting-started/quickstart) — get running in 5 minutes
+- [Talk to Nucleus](/getting-started/talk-to-nucleus): sign in and say what you want
+- [Quickstart](/getting-started/quickstart): the manual path, from the terminal
 - [Infrastructure: Workers](/concepts/workers) — understand self-hosted vs Cloud worker
 - [Automation Overview](/concepts/automation) — how Runs and Schedules fit together
 - [CLI Reference](/cli/overview) — all commands at a glance

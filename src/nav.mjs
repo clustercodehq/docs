@@ -35,7 +35,7 @@ export const nav = [
     label: 'Getting Started',
     short: 'Start',
     icon: 'book',
-    href: '/getting-started/quickstart/',
+    href: '/getting-started/talk-to-nucleus/',
     collapsed: true,
     pinned: true,
     // Ordered so a reader going top-to-bottom never hits a page whose
@@ -45,12 +45,18 @@ export const nav = [
     // end. 'Agent sign-in' moved here from Guides (was 13 items deep, linked from
     // no Getting Started page) because a worker without signed-in agents cannot
     // do agent work at all.
+    //
+    // 'Talk to Nucleus' leads: the product's own first run is the Dispatch
+    // home, where Nucleus sets up the worker, sign-in and repository from
+    // chat. The four pages after Introduction are the manual (CLI) path to the
+    // same place, still in prerequisite order.
     items: [
+      { label: 'Talk to Nucleus', slug: 'getting-started/talk-to-nucleus', desc: 'Sign in and say what you want' },
       { label: 'Introduction', slug: 'getting-started/introduction', desc: 'What is ClusterCode' },
       { label: 'Install CLI', slug: 'getting-started/install-cli', desc: 'Install the CLI tool' },
       { label: 'Register a Worker', slug: 'getting-started/register-worker', desc: 'Connect your machine' },
       { label: 'Agent sign-in', slug: 'guides/agent-sign-in', desc: 'Sign AI engines into a worker' },
-      { label: 'Your first DevBox', slug: 'getting-started/quickstart', desc: 'Get running in 5 minutes' },
+      { label: 'Your first DevBox', slug: 'getting-started/quickstart', desc: 'The manual path, from the terminal' },
     ],
   },
   {

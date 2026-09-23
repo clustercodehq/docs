@@ -1,0 +1,157 @@
+---
+title: Talk to Nucleus
+description: Sign in, land on Dispatch, and tell Nucleus what you want. It sets things up, asks before anything destructive or costly, and shows you the result as cards. Prefer the full dashboard? Switch to Advanced mode.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+**TL;DR:** sign in and you land on **Dispatch**, a chat with
+[Nucleus](/concepts/nucleus). Say what you want in plain words: get a place to
+run, open a DevBox, start work, run a workflow. Nucleus finds the project, asks
+only for what it is missing, **asks before anything destructive or costly**, and
+shows the result as live cards you can click. Prefer the classic dashboard? Turn
+on [Advanced mode](#prefer-the-dashboard-switch-to-advanced-mode).
+
+{/* VIDEO: nucleus-guided-home — hero clip goes here */}
+
+## 1. Sign in and land on Dispatch
+
+Sign in at [console.clustercode.io](https://console.clustercode.io). Your home
+page is **Dispatch**, which is also the first item in the sidebar and in the
+phone's bottom bar. It asks one question, **What are we working on?**, with the
+message box right in the middle of the page.
+
+Around that box:
+
+- **Preview cards** send a ready-made request in one click: **Start work**,
+  **Anything for me?**, **Run a workflow** and **My DevBoxes**. The last two
+  appear once you have an active workflow or a DevBox.
+- **Quick links** under the cards: **Start from a ticket**, **What's running?**,
+  **My projects**, **Help me get set up** and **What can you do?**
+- **Learn the basics**: short explainers (runs, workers, images, projects,
+  DevBoxes) that Nucleus answers in the chat.
+- **A one-line stats bar** at the bottom of the page. Each figure links to its
+  page.
+
+As soon as you send something, the message box moves to the bottom and the page
+becomes the conversation. **New chat** (+) and **History** sit in the message
+box's own button row, so you can start over or reopen an earlier chat at any
+time.
+
+## 2. Tell Nucleus what you want
+
+You do not need to know the product's vocabulary. Some examples:
+
+| You want | Say something like | What Nucleus does |
+|---|---|---|
+| To get set up | "Help me get set up" | Walks you through a place to run, agent sign-in, an optional image and a repository, skipping every step that is already done, then hands over to your first job. |
+| A DevBox to work in yourself | "Open a terminal on my-app so I can poke around" | Launches a [DevBox](/concepts/containers) for that project and opens a terminal on it. |
+| To start work | "I want to work on something" | Asks which project, then how to start: hand it to an agent that reports back, set you up to work alongside it, or run one of your [workflows](/concepts/workflows). |
+| Something specific | "In my-app, fix the typo in the README" | Skips the questions it can answer itself and goes straight to the run summary. |
+| To run a workflow | "Run the release-notes workflow" | Asks for the workflow's inputs in one set of questions, starts it, and offers to open the run. |
+| To start from a ticket | "Work on github.com/acme/my-app/issues/42" | Reads the ticket and starts a [run](/concepts/runs) with it attached. |
+| To check on things | "Anything waiting on me?", "What's running right now?", "Show my DevBoxes" | Answers with live cards (see [step 4](#4-follow-the-cards)). |
+
+### Setup chips on a new account
+
+On an account that is not set up yet, amber **setup chips** sit in the message
+box's button row:
+
+- **Connect a worker**: shows while you have no worker. Nucleus offers a
+  [Cloud worker](/concepts/cloud-workers) or your own machine; for your own
+  machine it gives you the [CLI commands](/getting-started/register-worker) one
+  at a time and notices by itself when the worker comes online.
+- **Connect a repository**: shows while you have no project. Paste a GitHub URL
+  and Nucleus creates the [project](/concepts/projects) for you.
+- **Sign the agent in**: shows once you have a worker whose coding agents are
+  not signed in. Nucleus takes you to the [sign-in page](/guides/agent-sign-in)
+  and checks the result when you come back.
+
+Each chip is just a request to Nucleus, and it disappears once that step is
+done.
+
+<Aside type="note">
+  Nucleus never asks for an API key or token in the chat. Keys and sign-ins
+  belong on the sign-in page and in [Settings](/concepts/settings).
+</Aside>
+
+## 3. It asks before anything destructive or costly
+
+Nucleus does the safe things straight away: listing, showing, looking things
+up. For anything that spends budget or cannot be undone, it asks first:
+
+- **Starting work**: a new run shows a summary with an optional name and
+  **Launch** / **Cancel**. Loops and prototype races show their own summary and
+  wait for your go-ahead.
+- **Tearing things down**: stopping or removing a DevBox, cancelling a run or a
+  workflow run, disabling or deleting a schedule, deleting a project, a loop or
+  a cloud worker, and removing environment variables all wait for your **Yes**.
+
+For teardown, loops and prototype races the check is enforced by the platform,
+not left to the assistant's judgement: the action only goes through once you
+have answered. Say no and nothing changes. The full list is in
+[What Nucleus asks before doing](/concepts/nucleus#what-nucleus-asks-before-doing).
+
+## 4. Follow the cards
+
+When you ask to see something, Nucleus shows the app's own cards right in the
+chat instead of a wall of text: **DevBoxes**, **projects**, **runs** and
+**notifications**. They are live:
+
+- A run card moves from queued to running to completed without a reload. Click
+  it to open the run.
+- Each group has **Refresh** and **View all** to jump to the full page.
+- You can refer to what is on screen: "stop the first running one" acts on the
+  first card shown (and still asks first).
+
+After it starts a run or a workflow, Nucleus asks **Open the run now?** and only
+navigates if you say so. Otherwise you stay in the chat and the run's card keeps
+updating there.
+
+## Prefer the dashboard? Switch to Advanced mode
+
+**Advanced mode** swaps Dispatch for the full dashboard: every DevBox, run,
+schedule, project and worker on one live page. The switch lives in three
+places:
+
+| Where | How it behaves |
+|---|---|
+| **Dispatch's top line**, above the question while the chat is empty: "Your home page is Nucleus. Prefer the classic dashboard?" | Turning it on asks **Switch to the control centre?** Choose **Show me everything** to switch or **Keep it simple** to stay. |
+| **The header**, left of the notification bell, on every other page (desktop) | Same confirmation when turning it on. Turning it off switches straight back to Dispatch. |
+| **Settings → Experience**, the first section of [Settings](/concepts/settings#experience) | A plain toggle, no confirmation either way. |
+
+If your account existed before Dispatch arrived, the top line reads **Your home
+page is now Nucleus.** The switch there brings your old dashboard back.
+
+Your choice is **saved to your account**, so it follows you to every browser and
+device, and your home page opens in the right mode on the first load.
+
+With Advanced mode on, the first sidebar item is **Dashboard** again and Nucleus
+is still one click away as **Nucleus Assistant** in the sidebar or as the docked
+chat panel on any page. Every other page stays in the sidebar in both modes.
+
+<Aside type="tip" title="Free plan">
+  On the Free plan, Nucleus runs on your own AI key. Until you add one, Dispatch
+  shows a short note instead of the chat: add your own Anthropic API key or
+  Claude OAuth token (see
+  [Settings → App AI Assistants](/concepts/settings#app-ai-assistants)), or turn
+  on Advanced mode to use the full dashboard.
+</Aside>
+
+## Prefer the terminal?
+
+Everything Nucleus sets up can also be done by hand. The manual path is the rest
+of this section:
+
+1. [Install the CLI](/getting-started/install-cli)
+2. [Register a worker](/getting-started/register-worker)
+3. [Sign your agents in](/guides/agent-sign-in)
+4. [Launch your first DevBox](/getting-started/quickstart)
+
+## Next steps
+
+- [Nucleus](/concepts/nucleus): everything it can do, and what it asks before
+  doing
+- [Nucleus Configuration](/guides/nucleus-config): give it standing
+  instructions with NUCLEUS.md
+- [What is ClusterCode?](/getting-started/introduction): the big picture
