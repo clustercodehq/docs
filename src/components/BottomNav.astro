@@ -22,34 +22,59 @@ const pinnedItems = [
 // AI Workforce even though it sits under /concepts/.
 const activeGroup = activeGroupLabel(currentPath);
 const isActive = (key: string) => key === activeGroup;
+
+// `aria-current` for an active tab, as the console's NavPill derives it: the
+// tab lights up for its whole section, but only the section's own landing page
+// is the "page"; anywhere else inside it the tab is the current "location".
+const ariaCurrent = (key: string, href: string) =>
+  isActive(key) ? (href === currentPath ? 'page' : 'location') : undefined;
 ---
 
+{/* The console's mobile bottom bar, transcribed from the platform's NavPill
+    (platform/packages/ui/src/components/nav-pill + the `.nav-pill` block in its
+    theme.css): a floating glass pill, icon-only tabs, and the active tab grown
+    into its own tinted lozenge that shows the label. The console's raised
+    centre action has no counterpart here and is left out. Idle tabs keep their
+    name in `aria-label`; the label element is only shown on the active tab.
+    Styles: the BOTTOM NAV block in src/styles/custom.css. */}
+
 <nav class="bottom-nav" aria-label="Mobile navigation">
-  <button
-    class="bottom-nav-item"
-    type="button"
-    aria-label="Menu"
-    aria-expanded="false"
-    aria-controls="cc-mobile-drawer"
-    data-cc-drawer-toggle
-  >
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-      <path d="M4 6H20M4 12H20M4 18H20" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path>
-    </svg>
-    <span>Menu</span>
-  </button>
-  {pinnedItems.map((item) => (
-    item.action === 'search' ? (
-      <button class="bottom-nav-item" type="button" aria-label="Search" data-bottom-nav-search>
-        <NavIcon name="search" />
-        <span>{item.label}</span>
-      </button>
-    ) : (
-      <a href={item.href} class:list={['bottom-nav-item', { active: isActive(item.key) }]}>
-        <NavIcon name={item.icon} />
-        <span>{item.label}</span>
-      </a>
-    )
+  <div class="bottom-nav-cell" data-align="start">
+    <button
+      class="bottom-nav-item"
+      type="button"
+      aria-label="Menu"
+      aria-expanded="false"
+      aria-controls="cc-mobile-drawer"
+      data-cc-drawer-toggle
+    >
+      <span class="bottom-nav-icon">
+        <svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none">
+          <path d="M4 6H20M4 12H20M4 18H20" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path>
+        </svg>
+      </span>
+      <span class="bottom-nav-label">Menu</span>
+    </button>
+  </div>
+  {pinnedItems.map((item, i) => (
+    <div class="bottom-nav-cell" data-align={i === pinnedItems.length - 1 ? 'end' : 'center'}>
+      {item.action === 'search' ? (
+        <button class="bottom-nav-item" type="button" aria-label={item.label} data-bottom-nav-search>
+          <span class="bottom-nav-icon"><NavIcon name="search" /></span>
+          <span class="bottom-nav-label">{item.label}</span>
+        </button>
+      ) : (
+        <a
+          href={item.href}
+          class:list={['bottom-nav-item', { active: isActive(item.key) }]}
+          aria-label={item.label}
+          aria-current={ariaCurrent(item.key, item.href)}
+        >
+          <span class="bottom-nav-icon"><NavIcon name={item.icon} /></span>
+          <span class="bottom-nav-label">{item.label}</span>
+        </a>
+      )}
+    </div>
   ))}
 </nav>
 
